@@ -2,3 +2,4 @@
 	path = nixpkgs
 	url = https://github.com/NixOS/nixpkgs.git
 	branch = nixos-19.03
+	shallow = true
