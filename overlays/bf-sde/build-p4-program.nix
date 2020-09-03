@@ -47,7 +47,8 @@ stdenv.mkDerivation rec {
     echo "${bf-sde}/run_switchd.sh -p ${p4Name} -c $out/${p4Name}.config" >> $command
     chmod a+x $command
 
-    ## Create links to the kernel module load/unload scripts for convenience
+    ## Create links to bfshell and the kernel module load/unload scripts for convenience
+    ln -s ${bf-sde}/install/bin/bfshell $out/bin
     for mod in kdrv knet kpkt; do
       name=bf_''${mod}_mod
       ln -s ${bf-sde}/install/bin/''${name}_unload $out/bin/''${name}_unload
