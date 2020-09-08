@@ -20,8 +20,8 @@ let
             inherit self kernelId kernel;
           } // def);
         in self;
-    in lib.mapAttrs (kernelId: kernel: sdeWithKernel sdeDef kernelId kernel)
-                    kernels;
+    in pkgs.recurseIntoAttrs (lib.mapAttrs (kernelId: kernel: sdeWithKernel sdeDef kernelId kernel)
+                              kernels);
 
 ## Download bf-sde-${version}.tar and bf-reference-bsp-${version}.tar
 ## from the BF FORUM repository and add them manually to the Nix store

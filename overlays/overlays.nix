@@ -166,7 +166,7 @@ let
       ##
       ##   nix-build -A bf-sde.v9_2_0
       ##
-      bf-sde = import ./bf-sde { pkgs = self; };
+      bf-sde = self.recurseIntoAttrs (import ./bf-sde { pkgs = self; });
       bf-sde-latest = bf-sde.v9_2_0;
     };
 in [ overlay ]

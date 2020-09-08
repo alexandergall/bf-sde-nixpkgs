@@ -2,10 +2,14 @@
 
 none:
 
-bf-sde-closure:
-	nix-store --add-fixed sha256 bf-sde-build-inputs/*
-	path=$$(nix-build --cores 0 -E 'with import ./nixpkgs.nix; bf-sde') ;\
-	nix-store --export $$(nix-store -qR $$path) >$@
+closures:
+	export NIX_PATH=nixpkgs=.; \
+	paths=$$(nix-build --cores 0 -A bf-sde); \
+	for path in $$paths; do \
+	  closure=$$(sed -e 's,.*-bf-sde-,,' <<< $$path).closure; \
+	  echo "Creating $$closure"; \
+	  nix-store --export $$(nix-store -qR $$path) >$$closure; \
+	done
 
 bf-sde-env:
 	NIX_PATH=. nix-shell --pure --keep SDE --keep SDE_INSTALL --cores 0 ./environments/bf-sde/env.nix || true
