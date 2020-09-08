@@ -33,4 +33,10 @@ in builtins.foldl' (res: attrs: res // { "${attrs.id}" = mkKernel attrs; }) {} [
     localVersion = "-OpenNetworkLinux";
     sha256 = "1bizb1wwni5r4m5i0mrsqbc5qw73lwrfrdadm09vbfz9ir19qlgz";
   }
+  rec {
+    id = "k4_19_81_ONL_1537d8";
+    version = "4.19.81";
+    localVersion = "-OpenNetworkLinux";
+    sha256 = "17g2wiaa7l7mxi72k79drxij2zqk3nsj8wi17bl4nfvb1ypc2gi9";
+  }
 ]
