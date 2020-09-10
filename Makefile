@@ -10,9 +10,3 @@ closures:
 	  echo "Creating $$closure"; \
 	  nix-store --export $$(nix-store -qR $$path) >$$closure; \
 	done
-
-bf-sde-env:
-	NIX_PATH=. nix-shell --pure --keep SDE --keep SDE_INSTALL --cores 0 ./environments/bf-sde/env.nix || true
-
-bmv2-env:
-	nix-shell --pure --cores 0 ./environments/bmv2/env.nix || true

@@ -1,5 +1,14 @@
 let
-  grpc_version = "1.17.2";
+  grpc_1_17_0 = super: pname: fetchSubmodules: sha256: rec {
+    version = "1.17.0";
+    name = "${pname}-${version}";
+    src = super.fetchFromGitHub {
+      owner = "grpc";
+      repo = "grpc";
+      rev = "v${version}";
+      inherit fetchSubmodules sha256;
+    };
+  };
 
   overlay = self: super:
     rec {
@@ -26,16 +35,12 @@ let
         name = "libpcap-${version}";
       });
 
-      grpc = super.grpc.overrideAttrs(oldAttrs: rec {
-        version = grpc_version;
-        name = "grpc-${version}";
-        src = super.fetchFromGitHub {
-            owner = "grpc";
-            repo = "grpc";
-            rev = "v${version}";
-            sha256 = "1rq20951h5in3dy0waa60dsqj27kmg6ylp2gdsxyfrq5jarlj89g";
-        };
+      ## Make the default explicit for future upgrades of the
+      ## underlying nixpkgs
+      protobuf = self.protobuf3_6;
 
+      grpc = super.grpc.overrideAttrs(oldAttrs:
+        (grpc_1_17_0 super "grpc" false "17y8lhkx22qahjk89fa0bh76q76mk9vwza59wbwcpzmy0yhl2k23") // {
         # grpc has a CMakefile and a standard (non-autoconf) Makefile. We
         # use cmake to build the package but that method does not support
         # pkg-config. We have to use the Makefile for that explicitely.
@@ -60,30 +65,8 @@ let
 
       python2 = super.python2.override {
         packageOverrides = python-self: python-super: {
-          scapy = python-super.scapy.overrideAttrs(oldAttrs: rec {
-            name = "scapy-${version}";
-            version = "2.4.0";
-
-            src = super.fetchFromGitHub {
-              owner = "secdev";
-              repo = "scapy";
-              rev = "v${version}";
-              fetchSubmodules = true;
-              sha256 = "1s6lkjm5l3vds0vj61qk1ma7jxdxr5ma9jcvzaw3akd69aah3b88";
-            };
-          });
-
-          grpcio = python-super.grpcio.overrideAttrs(oldAttrs: rec {
-            version = grpc_version;
-            name = "grpcio-${version}";
-            src = super.fetchFromGitHub {
-              owner = "grpc";
-              repo = "grpc";
-              rev = "v${version}";
-              fetchSubmodules = true;
-              sha256 = "03jyrbjqd57188cjllzh7py38cbdgpg6km0ys9afq8pvcqcji2kc";
-            };
-          });
+          grpcio = python-super.grpcio.overrideAttrs(oldAttrs:
+	    grpc_1_17_0 super "grpcio" true "06jpr27l71wz0fbifizdsalxvpraix7s5dg30pgd2wvd77ky5p3h");
 
           ## tenjin.py is included in the bf-drivers packages and
           ## installed in
@@ -104,29 +87,6 @@ let
             };
           };
 
-          nnpy = python-super.buildPythonPackage rec {
-            pname = "nnpy-python";
-            version = "1.4.2";
-
-            src = super.fetchFromGitHub {
-              owner = "nanomsg";
-              repo = "nnpy";
-              rev = version;
-              sha256 = "1ffqf3xxx30xjpxviqxrymprl78pshzji8pskz8164s7w4fv6fyd";
-            };
-
-            buildInputs = [ super.nanomsg python-super.cffi ];
-
-            LD_LIBRARY_PATH = super.stdenv.lib.makeLibraryPath [ super.nanomsg ];
-
-            patchPhase = ''
-              substituteInPlace generate.py --replace /usr/include ${super.nanomsg}/include
-            '';
-
-            meta = with super.stdenv.lib; {
-              description = "cffi-based Bindings for nnpy";
-            };
-          };
         };
       };
 
@@ -147,11 +107,6 @@ let
         };
       };
 
-      PI = super.callPackage ./PI { };
-      bmv2 = super.callPackage ./bmv2 { };
-      p4c = super.callPackage ./p4c { };
-      p4runtime = super.callPackage ./p4runtime { };
-
       ## This is a set containing sets of derivations for
       ## each version of the SDE.  The names in this set are
       ## of the form "v<version>", e.g. "v9_2_0".  There is one
@@ -161,11 +116,7 @@ let
       ##
       ##   bf-sde.v9_2_0.k4_14_151_ONL_7c3bfd
       ##
-      ## Beware that if you build an attribute of bf-sde with nix-build,
-      ## it will build the SDE for all known kernels, e.g.
-      ##
-      ##   nix-build -A bf-sde.v9_2_0
-      ##
+      ## Derivations within bf-sde will be built recursively.
       bf-sde = self.recurseIntoAttrs (import ./bf-sde { pkgs = self; });
       bf-sde-latest = bf-sde.v9_2_0;
     };
