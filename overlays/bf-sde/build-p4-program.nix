@@ -2,8 +2,15 @@
 
 { name ? attrs.${name},
   version ? attrs.${version},
+# The name of the p4 program to compile without the ".p4" extension
   p4Name ? attrs.${p4Name},
-  src ? attrs.${src}
+# The path to the program relative to the root of the source tree.
+# I.e. the program to be compiled si expected to be
+#   <path>/<p4Name>.p4
+  path ? null,
+# The flags passed to the p4_build.sh script
+  buildFlags ? "",
+  src ? attrs.${src},
 } @attrs:
 
 stdenv.mkDerivation rec {
@@ -22,7 +29,9 @@ stdenv.mkDerivation rec {
     find $sde -type d -exec chmod u+w {} \;
     touch $sde/stamp
 
-    $sde/p4_build.sh ./${p4Name}.p4
+    cmd="$sde/p4_build.sh ${buildFlags} ${if path == null then "." else path}/${p4Name}.p4"
+    echo "Build command: $cmd"
+    $cmd
   '';
 
   installPhase = ''
