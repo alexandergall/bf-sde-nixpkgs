@@ -119,6 +119,8 @@ let
       ## Derivations within bf-sde will be built recursively.
       bf-sde = self.recurseIntoAttrs (import ./bf-sde { pkgs = self; });
       bf-sde-latest = bf-sde.v9_2_0;
+
+      freerouter = super.callPackage ./freerouter {};
       RARE = super.callPackage ./RARE { bf-sde = bf-sde.v9_2_0.k4_19_81_ONL_1537d8; };
     };
 in [ overlay ]
