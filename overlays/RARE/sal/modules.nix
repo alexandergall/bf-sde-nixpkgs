@@ -1,10 +1,10 @@
-{ python2 }:
+{ fetchBitbucketPrivate, python2 }:
 
-python2.pkgs.buildPythonPackage rec {
+let
+  repo = import ./repo.nix { inherit fetchBitbucketPrivate; };
+in python2.pkgs.buildPythonPackage rec {
   pname = "sal-bf2556-t1";
-  version = "20.6.23";
-
-  src = /home/gall/rare-bf2556x-1t;
+  inherit (repo) version src;
 
   preConfigure = ''
     cd modules

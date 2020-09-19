@@ -1,10 +1,10 @@
-{ bf-sde, sal_modules, python2, makeWrapper }:
+{ bf-sde, fetchgit, sal_modules, python2, makeWrapper }:
 
-python2.pkgs.buildPythonApplication rec {
+let
+  repo = import ./repo.nix { inherit fetchgit; };
+in python2.pkgs.buildPythonApplication rec {
+  inherit (repo) version src;
   pname = "bf_forwarder";
-  version = "20.6.23";
-
-  src = /home/gall/rare;
 
   propagatedBuildInputs = [
     bf-sde sal_modules

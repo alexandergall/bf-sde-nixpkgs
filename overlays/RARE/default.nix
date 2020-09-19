@@ -1,6 +1,10 @@
 { bf-sde, callPackage }:
 
-rec {
+let
+  fetchBitbucketPrivate = callPackage ../fetchbitbucket {
+    identityFile = ./bitbucket_deployment_rsa;
+  };
+in rec {
   mpls = callPackage ./generic.nix {
     inherit bf-sde;
     flavor = "mpls";
@@ -24,8 +28,10 @@ rec {
   bf_forwarder = callPackage ./bf_forwarder.nix {
     inherit bf-sde sal_modules;
   };
-  sal_modules = callPackage ./sal/modules.nix {};
+  sal_modules = callPackage ./sal/modules.nix {
+    inherit fetchBitbucketPrivate;
+  };
   sal_bf2556x = callPackage ./sal/bf2556x.nix {
-    inherit sal_modules;
+    inherit fetchBitbucketPrivate sal_modules;
   };
 }
