@@ -1,3 +1,3 @@
 import ./nixpkgs {
-  overlays = import ./overlays/overlays.nix;
+  overlays = import ./overlay.nix;
 }

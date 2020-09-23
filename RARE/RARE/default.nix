@@ -1,7 +1,7 @@
 { bf-sde, callPackage }:
 
 let
-  fetchBitbucketPrivate = callPackage ../fetchbitbucket {
+  fetchBitbucketPrivate = callPackage ./fetchbitbucket {
     identityFile = ./bitbucket_deployment_rsa;
   };
 in rec {
