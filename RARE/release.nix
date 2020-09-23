@@ -1,4 +1,7 @@
 { }:
 
 with import ./.;
-RARE
+{
+  inherit RARE;
+  inherit freerouter;
+}
