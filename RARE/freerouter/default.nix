@@ -1,4 +1,4 @@
-{ stdenv, fetchFromGitHub, jdk, jre_headless, makeWrapper }:
+{ stdenv, fetchFromGitHub, jdk, jre_headless, libpcap, openssl, dpdk, makeWrapper }:
 
 stdenv.mkDerivation rec {
   name = "freerouter-${version}";
@@ -12,11 +12,13 @@ stdenv.mkDerivation rec {
   };
 
   outputs = [ "out" "native" ];
-  buildInputs = [ jdk jre_headless makeWrapper];
+  buildInputs = [ jdk jre_headless makeWrapper libpcap openssl dpdk ];
 
   buildPhase = ''
+    set -e
     mkdir binTmp
     pushd misc/native
+    NIX_CFLAGS_COMPILE="$NIX_CFLAGS_COMPILE -isystem ${dpdk}/include/dpdk"
     ./c.sh
     popd
     pushd src
