@@ -29,11 +29,6 @@ let
       patches = [];
     });
 
-    libpcap_1_8 = super.libpcap.overrideAttrs(oldAttrs: rec {
-      version = "1.8";
-      name = "libpcap-${version}";
-    });
-
     ## Make the default explicit for future upgrades of the
     ## underlying nixpkgs
     protobuf = self.protobuf3_6;

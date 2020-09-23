@@ -1,7 +1,7 @@
 { self, version, srcHash, bspHash, kernelId, kernel, passthruFun,
   system, stdenv, writeText, gmp, glibc, python2, python3,
   pkg-config, file, thrift, openssl, boost, grpc,
-  protobuf, zlib, libpcap_1_8, libusb, curl_7_52, cscope
+  protobuf, zlib, libpcap, libusb, curl_7_52, cscope
 }:
 
 let
@@ -32,7 +32,7 @@ let
             - bf_utils_configure_options: '''
             #- bf_utils_configure_options: "--disable-bf-python"
           - bf-diags:
-            - bf_diags_configure_options: "--with-libpcap=${libpcap_1_8}"
+            - bf_diags_configure_options: "--with-libpcap=${libpcap}"
           - bf-drivers:
               - bf_drivers_configure_options: '''
               - bf-runtime
@@ -82,7 +82,7 @@ in stdenv.mkDerivation rec {
   buildInputs = [ kernel.dev pkg-config file thrift
                   openssl boost grpc protobuf zlib cscope
                   ## bf-diags
-                  libpcap_1_8
+                  libpcap
                   ## bf-platforms
                   libusb curl_7_52 ];
 
