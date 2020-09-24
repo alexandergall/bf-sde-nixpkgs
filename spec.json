@@ -1,0 +1,32 @@
+{
+    "stable": {
+        "enabled": 1,
+        "hidden": false,
+        "description": "Barefoot Tofino SDE",
+        "nixexprinput": "src",
+        "nixexprpath": "release.nix",
+        "checkinterval": 300,
+        "schedulingshares": 100,
+        "enableemail": false,
+        "emailoverride": "",
+        "keepnr": 3,
+        "inputs": {
+            "src": { "type": "git", "value": "https://gitlab+deploy-token-72:rF5zRLsyjunzkdDd5fpe@gitlab-int.switch.ch/network/bf-sde-nixpkgs.git release", "emailresponsible": false }
+        }
+    },
+    "testing": {
+        "enabled": 1,
+        "hidden": false,
+        "description": "Barefoot Tofino SDE",
+        "nixexprinput": "src",
+        "nixexprpath": "release.nix",
+        "checkinterval": 300,
+        "schedulingshares": 100,
+        "enableemail": false,
+        "emailoverride": "",
+        "keepnr": 3,
+        "inputs": {
+            "src": { "type": "git", "value": "https://gitlab+deploy-token-72:rF5zRLsyjunzkdDd5fpe@gitlab-int.switch.ch/network/bf-sde-nixpkgs.git", "emailresponsible": false }
+        }
+    }
+}
