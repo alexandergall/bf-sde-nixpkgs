@@ -14,14 +14,10 @@ let
   kernels = import ./kernels pkgs;
   mkSDE = sdeDef:
     let
-      sdeWithKernel = def: kernelId: kernel:
-        let
-          self = callPackage ./generic.nix ({
-            inherit self kernelId kernel;
-          } // def);
-        in self;
-    in pkgs.recurseIntoAttrs (lib.mapAttrs (kernelId: kernel: sdeWithKernel sdeDef kernelId kernel)
-                              kernels);
+      self = callPackage ./generic.nix ({
+        inherit self kernels;
+      } // sdeDef);
+    in self;
 
 ## Download bf-sde-${version}.tar and bf-reference-bsp-${version}.tar
 ## from the BF FORUM repository and add them manually to the Nix store

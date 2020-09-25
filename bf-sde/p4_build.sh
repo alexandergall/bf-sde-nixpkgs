@@ -387,8 +387,8 @@ check_environment() {
     
     SDE_PACKAGES=$SDE/$packages
     SDE_PKGSRC=$SDE/$pkgsrc
-    SDE_BUILD=$SDE/$build
-    SDE_LOGS=$SDE/$logs
+    SDE_BUILD=${SDE_BUILD:=$SDE}/$build
+    SDE_LOGS=${SDE_LOGS:=$SDE}/$logs
 
     return 0
 }
@@ -912,7 +912,7 @@ EOF
     
     P4_BUILD=$SDE_BUILD/p4-build/${P4_NAME}${P4_SUFFIX}
     P4_LOGS=$SDE_LOGS/p4-build/${P4_NAME}${P4_SUFFIX}
-    P4_INSTALL=$SDE_INSTALL
+    P4_INSTALL=${P4_INSTALL:=$SDE_INSTALL}
 
     p4_build=`package_dir p4-build`
     if [ -z $p4_build ]; then 

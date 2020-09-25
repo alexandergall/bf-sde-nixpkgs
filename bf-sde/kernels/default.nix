@@ -10,12 +10,13 @@ let
   firstCharacterOf = string:
     builtins.substring 0 1 string;
 
-  mkKernel = { id, version, localVersion, sha256 }:
-      (callPackage (path + "/pkgs/os-specific/linux/kernel/manual-config.nix") {})
-        {
+  mkKernel = spec:
+    let
+      kernel = with spec; (callPackage (path + "/pkgs/os-specific/linux/kernel/manual-config.nix") {})
+        rec {
           inherit version stdenv;
-          configfile = uncompress (./. + "/${id}-kernel-config.gz");
           modDirVersion = "${version}${localVersion}";
+          configfile = uncompress (./. + "/${modDirVersion}${distinguisher}-kernel-config.gz");
           src = fetchurl {
             url = "mirror://kernel/linux/kernel/v${firstCharacterOf version}.x/linux-${version}.tar.xz";
             inherit sha256;
@@ -23,18 +24,19 @@ let
           kernelPatches = [];
           config = { CONFIG_MODULES = "y"; };
         };
+    in spec // { inherit kernel; };
 
-in lib.mapAttrs (id: spec: mkKernel { inherit id; inherit (spec) version localVersion sha256; }) {
-  ## sha256 hashes can be determined with
-  ## nix-prefetch-url  http://cdn.kernel.org/pub/linux/kernel/v4.x/linux-<kernelVersion>.tar.xz 
-  k4_14_151_ONL_7c3bfd = {
+in map mkKernel [
+  {
     version = "4.14.151";
     localVersion = "-OpenNetworkLinux";
+    distinguisher = "";
     sha256 = "1bizb1wwni5r4m5i0mrsqbc5qw73lwrfrdadm09vbfz9ir19qlgz";
-  };
-  k4_19_81_ONL_1537d8 = {
+  }
+  {
     version = "4.19.81";
     localVersion = "-OpenNetworkLinux";
+    distinguisher = "";
     sha256 = "17g2wiaa7l7mxi72k79drxij2zqk3nsj8wi17bl4nfvb1ypc2gi9";
-  };
-}
+  }
+]

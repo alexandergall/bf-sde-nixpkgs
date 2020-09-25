@@ -73,31 +73,16 @@ In the top-level directory of the clone of this repository execute (as
 regular user)
 
 ```
-$ nix-build -A bf-sde.<version>.<kernel-id>
+$ nix-build -A bf-sde.<version>
 ```
 
 where `<version>` is `v` followed by the version of the SDE with dots
 replaced by underscores, i.e. currently either `v9_1_1` or
-`v9_2_0`. `<kernel-id>` is the identifier of the kernel for which the
-SDE should be built.  The latter is further discussed
-[below](#kernel_support). Currently available kernel ids are
-`k4_14_151_ONL_7c3bfd` and `k4_19_81_ONL_1537d8`.
-
-The `<version>` and `<kernel-id>` lables can be omitted to build
-multiple packages.  For example,
-
-```
-$ nix-build -A bf-sde.v9_2_0
-```
-
-would build the SDE 9.2.0 for all kernels and
+`v9_2_0`. It can be omitted to build all supported SDE versions:
 
 ```
 $ nix-build -A bf-sde
 ```
-
-would build all SDEs for all kernels.  Ideally, the kernel modules
-would be built as separate packages, but this is not yet supported.
 
 ### Build a P4 package
 
@@ -110,10 +95,10 @@ Add a file named `default.nix` to the top-level source directory with
 the content
 
 ```
-{ name, version, sde_version, kernel_version }:
+{ name, version, sde_version }:
 
 with import <nixpkgs>;
-bf-sde.${sde_version}.${kernel_version}.buildP4Program rec {
+bf-sde.${sde_version}.buildP4Program rec {
   inherit version;
   name = "${name}-${version}";
   p4Name = "${name}";
@@ -126,14 +111,13 @@ Then execute (while you're still in the root directory of the
 `bf-sde-nixpkgs` repository)
 
 ```
-$ nix-build -I nixpkgs=. <path-to-p4-source-tree> --argstr name <p4name> --argstr version <version> --argstr sde_version v<sde-version> --argstr kernel_version <kernel-id>
+$ nix-build -I nixpkgs=. <path-to-p4-source-tree> --argstr name <p4name> --argstr version <version> --argstr sde_version v<sde-version>
 ```
 
 `<p4name>` must be the name of the main P4 program file without the
 `.p4` extenstion, `<version>` is an arbitrary version number assigned
-to the P4 program by you (no dots allowed) and `<sde-version>` and
-`<kernel-id>` are the identifiers discussed in the previous
-section.
+to the P4 program by you (no dots allowed) and `<sde-version>` is the
+identifier discussed in the previous section.
 
 ### Build a control-plane Python application that uses `bfrt_grpc`
 
@@ -160,11 +144,11 @@ file. Add a file `default.nix` to the top-level directory with the
 following contents
 
 ```
-{ sde_version, kernel_version }:
+{ sde_version }:
 
 let
   pkgs = import <nixpkgs>;
-  bf-sde = pkgs.bf-sde.${sde_version}.${kernel_version};
+  bf-sde = pkgs.bf-sde.${sde_version};
 in with pkgs; python2Packages.buildPythonApplication rec {
   pname = "<name>";
   version = "<version>";
@@ -183,11 +167,11 @@ in with pkgs; python2Packages.buildPythonApplication rec {
 }
 ```
 
-Replace `<name>` and `<version>` with arbitrary values that apply your
-control-plane.  The resulting package will have `<name>-<version>` in
-its name in the Nix store.  For each Python module that your code
-uses, add a `<module>` parameter in the `propagatedBuildInputs`
-section.  For example, if your code contains
+Replace `<name>` and `<version>` with arbitrary values that apply to
+your control-plane.  The resulting package will have
+`<name>-<version>` in its name in the Nix store.  For each Python
+module that your code uses, add a `<module>` parameter in the
+`propagatedBuildInputs` section.  For example, if your code contains
 
 ```
 import ipaddress
@@ -204,7 +188,7 @@ Finally, build the package with (while you're still in the root
 directory of the `bf-sde-nixpkgs` repository)
 
 ```
-$ nix-build -I nixpkgs=. <path-to-control-plane-source-tree> --argstr sde_version v<sde-version> --argstr kernel_version <kernel-id>
+$ nix-build -I nixpkgs=. <path-to-control-plane-source-tree> --argstr sde_version v<sde-version>
 ```
 
 ### <a name="kernel_support"></a>Kernel support
@@ -221,6 +205,7 @@ information about the kernel for which it should be built.
    * Kernel version
    * Local version
    * Kernel configuration
+   * Distinguisher
 
 The version must be one of the official kernel releases available on
 the [kernel CDN site](http://cdn.kernel.org/pub/linux/kernel).  For
@@ -244,33 +229,70 @@ $ zcat /proc/config.gz | grep LOCALVERSION=
 CONFIG_LOCALVERSION="-OpenNetworkLinux"
 ```
 
-Finally, the kernel configuration is a file with the complete set of
-kernel configuration options.  One way to obtain it is to copy it from
+The kernel configuration is a file with the complete set of kernel
+configuration options.  One way to obtain it is to copy it from
 `/proc/config.gz` (as shown above) from a system that already runs the
 required kernel.
 
+The triple of `version`, `localVersion` and configuration uniquely
+identify a kernel.  However, at the time when a module needs to be
+loaded, only `version` and `localVersion` are available through the
+kernel release identifier from the `uname -r` command.  To be able to
+distinguish between kernels that have the same kernel release name but
+were built with different configurations, we add another identifier
+when looking up the proper module to load.  This identifier is called
+`distinguisher` in the list above.
+
+When the SDE is built, the modules for a particular kernel are stored
+in the directory
+
+```
+lib/modules/$version$localVersion$distinguisher
+```
+
+relative to the root of the SDE package.  The SDE also contains a
+shell script in its `bin` directory to load each kernel module:
+
+```
+bin/bf_kdrv_mod_load
+bin/bf_knet_mod_load
+bin/bf_kpkt_mod_load
+```
+
+These scripts use the following code to locate the module
+
+```
+insmod lib/modules/$(uname -r)${SDE_KERNEL_DISTINGUISHER:-}/bf_...
+```
+
+To load a module for a kernel with a non-empty distinguisher, simply
+set the environment variable `SDE_KERNEL_DISTINGUISHER` to the
+appropriate value when calling the scripts.
+
 The list of kernels supported by the SDE Nix package can be found in
 `overlays/bf-sde/kernels/default.nix`. In the current version, the
-essential part of that file is the attribute set
+essential part of that file is a list of sets:
 
 ```
-{
-  k4_14_151_ONL_7c3bfd = {
+[
+  {
     version = "4.14.151";
     localVersion = "-OpenNetworkLinux";
+    distinguisher = "";
     sha256 = "1bizb1wwni5r4m5i0mrsqbc5qw73lwrfrdadm09vbfz9ir19qlgz";
-  };
-  k4_19_81_ONL_1537d8 = {
+  }
+  {
     version = "4.19.81";
     localVersion = "-OpenNetworkLinux";
+    distinguisher = "";
     sha256 = "17g2wiaa7l7mxi72k79drxij2zqk3nsj8wi17bl4nfvb1ypc2gi9";
-  };
-}
+  }
+]
 ```
 
-The `version` and `localVersion` attributes are exactly those
-explained above.  The `sha256` attribute is a hash of the kernel
-archive.  It can be calculated in advance by using the
+The `version`, `localVersion` and `distinguisher` attributes are
+exactly those explained above.  The `sha256` attribute is a hash of
+the kernel archive.  It can be calculated in advance by using the
 `nix-prefetech-url` command, for example
 
 ```
@@ -280,22 +302,15 @@ path is '/nix/store/3wwkk9a4gl9fnxcp4w2hvmbm5cxpdly1-linux-4.14.151.tar.xz'
 1bizb1wwni5r4m5i0mrsqbc5qw73lwrfrdadm09vbfz9ir19qlgz
 ```
 
-The names of the attributes identify each kernel.  We use the
-convention to start those names with a `k` (because attribute names
-must not start with a number) followed by the kernel version with dots
-replaced by underscores followed by an arbitrary string (because
-attribute names must not contain dots either).
+The kernel configuration file for a kernel is expected to be in
 
-For OpenNetworkLinux kernels, we use `_ONL_` followed by the commit of
-the [ONL
-repository](https://github.com/opencomputeproject/OpenNetworkLinux)
-that was used to build the kernel.
+```
+bf-sde/kernels/<version><localVersion><distinguisher>-kernel-config.gz
+```
 
-In addition, there must be a file in `overlays/bf-sde/kernels` named
-`<id>-kernel-config.gz` for each kernel where `<id>` is the kernel's
-identifier, for example `k4_14_151_ONL_7c3bfd-kernel-config.gz`.
+relative to the root of this repository.
 
-To add a new kernel, add a new attribute to the set in
+To add a new kernel, add a new set to the list in
 `overlays/bf-sde/kernels/default.nix` and install the corresponding
 configuration file using this naming convetion.
 
@@ -552,10 +567,15 @@ import ./nixpkgs {
 which can be found in the `default.nix` file in the root of the
 repository.
 
+The upcoming Nix version 3.0 introduces the concept of
+[Flakes](https://nixos.wiki/wiki/Flakes), which provides a similar
+functionality as the hybrid approach. A future version of the SDE Nix
+package will probably use that new mechanism instead.
+
 ## SDE Nix overlay
 
 The overlay is structured as follows.  The overlay itself is defined
-in `overlays/overlay.nix`. 
+in `overlay.nix`
 
 ```
 let
@@ -570,22 +590,22 @@ Please refer to the
 [manual](https://nixos.org/manual/nixpkgs/stable/#chap-overlays) and
 [NixOS Wiki article](https://nixos.wiki/wiki/Overlays) for details
 about how overlays are defined and how they work.  As a convention, we
-include overrides of existing packages in `overlays.nix` directly and
+include overrides of existing packages in `overlay.nix` directly and
 put the Nix expressions for new packages in subdirectories.
 
 In particular, the definition of the SDE packages is delegated to the
-file `overlays/bf-sde/default.nix` by the expression
+file `bf-sde/default.nix` by the expression
 
 ```
   bf-sde = self.recurseIntoAttrs (import ./bf-sde { pkgs = self; });
 ```
 
-in the `overlays.nix` file.  That file contains the declarations for
+in the `overlay.nix` file.  That file contains the declarations for
 the supported SDE versions.  There you can also find the SHA256 hashes
 of the SDE and BSP archives that were given in the table above.
 
 Finally, the actual build recipe (called a _derivation_ in Nix-speak)
-is defined in the file `overlays/bf-sde/generic.nix`.
+is defined in the file `bf-sde/generic.nix`.
 
 ## Deployment models
 
@@ -642,6 +662,17 @@ All packages in the closure are now available on the target system.
 Note that with a binary deployment, the Nix expression that was used
 to create the packages does not need to be present on the target
 system.
+
+### Binary cache
+
+A variant of the source deployment model uses a _binary cache_ to
+speed up the build process.  Before a package is built from source,
+the system checks whether the package already exists in a location
+specified by a URL.  If the package is found there, it will be copied
+to the local Nix store.
+
+This is probably the most useful deployment model in an enterprise
+scenario and will be documented here some time in the future.
 
 ### Using profiles with binary deployments
 

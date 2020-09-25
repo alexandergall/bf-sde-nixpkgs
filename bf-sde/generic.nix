@@ -1,7 +1,8 @@
-{ self, version, srcHash, bspHash, kernelId, kernel, passthruFun,
+{ self, version, srcHash, bspHash, kernels, passthruFun,
   system, stdenv, writeText, gmp, glibc, python2, python3,
   pkg-config, file, thrift, openssl, boost, grpc,
-  protobuf, zlib, libpcap, libusb, curl_7_52, cscope
+  protobuf, zlib, libpcap, libusb, curl_7_52, cscope,
+  runtimeShell
 }:
 
 let
@@ -30,11 +31,10 @@ let
             - bf_syslibs_configure_options: '''
           - bf-utils:
             - bf_utils_configure_options: '''
-            #- bf_utils_configure_options: "--disable-bf-python"
           - bf-diags:
             - bf_diags_configure_options: "--with-libpcap=${libpcap}"
           - bf-drivers:
-              - bf_drivers_configure_options: '''
+              - bf_drivers_configure_options: "--without-kdrv"
               - bf-runtime
 
         # Third party source packages to be installed
@@ -67,9 +67,14 @@ let
     python3Env = python3.withPackages (ps: with ps;
       [ packaging jsl jsonschema ]);
 
+    kernelDevPaths = builtins.concatStringsSep " "
+      (map (spec: spec.kernel.dev + ":" +
+                  spec.version + spec.localVersion + ":" +
+		  spec.distinguisher) kernels);
+
 in stdenv.mkDerivation rec {
   inherit version src passthru;
-  name = "bf-sde-${version}-${kernelId}";
+  name = "bf-sde-${version}";
 
   ## We really only need python2Env as propagated input, but
   ## propagated inputs end up after regular inputs in the environment
@@ -79,12 +84,13 @@ in stdenv.mkDerivation rec {
   ## into the propagated inputs (and keeping the order here) solves
   ## this problem.
   propagatedBuildInputs = [ python2Env python3Env ];
-  buildInputs = [ kernel.dev pkg-config file thrift
+  buildInputs = [ pkg-config file thrift
                   openssl boost grpc protobuf zlib cscope
                   ## bf-diags
                   libpcap
                   ## bf-platforms
-                  libusb curl_7_52 ];
+                  libusb curl_7_52 ] ++
+		  (map (spec: spec.kernel.dev) kernels);
 
   buildPhase = ''
     function fixup() {
@@ -183,7 +189,7 @@ in stdenv.mkDerivation rec {
 
     mkdir -p $out/install
     export SDE=$(pwd)
-    export SDE_INSTALL=$out/install
+    export SDE_INSTALL=$out
     
     pushd p4studio_build
     cp ${profile} profiles/custom_profile.yaml
@@ -208,15 +214,50 @@ in stdenv.mkDerivation rec {
     
     ./p4studio_build.py -j4 --os-detail NixOS_19.03 --use-profile custom_profile \
       --bsp-path $TEMP/bsp --skip-os-check --skip-dependencies \
-      --skip-kernelheader-check --skip-dependencies-check \
-      --KDIR ${kernel.dev}/lib/modules/*/build $extraOptions
+      --skip-kernelheader-check --skip-dependencies-check $extraOptions
+
     popd
-   '';
+
+    echo "Building kernel modules"
+    pushd build/bf-drivers
+    ../../pkgsrc/bf-drivers/configure --prefix=$SDE_INSTALL enable_thrift=no \
+       enable_grpc=no enable_bfrt=no enable_p4rt=no enable_pi=no --with-kdrv=yes
+    for spec in ${kernelDevPaths}; do
+      IFS=":"
+      set -- $spec
+      path=$1
+      version=$2
+      distinguisher=$3
+
+      echo "Kernel $version$distinguisher"
+      export KDIR=$path/lib/modules/$version/build
+      pushd kdrv
+      make install
+
+      mod_dir=$SDE_INSTALL/lib/modules/$version$distinguisher
+      mkdir -p $mod_dir
+      mv $SDE_INSTALL/lib/modules/*.ko $mod_dir
+
+      make clean
+      popd
+    done
+    popd
+  '';
 
   installPhase = ''
+    for mod in kpkt kdrv knet; do
+      script=$SDE_INSTALL/bin/bf_''${mod}_mod_load
+      substituteInPlace  $script \
+        --replace lib/modules "lib/modules/\$(uname -r)\''${SDE_KERNEL_DISTINGUISHER:-}"
+      mv $script ''${script}.wrapped
+      echo '#!${runtimeShell}' >>$script
+      echo "$script.wrapped $SDE_INSTALL" >>$script
+      chmod a+x $script
+    done
     tar -cf - bf-sde-${version}.manifest run_bfshell.sh run_switchd.sh run_tofino_model.sh | tar -xf - -C $out
     tar cf - pkgsrc/p4-build | tar -xf - -C $out
     tar cf - pkgsrc/p4-examples/tofino* | tar -xf - -C $out
-    cp ${p4BuildScript} $out/p4_build.sh
+    cp ${p4BuildScript} $out/bin/p4_build.sh
+    mv run_*sh $out/bin
   '';
 }
