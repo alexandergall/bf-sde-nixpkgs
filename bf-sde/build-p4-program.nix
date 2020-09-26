@@ -32,19 +32,17 @@ stdenv.mkDerivation rec {
   '';
 
   installPhase = ''
-    ## Create a configuration that references the build artefacts by
-    ## absolute paths. This allows us to use the original SDE as a
-    ## runtime system.
-    conf=$(find $out/share/p4 -name ${p4Name}.conf)
-    cat $conf | sed -e "s,share/tofinopd,$out/share/tofinopd,g" > $out/${p4Name}.conf
 
-    ## Finally, this script will execute bf_switchd with our P4 program
+    ## This script will execute bf_switchd with our P4 program
     command=$out/bin/${p4Name}
     mkdir $out/bin
-    echo '#!${runtimeShell}' > $command
-    echo 'export SDE=${bf-sde}' >> $command
-    echo 'export SDE_INSTALL=$SDE' >> $command
-    echo "${bf-sde}/run_switchd.sh -p ${p4Name} -c $out/${p4Name}.conf" >> $command
+    cat <<EOF > $command
+    #!${runtimeShell}
+    export SDE=${bf-sde}
+    export SDE_INSTALL=${bf-sde}
+    export P4_INSTALL=$out
+    ${bf-sde}/run_switchd.sh -p ${p4Name}
+    EOF
     chmod a+x $command
 
     ## Create links to bfshell and the kernel module load/unload scripts for convenience

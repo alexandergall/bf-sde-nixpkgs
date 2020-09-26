@@ -10,6 +10,33 @@ let
       buildP4Program = callPackage ./build-p4-program.nix {
         bf-sde = self;
       };
+      mkShell = mkShell {
+        buildInputs = [ self kmod ];
+        shellHook = ''
+          export P4_INSTALL=~/.bf-sde/${self.version}
+          export SDE=${self}
+          export SDE_INSTALL=${self}
+          export SDE_BUILD=$P4_INSTALL/build
+          export SDE_LOGS=$P4_INSTALL/logs
+          mkdir -p $P4_INSTALL $SDE_BUILD $SDE_LOGS
+
+          cat <<EOF
+
+          Barefoot SDE ${self.version}
+
+          Compile: $ p4_build.sh <p4name>.p4
+          Run:     $ run_switchd -p <p4name>
+
+          Load/unload kernel modules: $ sudo bf_{kdrv,kpkt,knet}_mod_{load,unload}
+
+          Build artefacts and logs are stored in $P4_INSTALL
+
+          Use "exit" or CTRL-D to exit this shell.
+
+          EOF
+          PS1="\n\[\033[1;32m\][nix-shell(\033[31mSDE-${self.version}\033[1;32m):\w]\$\[\033[0m\] "
+        '';
+      };
     };
   kernels = import ./kernels pkgs;
   mkSDE = sdeDef:

@@ -1,0 +1,27 @@
+diff -Naur bf-sde.orig/run_switchd.sh bf-sde/run_switchd.sh
+--- bf-sde.orig/run_switchd.sh	2020-04-30 19:52:10.000000000 +0200
++++ bf-sde/run_switchd.sh	2020-09-26 12:25:16.398363339 +0200
+@@ -188,7 +188,7 @@
+     echo "Detected custom conf file $(<$CUSTOM_CONF_FILE)"
+     TARGET_CONFIG_FILE=$SDE_INSTALL/share/p4/targets/$CHIP_ARCH/$(<$CUSTOM_CONF_FILE)
+   else
+-    TARGET_CONFIG_FILE=$SDE_INSTALL/share/p4/targets/$CHIP_ARCH/$P4_NAME.conf
++    TARGET_CONFIG_FILE=${P4_INSTALL:-$SDE_INSTALL}/share/p4/targets/$CHIP_ARCH/$P4_NAME.conf
+   fi
+ fi
+ 
+diff -Naur bf-sde.orig/run_tofino_model.sh bf-sde/run_tofino_model.sh
+--- bf-sde.orig/run_tofino_model.sh	2020-04-30 19:52:10.000000000 +0200
++++ bf-sde/run_tofino_model.sh	2020-09-26 12:29:58.240043516 +0200
+@@ -136,9 +136,9 @@
+     if [[ $TARGET_CONFIG_FILE == "" ]]; then
+       if [[ -f $CUSTOM_CONF_FILE ]]; then
+         echo "Detected custom conf file $(<$CUSTOM_CONF_FILE)"
+-        TARGET_CONFIG_FILE=$SDE_INSTALL/share/p4/targets/$CHIP_ARCH/$(<$CUSTOM_CONF_FILE)
++        TARGET_CONFIG_FILE=${P4_INSTALL:-$SDE_INSTALL}/share/p4/targets/$CHIP_ARCH/$(<$CUSTOM_CONF_FILE)
+       else
+-        TARGET_CONFIG_FILE=$SDE_INSTALL/share/p4/targets/${CHIP_ARCH}/${P4_NAME}.conf
++        TARGET_CONFIG_FILE=${P4_INSTALL:-$SDE_INSTALL}/share/p4/targets/${CHIP_ARCH}/${P4_NAME}.conf
+       fi
+     fi
+     [[ ! -r $TARGET_CONFIG_FILE ]] && echo "Target config file not found" && exit 1

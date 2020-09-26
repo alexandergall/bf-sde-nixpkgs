@@ -1,4 +1,4 @@
-#!/nix/store/kzv56yx369j0jvcza2cphj2pv8xmqga4-bash-4.4-p23/bin/bash
+#!/bin/bash
 
 #
 # p4_build.sh
@@ -1244,6 +1244,12 @@ check_compiler
 # p4-build flags (usually should not be required)
 #
 build_p4_prog "$@"
+
+# Replace relative paths with absolute paths to the install directory to
+# support build artefacts outside of SDE_INSTALL
+for file in $(find $P4_INSTALL/share/p4 -name ${P4_NAME}.conf); do
+    sed -e "s,share/tofinopd,$P4_INSTALL/share/tofinopd,g" $file > $file.tmp && mv $file.tmp $file
+done
 
 #
 # Build additional graphs. Currently only supported for P4_14 programs

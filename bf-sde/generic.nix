@@ -46,11 +46,6 @@ let
         tofino_architecture: tofino
       '';
 
-    ## This script was copied from the tools provided for
-    ## the BF Academy courses.  It should really be part of
-    ## the SDE proper.
-    p4BuildScript = ./p4_build.sh;
-
     ## Build- and run-time Python dependencies.  These environments
     ## contain the selected modules and a wrapper for the python2 and
     ## python3 interpreters that makes those modules available.
@@ -70,11 +65,13 @@ let
     kernelDevPaths = builtins.concatStringsSep " "
       (map (spec: spec.kernel.dev + ":" +
                   spec.version + spec.localVersion + ":" +
-		  spec.distinguisher) kernels);
+                  spec.distinguisher) kernels);
 
 in stdenv.mkDerivation rec {
   inherit version src passthru;
   name = "bf-sde-${version}";
+
+  outputs = [ "out" "support" ];
 
   ## We really only need python2Env as propagated input, but
   ## propagated inputs end up after regular inputs in the environment
@@ -90,7 +87,9 @@ in stdenv.mkDerivation rec {
                   libpcap
                   ## bf-platforms
                   libusb curl_7_52 ] ++
-		  (map (spec: spec.kernel.dev) kernels);
+                  (map (spec: spec.kernel.dev) kernels);
+
+  patches = [ ./bf-sde.patch ];
 
   buildPhase = ''
     function fixup() {
@@ -165,7 +164,7 @@ in stdenv.mkDerivation rec {
     function version() {
       printf "%02d%02d%02d" ''${1//./ }
     }
-    
+
     fixup packages/bf-drivers-${version}.tgz
     fixup packages/bf-syslibs-${version}.tgz
 
@@ -228,6 +227,7 @@ in stdenv.mkDerivation rec {
       path=$1
       version=$2
       distinguisher=$3
+      IFS=" "
 
       echo "Kernel $version$distinguisher"
       export KDIR=$path/lib/modules/$version/build
@@ -257,7 +257,19 @@ in stdenv.mkDerivation rec {
     tar -cf - bf-sde-${version}.manifest run_bfshell.sh run_switchd.sh run_tofino_model.sh | tar -xf - -C $out
     tar cf - pkgsrc/p4-build | tar -xf - -C $out
     tar cf - pkgsrc/p4-examples/tofino* | tar -xf - -C $out
-    cp ${p4BuildScript} $out/bin/p4_build.sh
+
+    ## This script was copied from the tools provided for
+    ## the BF Academy courses.
+    cp ${./p4_build.sh} $out/bin/p4_build.sh
+    chmod a+x $out/bin/p4_build.sh
     mv run_*sh $out/bin
+
+    ## The support output contains a script that starts a
+    ## nix-shell in which P4 programs can be compiled and
+    ## run in the context of the SDE
+    mkdir -p $support/bin
+    substitute ${./sde-env.sh} $support/bin/sde-env-${version} \
+      --subst-var-by VERSION ${builtins.replaceStrings [ "." ] [ "_" ] version}
+    chmod a+x $support/bin/sde-env-${version}
   '';
 }
