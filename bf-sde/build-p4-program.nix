@@ -1,4 +1,5 @@
-{ stdenv, bf-sde, getopt, which, runtimeShell }:
+{ stdenv, lib, bf-sde, getopt, which, coreutils, findutils,
+  procps, gnugrep, gnused, utillinux, runtimeShell }:
 
 { name ? attrs.${name},
   version ? attrs.${version},
@@ -41,6 +42,11 @@ stdenv.mkDerivation rec {
     export SDE=${bf-sde}
     export SDE_INSTALL=${bf-sde}
     export P4_INSTALL=$out
+
+    ## We would like to make this self-contained with nixpkgs, but
+    ## sudo is a special case because suid executables are not
+    ## supported. Hence we use sudo from /usr/bin for the time being.
+    export PATH=${lib.strings.makeBinPath [ coreutils findutils gnugrep gnused utillinux procps ]}:/usr/bin
     ${bf-sde}/run_switchd.sh -p ${p4Name}
     EOF
     chmod a+x $command
