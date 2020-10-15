@@ -14,7 +14,7 @@
 } @attrs:
 
 stdenv.mkDerivation rec {
-  buildInputs = [ bf-sde getopt which ];
+  buildInputs = [ bf-sde getopt which procps ];
 
   inherit (attrs) name version src p4Name;
   

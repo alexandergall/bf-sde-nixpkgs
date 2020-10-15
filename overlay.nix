@@ -101,17 +101,9 @@ let
       };
     };
 
-    ## This is a set containing sets of derivations for
-    ## each version of the SDE.  The names in this set are
-    ## of the form "v<version>", e.g. "v9_2_0".  There is one
-    ## derivation for each kernel defined in
-    ## ./bf-sde/kernels/default.nix. The names of these derivations
-    ## are given by the "id" attribute of the kernel, e.g.
-    ##
-    ##   bf-sde.v9_2_0.k4_14_151_ONL_7c3bfd
-    ##
-    ## Derivations within bf-sde will be built recursively.
+    ## This set contains one derivation per SDE version.  The names of
+    ## the attributes are of the form "v<version>" with dots replaced
+    ## by undetscores, e.g. "v9_2_0".
     bf-sde = self.recurseIntoAttrs (import ./bf-sde { pkgs = self; });
-    bf-sde-latest = bf-sde.v9_2_0;
   };
 in [ overlay ]

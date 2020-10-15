@@ -89,7 +89,7 @@ in stdenv.mkDerivation rec {
                   libusb curl_7_52 ] ++
                   (map (spec: spec.kernel.dev) kernels);
 
-  patches = [ ./bf-sde.patch ];
+  patches = [ ./run_switchd.patch ];
 
   buildPhase = ''
     function fixup() {
@@ -165,7 +165,8 @@ in stdenv.mkDerivation rec {
       printf "%02d%02d%02d" ''${1//./ }
     }
 
-    fixup packages/bf-drivers-${version}.tgz
+    fixup packages/bf-drivers-${version}.tgz \
+      "patch -p1 -i ${./bf_switchd_model.patch}"
     fixup packages/bf-syslibs-${version}.tgz
 
     ## judy/libedit/klish (erroneously?) add $lt_sysroot to the
@@ -258,11 +259,13 @@ in stdenv.mkDerivation rec {
     tar cf - pkgsrc/p4-build | tar -xf - -C $out
     tar cf - pkgsrc/p4-examples/tofino* | tar -xf - -C $out
 
-    ## This script was copied from the tools provided for
+    ## These scripts were copied from the tools provided for
     ## the BF Academy courses.
     cp ${./p4_build.sh} $out/bin/p4_build.sh
-    chmod a+x $out/bin/p4_build.sh
+    cp ${./veth_setup.sh} $out/bin/veth_setup.sh
+    cp ${./veth_teardown.sh} $out/bin/veth_teardown.sh
     mv run_*sh $out/bin
+    chmod a+x $out/bin/*.sh
 
     ## The support output contains a script that starts a
     ## nix-shell in which P4 programs can be compiled and

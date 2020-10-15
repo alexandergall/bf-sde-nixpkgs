@@ -1,0 +1,82 @@
+diff -Naur bf-drivers.orig/bf_switchd/bf_switchd.c bf-drivers/bf_switchd/bf_switchd.c
+--- bf-drivers.orig/bf_switchd/bf_switchd.c	2020-04-30 19:36:18.000000000 +0200
++++ bf-drivers/bf_switchd/bf_switchd.c	2020-10-13 13:58:44.400776565 +0200
+@@ -4837,12 +4837,18 @@
+   }
+ 
+   /* Load switchd configuration file */
++  /* Uses switchd_ctx->is_sw_model to enforce model operation
++     by overriding the agent library */
+   ret = bf_switchd_load_switch_conf_file();
+   if (ret != 0) {
+     printf("ERROR: loading conf_file failed : %d\n", ret);
+     if (switchd_ctx) free(switchd_ctx);
+     return ret;
+   }
++  /* Reset the flag.  The model mode is activated when
++     the overridden agent library fails to load */
++  switchd_ctx->is_sw_model = 0;
++  
+   /* Load P4 specific libraries associated with each device */
+   for (dev_id = 0; dev_id < BF_MAX_DEV_COUNT; dev_id++) {
+     if (switchd_ctx->p4_devices[dev_id].configured == 0) continue;
+diff -Naur bf-drivers.orig/bf_switchd/bf_switchd_main.c bf-drivers/bf_switchd/bf_switchd_main.c
+--- bf-drivers.orig/bf_switchd/bf_switchd_main.c	2020-04-30 19:36:17.000000000 +0200
++++ bf-drivers/bf_switchd/bf_switchd_main.c	2020-10-13 13:59:51.852696245 +0200
+@@ -75,6 +75,7 @@
+     /* Options without short equivalents */
+     enum long_opts {
+       OPT_START = 256,
++      OPT_MODEL,
+       OPT_INSTALLDIR,
+       OPT_CONFFILE,
+       OPT_TCPPORTBASE,
+@@ -137,6 +138,7 @@
+         {"init-mode", required_argument, 0, OPT_INIT_MODE},
+         {"p4rt-server", required_argument, 0, OPT_P4RT_SERVER},
+         {"shell-no-wait", no_argument, 0, OPT_SHELL_NO_WAIT},
++        {"model", no_argument, 0, OPT_MODEL},
+         {0, 0, 0, 0}};
+     int c = getopt_long(argc, argv, "h", long_options, &option_index);
+     if (c == -1) {
+@@ -218,6 +220,9 @@
+       case OPT_SHELL_NO_WAIT:
+         ctx->shell_before_dev_add = true;
+         break;
++      case OPT_MODEL:
++        ctx->is_sw_model = true;
++        break;
+       case 'h':
+       case '?':
+         printf("bf_switchd \n");
+@@ -239,6 +244,7 @@
+             "device\n");
+         printf(" --p4rt-server=<addr:port> Run the P4Runtime gRPC server\n");
+         printf(" --shell-no-wait Start the shell before devices are added\n");
++        printf(" --model Use Tofino model (overrides ASIC mode)\n");
+         printf(" -h,--help Display this help message and exit\n");
+         exit(c == 'h' ? 0 : 1);
+         break;
+diff -Naur bf-drivers.orig/bf_switchd/switch_config.c bf-drivers/bf_switchd/switch_config.c
+--- bf-drivers.orig/bf_switchd/switch_config.c	2020-04-30 19:36:17.000000000 +0200
++++ bf-drivers/bf_switchd/switch_config.c	2020-10-13 13:58:33.115790010 +0200
+@@ -345,10 +345,15 @@
+       for (agent_idx = 0; agent_idx < BF_SWITCHD_MAX_AGENTS; agent_idx++) {
+         char agent_idx_str[50];
+         snprintf(agent_idx_str, 50, "%s%d", agent_str, agent_idx);
+-        to_abs_path(p4_device->agent[agent_idx],
+-                    p4_device_obj,
+-                    agent_idx_str,
+-                    install_dir);
++        if (self->is_sw_model) {
++          if (strlen(check_and_get_string(p4_device_obj, agent_idx_str)))
++            strcpy(p4_device->agent[agent_idx], "/none");
++          } else {
++          to_abs_path(p4_device->agent[agent_idx],
++                      p4_device_obj,
++                      agent_idx_str,
++                      install_dir);
++        }
+       }
+ 
+       /* Print config */
