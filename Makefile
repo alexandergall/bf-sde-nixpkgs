@@ -1,5 +1,6 @@
 .DEFAULT_GOAL = none
 SHELL := /bin/bash
+THIS_DIR := $(dir $(abspath $(firstword $(MAKEFILE_LIST))))
 
 none:
 
@@ -15,7 +16,7 @@ install: clean
 	nix-env -p $$profile -i $$nixpkgs $$(nix-build build-support.nix --argstr version "$(VERSION)")
 
 env:
-	nix-shell -I nixpkgs=. -E "with import <nixpkgs> {}; bf-sde.$(VERSION).mkShell" $(if $(INPUT_FN),--arg inputFn "$(INPUT_FN)")
+	nix-shell -I nixpkgs=$(THIS_DIR) -E "with import <nixpkgs> {}; bf-sde.$(VERSION).mkShell" $(if $(INPUT_FN),--arg inputFn "$(INPUT_FN)")
 
 closures:
 export NIX_PATH=nixpkgs=.; \

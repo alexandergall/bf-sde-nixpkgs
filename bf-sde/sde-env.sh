@@ -10,5 +10,4 @@ set -e
 
 dir=$(realpath -s $(dirname $0)/..)
 echo "Using Nix expression from $dir"
-cd $dir
-make env VERSION=v@VERSION@ INPUT_FN="$1"
+make -f $dir/Makefile env VERSION=v@VERSION@ INPUT_FN="$1"
