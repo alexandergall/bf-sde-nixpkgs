@@ -2,11 +2,13 @@
 
 set -e
 
-profile=${SDE_PROFILE:-/nix/var/nix/profiles/per-user/$USER/bf-sde}
-if ! [ -e $profile ]; then
-    echo -n "Please install a clone of the bf-sde-nixpkgs Git repository "
-    echo  "in the profile $profile"
-    exit 1
-fi
+## This script is expected to be executed from the "bin" directory of
+## a Nix profile which also contains a copy of the Git repository at
+## the top-level (e.g. as created by "make install").  Hence, the
+## "make env" command below will use the top-level Makefile from
+## that repo.
 
-nix-shell -I nixpkgs=$profile -E "with import <nixpkgs> {}; bf-sde.v@VERSION@.mkShell" ${1:+--arg inputFn "$1"}
+dir=$(realpath -s $(dirname $0)/..)
+echo "Using Nix expression from $dir"
+cd $dir
+make env VERSION=v@VERSION@ INPUT_FN="$1"
