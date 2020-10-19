@@ -17,18 +17,21 @@ let
       ## function takes an optional argument which must be a function
       ## that is called with the package set and returns a list of
       ## of packages to be included in the environment.
+      ## packages to be included in the environment.
       mkShell = { inputFn ? { pkgs }: [] }:
         let
           inputs = (builtins.tryEval inputFn).value { inherit pkgs; };
         in mkShell {
           ## kmod provides insmod, procps provides sysctl
-          buildInputs = [ self kmod procps ] ++ inputs;
+          buildInputs = [ self kmod procps utillinux which ] ++ inputs;
           shellHook = ''
             export P4_INSTALL=~/.bf-sde/${self.version}
             export SDE=${self}
             export SDE_INSTALL=${self}
             export SDE_BUILD=$P4_INSTALL/build
             export SDE_LOGS=$P4_INSTALL/logs
+            ## See comment in ./build_p4_program.nix regarding /usr/bin
+            export PATH=$PATH:/usr/bin
             export PYTHONPATH=${self}/lib/python2.7/site-packages/tofino:$PYTHONPATH
             mkdir -p $P4_INSTALL $SDE_BUILD $SDE_LOGS
 
