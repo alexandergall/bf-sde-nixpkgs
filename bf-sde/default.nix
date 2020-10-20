@@ -18,9 +18,9 @@ let
       ## that is called with the package set and returns a list of
       ## of packages to be included in the environment.
       ## packages to be included in the environment.
-      mkShell = { inputFn ? { pkgs }: [] }:
+      mkShell = { inputFn ? pkgs: [] }:
         let
-          inputs = (builtins.tryEval inputFn).value { inherit pkgs; };
+          inputs = (builtins.tryEval inputFn).value pkgs;
         in mkShell {
           ## kmod provides insmod, procps provides sysctl
           buildInputs = [ self kmod procps utillinux which ] ++ inputs;
