@@ -10,7 +10,7 @@ clean:
 VERSION=latest
 INPUT_FN=
 
-install: clean
+install-sde: clean
 	profile=$${SDE_PROFILE:-/nix/var/nix/profiles/per-user/$$USER/bf-sde}; \
 	nixpkgs=$$(nix-store --add $$(realpath .)); \
 	nix-env -p $$profile -r -i $$nixpkgs $$(nix-build build-support.nix --argstr version "$(VERSION)")
