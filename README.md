@@ -2,16 +2,39 @@
 
 Nix packaging of the Barefoot SDE.
 
-The first part of this documentation provides a step-by-step
-description of how to build packages.  The second part provides some
-basic information about the Nix package manager as well as a more
-in-depth description of the SDE package itself.
+Note: The SDE for the Tofino series of programmable NPUs is currently
+only available under NDA from Intel/Barefoot.  The users of this
+repositories are assumed to be authorized to download and use the SDE.
 
-## How to use this repository
+In its current form (version 9.2.0 at the time of writing), the SDE
+officially supports only a very specific set of operating systems.
+The main reason for this restriction is the management of build- and
+run-time dependencies.  Packaging of the SDE with Nix removes these
+restrictions completely and makes it possible to install any version
+of the SDE on any system that supports the Nix package manager itself,
+including systems without Tofino ASIC, in which case P4 programs can
+be executed on the Tofino software emulation.  Different versions of
+the SDE can coexist on the same system.
+
+The [first part](#part1) of this documentation provides a step-by-step
+description of how to build and use the packages for developing P4
+programs and their control-planes.  The [second part](#part2)
+describes how to build packages for P4 applications using the SDE as a
+run-time environment.
+
+The [third part](#part3) provides some basic information about the Nix
+package manager for novice users.  It also describes some technical
+details of the SDE package regarding support for Linux kernels.
 
 The `master` branch contains the current development code. Stable
 releases are contained in the `release` branch and tagged with
 `v<version>`.
+
+Additional branches make use of the SDE as a run-time environment for
+Tofino-based networking applications on production systems.
+
+As a prerequisite for working with this Git repository, the following
+steps must be completed first.
 
 ### Install the Nix package manager in multi-user mode
 
@@ -22,9 +45,9 @@ don't trust the site)
 $ bash <(curl -L https://nixos.org/nix/install) --daemon
 ```
 
-and proceed as instructed.  This does not require any support from the
-native package manager of the system and should work on any Linux
-distribution.
+and proceed as instructed.  This should work on any Linux distribution
+because no support of the native package manager is required for the
+installation.
 
 ### Clone into the repository
 
@@ -51,7 +74,7 @@ registration and NDA).  The only versions currently supported are
 
 ### Add archives to the Nix store
 
-Execute (as regular user)
+Execute (as any user)
 
 ```
 $ nix-store --add-fixed sha256 bf-sde-<version>.tar bf-reference-bsp-<version>.tar
@@ -63,286 +86,508 @@ error similar to the following
 ```
 while setting up the build environment: executing 'none': No such file or directory
 builder for '/nix/store/fbycbaqb8l502pdwidjhipmd6b6ym6n1-bf-reference-bsp-9.2.0.tar.drv' failed with exit code 1
-cannot build derivation '/nix/store/38s8lsm2f7vg93f7n5x98hwbzmdlxfq8-bf-sde-9.2.0-k4_14_151_ONL_7c3bfd.drv': 1 dependencies couldn't be built
-error: build of '/nix/store/38s8lsm2f7vg93f7n5x98hwbzmdlxfq8-bf-sde-9.2.0-k4_14_151_ONL_7c3bfd.drv' failed
+cannot build derivation '/nix/store/38s8lsm2f7vg93f7n5x98hwbzmdlxfq8-bf-sde-9.2.0.drv': 1 dependencies couldn't be built
+error: build of '/nix/store/38s8lsm2f7vg93f7n5x98hwbzmdlxfq8-bf-sde-9.2.0.drv' failed
 ```
 
-### Build the SDE package
+## <a name="part1"></a>Part 1:  P4 Program Development
 
-In the top-level directory of the clone of this repository execute (as
-regular user)
+In this mode, the SDE is used as an actual development system, in
+which the user can freely compile and run P4 programs as well as any
+control-plane related code.  Multiple versions of the SDE are
+supported on the same system concurrently.
 
-```
-$ nix-build -A bf-sde.<version>
-```
+The main feature of the SDE package with respect to development is the
+ability to launch a shell within the environment of a particular
+version of the SDE.
 
-where `<version>` is `v` followed by the version of the SDE with dots
-replaced by underscores, i.e. currently either `v9_1_1` or
-`v9_2_0`. It can be omitted to build all supported SDE versions:
+### Usage from a Repository Checkout
 
-```
-$ nix-build -A bf-sde
-```
-
-### Build a P4 package
-
-It is assumed that the source tree of the P4 program that should be
-packaged is present on the system in an arbitrary location and that it
-contains the main P4 program in the top-level directory.  The program
-must have the extension `.p4`.
-
-Add a file named `default.nix` to the top-level source directory with
-the content
+One way to launch the shell is to enter the top-level directory of the
+repository and execute `make env`:
 
 ```
-{ name, version, sde_version }:
+$ make env
+nix-shell  -I nixpkgs=/home/gall/bf-sde-nixpkgs/ -E "with import <nixpkgs> {}; bf-sde.latest.mkShell"  || true
 
-with import <nixpkgs>;
-bf-sde.${sde_version}.buildP4Program rec {
-  inherit version;
-  name = "${name}-${version}";
-  p4Name = "${name}";
+Barefoot SDE 9.2.0
 
-  src = ./.;
+Load/unload kernel modules: $ sudo bf_{kdrv,kpkt,knet}_mod_{load,unload}
+
+Compile: $ p4_build.sh <p4name>.p4
+Run:     $ run_switchd -p <p4name>
+Run Tofino model:
+         $ sudo veth_setup.sh
+         $ run_tofino_model -p <p4name>
+         $ run_switchd -p <p4name> -- --model
+
+Build artefacts and logs are stored in /home/gall/.bf-sde/9.2.0
+
+Use "exit" or CTRL-D to exit this shell.
+
+
+[nix-shell(SDE-9.2.0):~/bf-sde-nixpkgs]$ 
+```
+
+When executed for the first time, this will build all packges from
+source (or copy them from a binary cache), which may take up to 45
+minutes, depending on the system. The resulting shell makes the
+commands from the latest version of the SDE (9.2.0 in this case)
+available through the user's `PATH`.  The introductory text summarizes
+how to compile and run a P4 program.
+
+(TBD: Describe all commands and their usage)
+
+The `make` command is equivalent to
+
+```
+$ make env VERSION=latest
+```
+
+To select a particular version, use
+
+```
+$ make env VERSION=<version>
+```
+
+where `<version>` can be any of the values listed by `make env-list-versions`, currently
+
+```
+$ make env-list-versions
+[ "latest" "v9_1_1" "v9_2_0" ]
+```
+
+### Usage from a Nix Profile
+
+Instead of keeping a copy of the Git repository around and using
+`make` to launch a shell, it is also possible to install the SDE in a
+[Nix profile](https://nixos.org/manual/nix/stable/#sec-profiles) by
+executing
+
+```
+$ make install-sde
+```
+
+in the top-level directory of the repository.  This performs the
+following actions
+
+   * Build the SDE for the latest available version if necessary
+
+   * Add the Git repository to the Nix store
+   
+   * Create or update the Nix profile
+   `/nix/var/nix/profiles/per-user/$USER/bf-sde`
+
+   * Add the SDE package and Git repository (from the Nix store) to
+   the profile
+
+The Git working copy is no longer needed after this.  The installation
+can be performed by any user, including `root`.  The only difference
+is the location of the Nix profile (via the `USER` environment
+variable).  The packages can be used by any user in any case.  For a
+system-wide deployment, it would make sense to perform the
+installation as `root` and add
+`/nix/var/nix/profiles/per-user/root/bf-sde/bin` to `PATH` in the
+system-wide shell profile to make it available for all users.
+
+After the installation, the profile contains a command that launches
+the shell for the latest version of the SDE, for example
+
+```
+/nix/var/nix/profiles/per-user/$USER/bf-sde/bin/sde-env-9.2.0 
+```
+
+Executing this command has exactly the same effect as `make env` or
+`make env VERSION=v9_2_0` discussed in the previous section
+
+```
+$ /nix/var/nix/profiles/per-user/$USER/bf-sde/bin/sde-env-9.2.0 
+Using Nix expression from /nix/var/nix/profiles/per-user/gall/bf-sde
+nix-shell  -I nixpkgs=/nix/var/nix/profiles/per-user/gall/bf-sde/ -E "with import <nixpkgs> {}; bf-sde.v9_2_0.mkShell"  || true
+
+Barefoot SDE 9.2.0
+
+Load/unload kernel modules: $ sudo bf_{kdrv,kpkt,knet}_mod_{load,unload}
+
+Compile: $ p4_build.sh <p4name>.p4
+Run:     $ run_switchd -p <p4name>
+Run Tofino model:
+         $ sudo veth_setup.sh
+         $ run_tofino_model -p <p4name>
+         $ run_switchd -p <p4name> -- --model
+
+Build artefacts and logs are stored in /home/gall/.bf-sde/9.2.0
+
+Use "exit" or CTRL-D to exit this shell.
+
+
+[nix-shell(SDE-9.2.0):~/bf-sde-nixpkgs]$ 
+```
+
+It is also possible to install a specific version, e.g.
+
+```
+$ make install-sde VERSION=v9_1_1
+```
+
+or all available versions
+
+```
+$ make install-sde VERSION=all
+```
+
+The latter results in the presence of multiple commands in the
+profile, one per version of the SDE
+
+```
+$ ls /nix/var/nix/profiles/per-user/gall/bf-sde/bin/
+sde-env-9.1.1  sde-env-9.2.0
+```
+
+As with any Nix profile, the `nix-env` command can be used to switch
+to different versions of the profile at any time, e.g.
+
+```
+$ nix-env -p /nix/var/nix/profiles/per-user/$USER/bf-sde --rollback
+```
+
+would change to the preceeding generation or
+
+```
+$ nix-env -p /nix/var/nix/profiles/per-user/$USER/bf-sde --switch-generation 1
+```
+
+would change to the first generation.
+
+### Using additional Dependencies for Developping Control-Plane Programs
+
+By default, the shell contains everything needed to compile and run
+any P4 program (essentially via the `p4_build.sh` and `run_switchd.sh`
+commands).  It is also desireable to be able to test and run the
+control-plane programs associated with the P4 program.  The SDE
+environment supports this for Python-based programs that make use of
+the gRPC Python-bindings provided by the SDE package.
+
+The default shell already has the environment variable `PYTHONPATH`
+set up such that a Python program can access those modules with
+
+```
+import bfrt_grpc
+```
+
+Apart from that, the Python environment only contains the standard
+modules by default.  Suppose our control-plane program requires the
+`jsonschema` module.  This will fail with the standard shell
+
+```
+$ make env
+nix-shell  -I nixpkgs=/home/gall/bf-sde-nixpkgs/ -E "with import <nixpkgs> {}; bf-sde.latest.mkShell" 
+
+Barefoot SDE 9.2.0
+[...]
+
+[nix-shell(SDE-9.2.0):~/bf-sde-nixpkgs]$ python2
+Python 2.7.17 (default, Oct 19 2019, 18:58:51) 
+[GCC 7.4.0] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import jsonschema
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+ImportError: No module named jsonschema
+>>> 
+```
+
+To solve this problem, the mechanism that invokes `nix-shell` takes an
+additional argument, which must be a valid Nix expression which must
+evaluate to a function taking the set of available packages as
+argument and returning a list of packages to be added to the shell's
+environment.  The default value for this expression is
+
+```
+pkgs: []
+```
+
+which ignores the argument and returns an empty list.  In our example,
+we can use the function
+
+```
+pkgs:
+  with pkgs.python2.pkgs; [ jsonschema ]
+```
+
+instead, which returns a list with a single element that contains the
+Nix package for the `jsonschema` Python module.  To use it with
+`make`, we must set the variable `INPUT_FN` like this:
+
+```
+$ make env INPUT_FN="pkgs: with pkgs.python2.pkgs; [ jsonschema ]"
+nix-shell  -I nixpkgs=/home/gall/bf-sde-nixpkgs/ -E "with import <nixpkgs> {}; bf-sde.latest.mkShell" --arg inputFn "pkgs: with pkgs.python2.pkgs; [ jsonschema ]"
+
+Barefoot SDE 9.2.0
+[...]
+
+[nix-shell(SDE-9.2.0):~/bf-sde-nixpkgs]$ python2
+Python 2.7.17 (default, Oct 19 2019, 18:58:51) 
+[GCC 7.4.0] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import jsonschema
+>>> jsonschema
+<module 'jsonschema' from '/nix/store/wlgihkbky9ixwh96awphlgw17a72j1n6-python2.7-jsonschema-2.6.0/lib/python2.7/site-packages/jsonschema/__init__.pyc'>
+>>> 
+```
+
+If the shell is invoked via the profile, the function must be provided
+as a parameter to the command, e.g.
+
+```
+$ /nix/var/nix/profiles/per-user/$USER/bf-sde/bin/sde-env-9.2.0 "pkgs: with pkgs.python2.pkgs; [ jsonschema ]"
+```
+
+This technique can be used to make any Nix package available in the SDE shell.
+
+## <a name="part2"></a>Part 2: Creating Packages for P4 Applications
+
+In this mode, the SDE packages are used as build-time dependencies to
+create packages for ready-to-run P4 applications.  This requires
+adding the Nix expressions of the package specifications as Nix
+[overlays](https://nixos.org/manual/nixpkgs/stable/#chap-overlays).
+
+It is recommended to create a new branch from `master` or `release`
+and create a directory of the same name.  To create a new application
+`foo`, create a new branch and subdirectory
+
+```
+$ git checkout -b foo
+$ mkdir foo
+```
+
+Change to the new directory and add the file `default.nix` with contents
+
+```
+{ overlays ? [], ... } @attrs:
+
+import ../. (attrs // {
+  overlays = import ./overlay.nix ++ overlays;
+})
+```
+
+This pulls in the overlay from the main SDE and combines it with an
+overlay for the new project defined in `foo/overlay.nix`.  The
+`overlays` parameter to this function can, in turn, be used to further
+compose the `foo` overlay with another overlay if desired.  An empty
+overlay looks like
+
+```
+let
+  overlay = self: super:
+    {
+    };
+in [ overlay ]
+```
+
+For the remainder of this chapter, we use the `packet-broker` branch
+as example.  In this case, the SDE-specific part of the overlay looks
+as follows (we leave out all parts that are not directly related to
+the SDE)
+
+```
+let
+  overlay = self: super:
+    {
+      packetBroker = self.recurseIntoAttrs (import ./packet-broker {
+        bf-sde = self.bf-sde.latest;
+        inherit (self) callPackage;
+      });
+    };
+in [ overlay ]
+```
+
+This reads and evaluates the Nix expression in
+`packet-broker/default.nix` (note how we select the latest version of
+the SDE to be used with this application)
+
+```
+{ bf-sde, callPackage }:
+
+{
+  packetBroker = callPackage ./packet-broker.nix { inherit bf-sde; };
+  configd = callPackage ./configd.nix { inherit bf-sde; };
 }
 ```
 
-Then execute (while you're still in the root directory of the
-`bf-sde-nixpkgs` repository)
+The actual build recipes for the P4 program and control-plane Python
+application are contained in separate files.
 
+The P4 program is built from `packet-broker/packet-broker/packet-broker.nix`:
 ```
-$ nix-build -I nixpkgs=. <path-to-p4-source-tree> --argstr name <p4name> --argstr version <version> --argstr sde_version v<sde-version>
-```
+{ bf-sde, fetchFromGitHub }:
 
-`<p4name>` must be the name of the main P4 program file without the
-`.p4` extenstion, `<version>` is an arbitrary version number assigned
-to the P4 program by you (no dots allowed) and `<sde-version>` is the
-identifier discussed in the previous section.
-
-### Build a control-plane Python application that uses `bfrt_grpc`
-
-[Note: this functionality is work in progress]
-
-The SDE provides a Python API for the communication between a
-control-plane process and `bf_switchd` via GRPC.  The Python modules
-are located in the `install/lib/python2.7/site-packaes/tofino`
-directory of the SDE.  If the following procedure is implemented, the
-control-plane script can simply use
-
-```
-import bfrt_grpc.client
+bf-sde.buildP4Program rec {
+  version = "0.1";
+  name = "packet-broker-${version}";
+  p4Name = "packet_broker";
+  src = fetchFromGitHub {
+    owner = "alexandergall";
+    repo = "packet-broker";
+    rev = "d490261";
+    sha256 = "0wcab5l7xyxbf25g328zpsnxzfwny8fafaarmpknhjwrdr8nj9d1";
+  };
+}
 ```
 
-to import the module.
+(Note that the `fetchFromGitHub` dependency is [automatically filled
+in by
+`callPackage`](https://nixos.org/guides/nix-pills/callpackage-design-pattern.html)
 
-Nix provides built-in support for building arbitray Python
-applications by creating environments with the modules required by the
-application automatically.
+This uses the function `buildP4Program` associated with the `bf-sde`
+derivation (which, in this example, is actually `bf-sde.latest` as
+shown before).  The definition of this function can be found in
+`bf-sde/build-p4-program.nix`. It takes the following parameters
 
-We assume that the control-plane code contains a valid `setup.py`
-file. Add a file `default.nix` to the top-level directory with the
-following contents
+   * `name`: The name of the package to generate (only appears in the
+     name of the final path in `/nix/store` and is irrelevant
+     otherwise)
+
+   * `version`: The version of the package. It is combined with `name`
+     to become part of the name of the store path.
+
+   * `p4Name`: The name of the top-level P4 program file to compile,
+     without the `.p4` extension.
+
+   * `execName`: The name under which the program will appear in the
+     finished package, defaults to `p4Name`.  This is useful if the
+     same source code is used to produce different programs, e.g. by
+     selecting features via preprocessor symbols.  Each variant of the
+     program can be given a different `execName`, which makes it
+     possible to combinde them all in the same Nix profile (which
+     would otherwise result in a naming conflict because all programs
+     would have the same name, i.e. `p4Name`).
+
+   * `path`: An optional path to the program file relative to the root
+     of the source directory.
+
+   * `buildFlags`: A string of options to be passed to the
+     `p4_build.sh` build script, for example a list of preprocessor
+     symbols `"-Dfoo -Dbar"`.
+
+   * `kernelModule`: The `bf_switchd` program (provided by the SDE
+     package) requires a kernel module to be present.  Currently,
+     there is a selection of three such modules called `bf_kdrv`,
+     `bf_kpkt` and `bf_knet` (their function is not discussed here and
+     the reader is referred to the documentation supplied by
+     Barefoot/Intel).  The `kernelModule` parameter selects which of
+     those modules should be loaded automatically when the compiled P4
+     program is run.  The value must be one of the names just
+     mentioned or `null`, in which case no kernel module is loaded
+     when the program is run.
+   
+   * `src`: A store path containing the source tree of the P4 program,
+     typically the result of a call to `fetchgit` or `fetchFromGitHub`.
+
+The script `p4_build.sh` is part of the SDE and performs the actual
+compilation of the P4 program (see `bf-sde/p4_build.sh`). The function
+`buildP4Program` essentially performs
 
 ```
-{ sde_version }:
+<path-to-sde>/bin/p4_build.sh ${buildFlags} <source-tree>/${path}/${p4Name}.p4
+```
 
-let
-  pkgs = import <nixpkgs>;
-  bf-sde = pkgs.bf-sde.${sde_version};
-in with pkgs; python2Packages.buildPythonApplication rec {
-  pname = "<name>";
-  version = "<version>";
+and stores the build artefacts in the resulting package. If `execName`
+is used, the builder first creates the symbolic link
 
-  src = ./.;
+```
+<source-tree>/${path}/${execName}.p4 -> <source-tree>/${path}/${p4Name}.p4
+```
 
+and then runs
+
+```
+<path-to-sde>/bin/p4_build.sh ${buildFlags} <source-tree>/${path}/${execName}.p4
+```
+
+The package then contains an executable named `execName` (defaulting
+to `p4Name`) in its `bin` directory which runs the compiled P4 program
+with the `bf_switchd` command provided by the SDE.  This script will
+also make sure the required kernel module is loaded first.  In our
+example, the resulting script would be
+
+```
+/nix/store/<hash>-packet-broker-0.1/bin/packet_broker
+```
+
+Executing this command is all it takes to load and run the compiled
+program on the Tofino ASIC.
+
+Finally, the build recipe for the control-plane process is in
+`packet-broker/packet-broker/configd.nix`
+
+```
+{ bf-sde, fetchFromGitHub, python2, makeWrapper }:
+
+python2.pkgs.buildPythonApplication rec {
+  pname = "packet-broker-configd";
+  version = "0.1";
+
+  src = fetchFromGitHub {
+    owner = "alexandergall";
+    repo = "packet-broker";
+    rev = "d490261";
+    sha256 = "0wcab5l7xyxbf25g328zpsnxzfwny8fafaarmpknhjwrdr8nj9d1";
+  };
   propagatedBuildInputs = [
     bf-sde
-    (python2.withPackages (ps: with ps; [ <module> ... ]))
+    (python2.withPackages (ps: with ps; [ jsonschema ipaddress ]))
   ];
   buildInputs = [ makeWrapper ];
 
+  preConfigure = ''cd control-plane'';
   postInstall = ''
-    wrapProgram "$out/bin/configd.py" --set PYTHONPATH "${bf-sde}/install/lib/python2.7/site-packages/tofino"
+    wrapProgram "$out/bin/configd.py" --set PYTHONPATH "${bf-sde}/lib/python2.7/site-packages/tofino"
   '';
 }
 ```
 
-Replace `<name>` and `<version>` with arbitrary values that apply to
-your control-plane.  The resulting package will have
-`<name>-<version>` in its name in the Nix store.  For each Python
-module that your code uses, add a `<module>` parameter in the
-`propagatedBuildInputs` section.  For example, if your code contains
+This is really just a straight-forward application of the standard
+build procedure for Python applications provided by the Nix package
+manager (via the function `buildPythonApplication` associated with the
+Python interpreter).  The SDE occurs as a build input to the package
+to provide the Python gRPC client module to the control-plane program
+by setting the `PYTHONPATH` environment variable before launching the
+script.
+
+All build- and run-time dependencies required by the program must be
+added to the `buildInput` and `propagatedBuildInputs` attributes.
+Note that Python modules that are needed at run-time must be added as
+the latter variant.  Also note the subtle difference between this code
+and the expression
 
 ```
-import ipaddress
-import jsonschema
+with pkgs.python2.pkgs [ jsonschema ]
 ```
 
-you would declare
+used with `nix-shell`.  This merely sets `PYTHONPATH`, where as the
+function `python2.withPackages` creates a run-time Python environment
+that contains all specified packages.  The interested reader is
+referred to the [Python
+section](https://nixos.org/manual/nixpkgs/stable/#python) of the
+Nixpkgs manual.
 
-```
-    (python2.withPackages (ps: with ps; [ ipaddres jsonschema ]))
-```
-
-Finally, build the package with (while you're still in the root
-directory of the `bf-sde-nixpkgs` repository)
-
-```
-$ nix-build -I nixpkgs=. <path-to-control-plane-source-tree> --argstr sde_version v<sde-version>
-```
-
-### <a name="kernel_support"></a>Kernel support
-
-Kernel modules are required to support some of the features of the
-Tofino ASIC, for example to expose the CPU PCIe port as a Linux
-network interface.  The modules have to be built to match the kernel
-on the host on which they will be loaded.
-
-For this reason, the SDE Nix package requires as additional input to
-the build process (apart from the SDE version) the following
-information about the kernel for which it should be built.
-
-   * Kernel version
-   * Local version
-   * Kernel configuration
-   * Distinguisher
-
-The version must be one of the official kernel releases available on
-the [kernel CDN site](http://cdn.kernel.org/pub/linux/kernel).  For
-example, if the version is specified to be 4.14.151, Nix will download
-the file
-`http://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.14.151.tar.xz`.
-
-The local version is the string appended to the version number in the
-output of `uname -r`, e.g. for
-
-```
-$ uname -r
-4.19.81-OpenNetworkLinux
-```
-
-the local version is `-OpenNetworkLinux`.  This is also the value of
-the `CONFIG_LOCALVERSION` kernel configuration option, e.g.
-
-```
-$ zcat /proc/config.gz | grep LOCALVERSION=
-CONFIG_LOCALVERSION="-OpenNetworkLinux"
-```
-
-The kernel configuration is a file with the complete set of kernel
-configuration options.  One way to obtain it is to copy it from
-`/proc/config.gz` (as shown above) from a system that already runs the
-required kernel.
-
-The triple of `version`, `localVersion` and configuration uniquely
-identify a kernel.  However, at the time when a module needs to be
-loaded, only `version` and `localVersion` are available through the
-kernel release identifier from the `uname -r` command.  To be able to
-distinguish between kernels that have the same kernel release name but
-were built with different configurations, we add another identifier
-when looking up the proper module to load.  This identifier is called
-`distinguisher` in the list above.
-
-When the SDE is built, the modules for a particular kernel are stored
-in the directory
-
-```
-lib/modules/$version$localVersion$distinguisher
-```
-
-relative to the root of the SDE package.  The SDE also contains a
-shell script in its `bin` directory to load each kernel module:
-
-```
-bin/bf_kdrv_mod_load
-bin/bf_knet_mod_load
-bin/bf_kpkt_mod_load
-```
-
-These scripts use the following code to locate the module
-
-```
-insmod lib/modules/$(uname -r)${SDE_KERNEL_DISTINGUISHER:-}/bf_...
-```
-
-To load a module for a kernel with a non-empty distinguisher, simply
-set the environment variable `SDE_KERNEL_DISTINGUISHER` to the
-appropriate value when calling the scripts.
-
-The list of kernels supported by the SDE Nix package can be found in
-`overlays/bf-sde/kernels/default.nix`. In the current version, the
-essential part of that file is a list of sets:
-
-```
-[
-  {
-    version = "4.14.151";
-    localVersion = "-OpenNetworkLinux";
-    distinguisher = "";
-    sha256 = "1bizb1wwni5r4m5i0mrsqbc5qw73lwrfrdadm09vbfz9ir19qlgz";
-  }
-  {
-    version = "4.19.81";
-    localVersion = "-OpenNetworkLinux";
-    distinguisher = "";
-    sha256 = "17g2wiaa7l7mxi72k79drxij2zqk3nsj8wi17bl4nfvb1ypc2gi9";
-  }
-]
-```
-
-The `version`, `localVersion` and `distinguisher` attributes are
-exactly those explained above.  The `sha256` attribute is a hash of
-the kernel archive.  It can be calculated in advance by using the
-`nix-prefetech-url` command, for example
-
-```
-$ nix-prefetch-url  http://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.14.151.tar.xz 
-[96.5 MiB DL]
-path is '/nix/store/3wwkk9a4gl9fnxcp4w2hvmbm5cxpdly1-linux-4.14.151.tar.xz'
-1bizb1wwni5r4m5i0mrsqbc5qw73lwrfrdadm09vbfz9ir19qlgz
-```
-
-The kernel configuration file for a kernel is expected to be in
-
-```
-bf-sde/kernels/<version><localVersion><distinguisher>-kernel-config.gz
-```
-
-relative to the root of this repository.
-
-To add a new kernel, add a new set to the list in
-`overlays/bf-sde/kernels/default.nix` and install the corresponding
-configuration file using this naming convetion.
-
-## Introduction
-
-Note: The SDE for the Tofino series of programmable NPUs is currently
-only available under NDA from Intel.  The users of this repositories
-are assumed to be authorized to download and use the SDA.
-
-In its current form (version 9.2.0 at the time of writing), the SDE
-supports only a very specific set of operating systems.  The main
-reason for this restriction is the management of build- and run-time
-dependencies.  Packaging of the SDE with Nix removes these
-restrictions completely and makes it possible to install any version
-of the SDE on any system that supports the Nix package manager itself.
-
-## The Nix package manager
+## <a name="part3"></a>Part 3: The Nix package manager
 
 The [Nix package manager](https://nixos.org/manual/nixpkgs/stable/),
-a.k.a. Nixpkgs, is an alternative to conventional package managers
+a.k.a. _Nixpkgs_, is an alternative to conventional package managers
 like `deb` or `rpm`. It differs substantially in the manner in which
 packages and their dependencies are described and managed. There even
 exists an entire Linux distribution called [NixOS](https://nixos.org/)
 which is based on it.
 
 For an introduction to the system, the reader is referred to the links
-given above.  In particular, the excellent [Nix
+given above.  In addition, the excellent [Nix
 pills](https://nixos.org/guides/nix-pills/index.html) series of
 articles provides a more in-depth tour through the inner workings of
 the package manager.
 
-The key feature of Nix is the use of a purely functional
+The key feature of Nix is the use of a purely functional,
 domain-specific programming language (DSL) to describe how each
 package is built from source and how it depends on other packages.
 This allows for a puerly declarative description of the entire package
@@ -376,7 +621,7 @@ shell used to bootrstrap the entire system.
 This construct makes it possible to have a huge coherent set of
 packages with precisely defined dependencies and a very high degree of
 reproducability.  The latter means that anyone who uses a specific Nix
-expression for the entire collection will be abel to exactly reproduce
+expression for the entire collection will be able to exactly reproduce
 any set of packages contained within.
 
 The fact that Nix is a lazy language makes it possible to work with
@@ -421,8 +666,7 @@ directories under `/nix/store`.  In a nutshell, environments allow the
 user to collect references to packages of his choice in a single
 location for easy access and multiple environments can be collected in
 a profile.  A profile also introduces the concept of generations and
-rollbacks as explained in the links given above.  Its use in the
-context of the SDE package will be illustrated later in this document.
+rollbacks as explained in the links given above.
 
 ### Channels
 
@@ -430,7 +674,7 @@ Nixpkgs uses a release cycle similar to other package collections like
 Ubuntu.  Every six months, in March and September, there is a new
 release named `<year>.<month>`.  At the time of writing, the current
 release is 20.03.  The installation procedure will always chose the
-current release at that point in time.
+"unstable" version of the next release at that point in time.
 
 Nix uses the concept of a
 [channel](https://nixos.org/manual/nix/stable/#sec-channels) to refer
@@ -475,10 +719,9 @@ pill](https://nixos.org/guides/nix-pills/override-design-pattern.html#override-d
 for details.
 
 Overrides are used in a larger framework known as
-[overlays](https://nixos.org/manual/nixpkgs/stable/#chap-overlays).
-
-Essentially, an overlay extends the pre-defined package collection in
-a well-defined manner. The result is the same as if the modifications
+[overlays](https://nixos.org/manual/nixpkgs/stable/#chap-overlays). Essentially,
+an overlay extends the pre-defined package collection in a
+well-defined manner. The result is the same as if the modifications
 had been added to the original expression (like in the forking method)
 but the modifications can be stored anywhere outside that original
 expression.  The result of combining the original expression with the
@@ -547,30 +790,275 @@ drwxr-xr-x 17 gall users 4096 Aug 19 12:25 pkgs
 We will keep this version fixed until there is a reason to change it,
 e.g. to pick up new dependencies for fututre versions of the SDE.
 
-The actual overlay is stored in the `overlays` subdirectory
+The actual overlay is stored in the `overlay.nix` file, which is
+combined with the Nix expression from the submodule with the following
+code found in `default.nix`
 
 ```
-[~/bf-sde-nixpkgs]$ ls -l overlays/
-total 20
-drwxr-xr-x 3 gall users 4096 Sep 10 08:53 bf-sde
--rw-r--r-- 1 gall users 4539 Sep 10 09:43 overlays.nix
-```
+{ overlays ? [], ... } @attrs:
 
-The two objects are combined by the following expression
-
+import ./nixpkgs ( attrs // {
+  overlays = import ./overlay.nix ++ overlays;
+})
 ```
-import ./nixpkgs {
-  overlays = import overlays/overlays.nix;
-}
-```
-
-which can be found in the `default.nix` file in the root of the
-repository.
 
 The upcoming Nix version 3.0 introduces the concept of
 [Flakes](https://nixos.wiki/wiki/Flakes), which provides a similar
 functionality as the hybrid approach. A future version of the SDE Nix
 package will probably use that new mechanism instead.
+
+## Working with Multiple Nix Expressions
+
+It is important to understand that when the SDE package collection is
+used, one effectively has a second independent version of the
+`nixpkgs` package collection present on the system (the first one is
+the result of the initial installation of Nix).
+
+At this point, it is worth while to understand how Nix actually finds
+the build recipe for a particular package.
+
+Whenever a Nix command needs to reference the package collection, it
+uses the environment variable `NIX_PATH` to find its "top-level" Nix
+expression.  With the standard multi-user setup, the value of
+`NIX_PATH` is
+
+```
+$ echo $NIX_PATH
+nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixpkgs:/nix/var/nix/profiles/per-user/root/channels
+```
+
+It contains a reference to the profile
+`/nix/var/nix/profiles/per-user/root/channels`.  By default, this
+profile has a single component called `nixpkgs`, which is
+(essentially) a clone of one particular commit of the [nixpkgs
+repository](https://github.com/NixOS/nixpkgs).  This whole construct
+is known (more or less) as a [Nix
+channel](https://nixos.wiki/wiki/Nix_channels).
+
+Now consider the command `nix-build`. The primary argument to it is a
+file that contains a Nix epxression to evaluate, for example
+
+```
+$ nix-build '<nixpkgs>' -A openssh
+```
+
+Here, `<nixpkgs>` is actually a simple Nix expression which is
+evaluated as follows. The angle brackets instruct the evaluator to
+look for the definition of `nixpkgs` in `NIX_PATH` . In this case, the
+result is the file-system path
+`/nix/var/nix/profiles/per-user/root/channels/nixpkgs`, which happens
+to be a symbolic link to a directory
+
+```
+$ ls -lL /nix/var/nix/profiles/per-user/root/channels/nixpkgs
+total 44
+-r--r--r--  1 root root 1097 Jan  1  1970 COPYING
+-r--r--r--  1 root root  968 Jan  1  1970 default.nix
+dr-xr-xr-x 10 root root 4096 Jan  1  1970 doc
+-r--r--r--  1 root root 1480 Jan  1  1970 flake.nix
+dr-xr-xr-x  4 root root 4096 Jan  1  1970 lib
+dr-xr-xr-x  3 root root 4096 Jan  1  1970 maintainers
+dr-xr-xr-x  7 root root 4096 Jan  1  1970 nixos
+dr-xr-xr-x 18 root root 4096 Jan  1  1970 pkgs
+-r--r--r--  1 root root 5853 Jan  1  1970 README.md
+-r--r--r--  1 root root   19 Jan  1  1970 svn-revision
+```
+
+When presented with a path to a directory, the evaluator looks for a
+file called `default.nix`. If present, it expects it to contain a
+valid Nix expression and evaluates it.  Therefore, the following
+invocations are equivalent to the one above
+
+```
+$ nix-build /nix/var/nix/profiles/per-user/root/channels/nixpkgs -A openssh
+$ nix-build /nix/var/nix/profiles/per-user/root/channels/nixpkgs/default -A openssh
+$ nix-build -E 'import <nixpkgs> {}' -A openssh
+```
+
+The result of the evaluation is a very large "attribute set" (the Nix
+version of a Python dictionary or any key/value store in other
+languages) containing the complete list of packages provided by this
+particular representation of the `nixpkgs` collection.  The source of
+this attribute set is the expression defined in
+
+```
+/nix/var/nix/profiles/per-user/root/channels/nixpkgs/pkgs/top-level/all-packages.nix
+```
+
+The purpose of the `-A` option is to select a particular attribute
+from that set. In this example, we have selected the attribute called
+`openssh` and the result of the `nix-build` command is the location in
+the Nix store where the finished package is stored, e.g.
+
+```
+$ nix-build '<nixpkgs>' -A openssh
+/nix/store/0ckm75cip412hrx4k7m3yfiyrpmmjl79-openssh-8.3p1
+```
+
+Unfortunatley, the `nix-env` command woks differently. It ignores
+`NIX_PATH` and, by default, uses `~/.nix-defexpr` to find the Nix
+expression. However, by default this also ends up in the profile
+`/nix/var/nix/profiles/per-user/root/channels` such that it operates
+on the same Nix expression as found by `nix-build` via `NIX_PATH`.
+
+In our example, we can use `nix-env` to show all packages whose names
+contain the string `openssh`
+
+```
+$ nix-env -qaP openssh
+nixpkgs.openssh                openssh-8.3p1
+nixpkgs.openssh_with_kerberos  openssh-8.3p1
+```
+
+In this output, `nixpkgs` refers to the channel in which the package
+is defined (in our case, we only have a single channel but it is
+possible to add other channels containing different package
+collections), followed by the name of the attribute by which the
+package is identified in the attribute set of the package collection.
+These names are unique within a channel and can be selected with the
+`-A` option in `nix-build`.  The name on the right is the name of the
+package as defined in the actual build recipe for the
+package.  In this example, it can be found in the file
+
+```
+/nix/var/nix/profiles/per-user/root/channels/nixpkgs/pkgs/tools/networking/openssh/default.nix
+```
+
+The name is constructed by combining the values of the attributes `pname` and `version`, in this case
+
+```
+version = "8.3p1";
+pname = "openssh";
+```
+
+Contrary to the attribute name of a package, this name is not unqiue
+(as in this exaple).  It is essentially ignored by Nix itself and only
+appears in the names of paths in `/nix/store` to help humans to have
+an idea what a particular store path contains.
+
+To further illustrate how this works, consider the following error
+
+```
+$ nix-build '<nixpkgs>' -A bf-sde
+error: attribute 'bf-sde' in selection path 'bf-sde' not found
+```
+
+It should be clear that this happens because the standard `nixpkgs`
+channel doesn't know anything about our custom `bf-sde` package.
+There are several ways to make Nix use our own package collection
+instead of the default one.
+
+The first method is to enter the top level directory of the
+`bf-sde-nixpkgs` clone and execute
+
+```
+$ nix-build -A bf-sde
+/nix/store/gvgvnc7jk5hzvq51yr4xvjj480b74p87-bf-sde-9.2.0
+/nix/store/y48cpnr7jk136gab1qw9pqh2jvph0ifi-bf-sde-9.1.1
+```
+
+Note that we did not specify any file to be read by `nix-build`.  In
+this case, `nix-build` looks for the file `default.nix` in the current
+directory and evaluates it if present.  In our case, the file exists
+and contains the expression
+
+```
+{ overlays ? [], ... } @attrs:
+
+import ./nixpkgs ( attrs // {
+  overlays = import ./overlay.nix ++ overlays;
+})
+```
+
+Compare this to one of the equivalent methods to call `nix-build` with
+the standard channel discussed above
+
+```
+$ nix-build -E 'import <nixpkgs> {}' -A openssh
+```
+
+This is really almost exactly the same thing, except that the
+`nixpkgs` subdirectory in our repository contains a different version
+of (https://github.com/NixOS/nixpkgs) than what's in the default
+channel.  Apart from that, the main difference is that we call the
+local version of `nixpkgs` with an additional attribute set
+
+```
+{
+  overlays = import ./overlay.nix;
+}
+```
+
+as argument.  This uses a mechanism called
+[overlays](https://nixos.org/manual/nixpkgs/stable/#chap-overlays) to
+add our customizations to the official Nix package collection.
+
+There are other ways to achieve the same thing.  Suppose the Git clone
+is located in `/home/gall/bf-sde-nixpkgs`. Then we can use
+
+```
+$ nix-build /home/gall/bf-sde-nixpkgs -A bf-sde
+/nix/store/gvgvnc7jk5hzvq51yr4xvjj480b74p87-bf-sde-9.2.0
+/nix/store/y48cpnr7jk136gab1qw9pqh2jvph0ifi-bf-sde-9.1.1
+```
+
+More interesting is to manipulate `NIX_PATH` instead
+
+```
+$ NIX_PATH=nixpkgs=/home/gall/bf-sde-nixpkgs nix-build '<nixpkgs>' -A bf-sde
+/nix/store/gvgvnc7jk5hzvq51yr4xvjj480b74p87-bf-sde-9.2.0
+/nix/store/y48cpnr7jk136gab1qw9pqh2jvph0ifi-bf-sde-9.1.1
+```
+
+Note how we are able to use `<nixpkgs>` to evaluate our customized
+version of the package collection.
+
+The drawback here is that we have to reference the path of the Git
+clone explicitly.  Here is where the profile
+`/nix/var/nix/profiles/per-user/root/bf-sde`, which we can create by
+calling `make install-sde` in the top-level directory of the repository
+clone:
+
+
+```
+$ NIX_PATH=nixpkgs=/nix/var/nix/profiles/per-user/$USER/bf-sde nix-build '<nixpkgs>' -A bf-sde
+/nix/store/y48cpnr7jk136gab1qw9pqh2jvph0ifi-bf-sde-9.1.1
+/nix/store/gvgvnc7jk5hzvq51yr4xvjj480b74p87-bf-sde-9.2.0
+```
+
+This is the preferred method, because the path to the profile never
+changes and is thus suitable to be hard-coded in scripts.  The idea is
+that we can use `nix-env` to update the profile whenever our custom
+package collection changes and have the scripts always work on the
+current version.
+
+This takes care of `nix-buid`, but what about using `nix-env` to work
+on our custom collection instead of the default channel?  Recall that
+`nix-env` ignores `NIX_PATH`, so we can't use the same trick here.
+However, it recognizes the option `-f` to override `~/.nix-defexpr`:
+
+```
+$ nix-env -qaP bf-sde
+error: selector 'bf-sde' matches no derivations
+$ nix-env -f /nix/var/nix/profiles/per-user/$USER/bf-sde -qaP bf-sde
+bf-sde.v9_1_1  bf-sde-9.1.1
+bf-sde.v9_2_0  bf-sde-9.2.0
+```
+
+So, for example, if we want to make the commands from `bf-sde.v9_2_0`
+available in the user's profile:
+
+```
+$ type run_switchd.sh
+-bash: type: run_switchd.sh: not found
+$ $ nix-env -f /nix/var/nix/profiles/per-user/$USER/bf-sde -iP -A bf-sde.v9_2_0
+installing 'bf-sde-9.2.0'
+building '/nix/store/zwkfp482bqw0vx6yr2i2jj1ba6p3vq56-user-environment.drv'...
+$ $ type run_switchd.sh
+run_switchd.sh is /home/gall/.nix-profile/bin/run_switchd.sh
+$ ls -l /home/gall/.nix-profile/bin/run_switchd.sh
+lrwxrwxrwx 1 root root 75 Jan  1  1970 /home/gall/.nix-profile/bin/run_switchd.sh -> /nix/store/gvgvnc7jk5hzvq51yr4xvjj480b74p87-bf-sde-9.2.0/bin/run_switchd.sh
+```
 
 ## SDE Nix overlay
 
@@ -581,7 +1069,7 @@ in `overlay.nix`
 let
   overlay = self: super:
     rec {
-	  ## package definitions
+          ## package definitions
     };
 in [ overlay ]
 ```
@@ -606,6 +1094,129 @@ of the SDE and BSP archives that were given in the table above.
 
 Finally, the actual build recipe (called a _derivation_ in Nix-speak)
 is defined in the file `bf-sde/generic.nix`.
+
+### <a name="kernel_support"></a>Kernel support
+
+Kernel modules are required to support some of the features of the
+Tofino ASIC, for example to expose the CPU PCIe port as a Linux
+network interface.  The modules have to be built to match the kernel
+on the host on which they will be loaded.
+
+For this reason, the SDE Nix package requires as additional input to
+the build process (apart from the SDE version) the following
+information about the kernel for which it should be built.
+
+   * Kernel version
+   * Local version
+   * Kernel configuration
+   * Distinguisher
+
+The version must be one of the official kernel releases available on
+the [kernel CDN site](http://cdn.kernel.org/pub/linux/kernel).  For
+example, if the version is specified to be 4.14.151, Nix will download
+the file
+`http://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.14.151.tar.xz`.
+
+The local version is the string appended to the version number in the
+output of `uname -r`, e.g. for
+
+```
+$ uname -r
+4.19.81-OpenNetworkLinux
+```
+
+the local version is `-OpenNetworkLinux`.  This is also the value of
+the `CONFIG_LOCALVERSION` kernel configuration option, e.g.
+
+```
+$ zcat /proc/config.gz | grep LOCALVERSION=
+CONFIG_LOCALVERSION="-OpenNetworkLinux"
+```
+
+The kernel configuration is a file with the complete set of kernel
+configuration options.  One way to obtain it is to copy it from
+`/proc/config.gz` (as shown above) from a system that already runs the
+required kernel.
+
+The triple of `version`, `localVersion` and configuration uniquely
+identify a kernel.  However, at the time when a module needs to be
+loaded, only `version` and `localVersion` are available through the
+kernel release identifier from the `uname -r` command.  To be able to
+distinguish between kernels that have the same kernel release name but
+were built with different configurations, we add another identifier
+when looking up the proper module to load.  This identifier is called
+`distinguisher` in the list above.
+
+When the SDE is built, the modules for a particular kernel are stored
+in the directory
+
+```
+lib/modules/<version><localVersion><distinguisher>
+```
+
+relative to the root of the SDE package.  The SDE also contains a
+shell script in its `bin` directory to load each kernel module:
+
+```
+bin/bf_kdrv_mod_load
+bin/bf_knet_mod_load
+bin/bf_kpkt_mod_load
+```
+
+These scripts use the following code to locate the module
+
+```
+insmod lib/modules/$(uname -r)${SDE_KERNEL_DISTINGUISHER:-}/bf_...
+```
+
+To load a module for a kernel with a non-empty distinguisher, simply
+set the environment variable `SDE_KERNEL_DISTINGUISHER` to the
+appropriate value when calling the scripts.
+
+The list of kernels supported by the SDE Nix package can be found in
+`overlays/bf-sde/kernels/default.nix`. In the current version, the
+essential part of that file is a list of sets:
+
+```
+[
+  {
+    version = "4.14.151";
+    localVersion = "-OpenNetworkLinux";
+    distinguisher = "";
+    sha256 = "1bizb1wwni5r4m5i0mrsqbc5qw73lwrfrdadm09vbfz9ir19qlgz";
+  }
+  {
+    version = "4.19.81";
+    localVersion = "-OpenNetworkLinux";
+    distinguisher = "";
+    sha256 = "17g2wiaa7l7mxi72k79drxij2zqk3nsj8wi17bl4nfvb1ypc2gi9";
+  }
+]
+```
+
+The `version`, `localVersion` and `distinguisher` attributes are
+exactly those explained above.  The `sha256` attribute is a hash of
+the kernel archive.  It can be calculated in advance by using the
+`nix-prefetech-url` command, for example
+
+```
+$ nix-prefetch-url  http://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.14.151.tar.xz 
+[96.5 MiB DL]
+path is '/nix/store/3wwkk9a4gl9fnxcp4w2hvmbm5cxpdly1-linux-4.14.151.tar.xz'
+1bizb1wwni5r4m5i0mrsqbc5qw73lwrfrdadm09vbfz9ir19qlgz
+```
+
+The kernel configuration file for a kernel is expected to be in
+
+```
+bf-sde/kernels/<version><localVersion><distinguisher>-kernel-config.gz
+```
+
+relative to the root of this repository.
+
+To add a new kernel, add a new set to the list in
+`overlays/bf-sde/kernels/default.nix` and install the corresponding
+configuration file using this naming convetion.
 
 ## Deployment models
 
@@ -673,63 +1284,3 @@ to the local Nix store.
 
 This is probably the most useful deployment model in an enterprise
 scenario and will be documented here some time in the future.
-
-### Using profiles with binary deployments
-
-Binary deployment makes it easy and reliable to install any Nix
-package on a given system.  However, to access the content of the
-package one needs to refer to it by its complete path in the Nix
-store.  This is not a problem in itself but consider, for example, the
-case when the package provides a program that needs to be run as a
-`systemd` service.  One can simply use the store path in the
-`ExecStart` option of the service's unit file and everything will
-work. However, this method has at least two drawbacks.
-
-First, such a reference will not be recognized by Nix as a root for
-the [garbage
-collector](https://nixos.org/manual/nix/stable/#sec-garbage-collection).
-This means that whenever someone executes `nix-collect-garbage` on the
-system, the entire closure will be deleted.
-
-Second, if a new version of the package is installed later, the
-reference in the unit file needs to be updated.
-
-Both of these problems can be solved by using a profile dedicated to
-the package. Let us assume that we have a single store path `<path>`
-and our service is located in `<path>/bin/foo`.  After installing the
-closure of `<path>` for the first time, we create a new profile called
-`foo` (but the name of the profile is really arbitrary) as root with
-
-```
-# nix-env -p /nix/var/nix/profiles/per-user/root/foo -i <path>
-```
-
-From now on, we can refer to the package by
-`/nix/var/nix/profiles/per-user/root/foo/bin/foo` in the `systemd`
-unit file.  Because a profile automatically provides a
-garbage-collection root, `<path>` is now protected from being removed
-from the Nix store by accident.
-
-Suppose the package is then upgraded and the new package's name is
-`<new_path>`.  After installing the closure for `<new_path>`, we can
-update the existing profile with
-
-```
-# nix-env -p /nix/var/nix/profiles/per-user/root/foo -i -r <new_path>
-```
-
-This generates a new generation of the profile `foo` which only
-contains whatever is in `<new_path>`. Without the `-r` option, Nix
-would try to merge `<new_path>` with `<path>` in the profile, which
-would result in a conflict beacuse both paths provide the same file
-`bin/foo`.
-
-The path `/nix/var/nix/profiles/per-user/root/foo/bin/foo` now refers
-to the new version of the package, i.e. restarting the `systemd`
-service would launch the new version of the program.
-
-The `nix-env` command can be used to [switch arbitrarily between the
-different generations of the
-profile](https://nixos.org/manual/nix/stable/#sec-profiles) or perform
-rollbacks (which is just the special case of switching from the
-current profile to the one preceeding it).
