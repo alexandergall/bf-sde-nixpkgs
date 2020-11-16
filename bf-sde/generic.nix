@@ -249,6 +249,11 @@ in stdenv.mkDerivation rec {
   '';
 
   installPhase = ''
+    ## Versions prior to 9.3.0 installed p4c as a copy of bf-p4c
+    if ! [ -e $out/bin/p4c ]; then
+      ln -sr $out/bin/bf-p4c $out/bin/p4c
+    fi
+
     for mod in kpkt kdrv knet; do
       script=$SDE_INSTALL/bin/bf_''${mod}_mod_load
       substituteInPlace  $script \
