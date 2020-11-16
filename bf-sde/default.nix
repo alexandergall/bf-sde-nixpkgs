@@ -80,6 +80,11 @@ let
       srcHash = "94cf6acf8a69928aaca4043e9ba2c665cc37d72b904dcadb797d5d520fb0dd26";
       bspHash = "d817f609a76b3b5e6805c25c578897f9ba2204e7d694e5f76593694ca74f67ac";
     };
+    v9_3_0 = {
+      version = "9.3.0";
+      srcHash = "566994d074ba93908307890761f8d14b4e22fb8759085da3d71c7a2f820fe2ec";
+      bspHash = "dd5e51aebd836bd63d0d7c37400e995fb6b1e3650ef08014a164124ba44e6a06";
+    };
   };
 
 in bf-sde // { latest = bf-sde.v9_2_0; }

@@ -133,7 +133,7 @@ in stdenv.mkDerivation rec {
 
       for f in $(find . -type f -exec file {} \; | grep -i elf | cut -d' ' -f1 | sed -e 's/:$//'); do
         echo $f
-        patchelf --set-interpreter ${glibc}/lib/ld-linux* $f
+        patchelf --set-interpreter ${glibc}/lib/ld-linux* $f || true
         case $f in
           *p4c-build-logs)
             patchelf --set-rpath ${zlib}/lib $f
@@ -211,7 +211,10 @@ in stdenv.mkDerivation rec {
       ## that specifies that nothing needs to be installed.
       substituteInPlace p4studio_build.py --replace "if params['skip_dependencies']:" "if False:"
     fi
-    
+
+    ## Starting with 9.3.0, the builder performs a "chdir ~", which
+    ## fails in a pure build environment where HOME=/homeless-shelter
+    HOME=/tmp
     ./p4studio_build.py -j4 --os-detail NixOS_19.03 --use-profile custom_profile \
       --bsp-path $TEMP/bsp --skip-os-check --skip-dependencies \
       --skip-kernelheader-check --skip-dependencies-check $extraOptions
