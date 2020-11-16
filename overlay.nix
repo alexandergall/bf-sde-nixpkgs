@@ -57,6 +57,17 @@ let
 
     });
 
+    thrift_0_13 = super.thrift.overrideAttrs(oldAttrs: rec {
+      version = "0.13.0";
+      name = "thrift-${version}";
+
+      src = super.fetchurl {
+          url = "https://archive.apache.org/dist/thrift/${version}/${name}.tar.gz";
+          sha256 = "0yai9c3bdsrkkjshgim7zk0i7malwfprg00l9774dbrkh2w4ilvs";
+      };
+
+    });
+
     python2 = super.python2.override {
       packageOverrides = python-self: python-super: {
         grpcio = python-super.grpcio.overrideAttrs(oldAttrs:

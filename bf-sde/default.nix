@@ -84,6 +84,7 @@ let
       version = "9.3.0";
       srcHash = "566994d074ba93908307890761f8d14b4e22fb8759085da3d71c7a2f820fe2ec";
       bspHash = "dd5e51aebd836bd63d0d7c37400e995fb6b1e3650ef08014a164124ba44e6a06";
+      thrift = thrift_0_13;
     };
   };
 
