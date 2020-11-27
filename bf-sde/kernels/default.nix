@@ -1,5 +1,5 @@
 ## Provide a list of kernels for which the SDE can build its modules.
-
+##
 ## Each attribute set in the list provides two items.  The first is
 ## the name of the kernel release exactly as it is reported by "uname
 ## -r" on a system that runs this kernel.  The second is a derivation
@@ -8,7 +8,7 @@
 ## native packages required for module compilation.  This derivation
 ## is used by ../generic.nix to perform the actual build of the
 ## modules.
-
+##
 ## The creation of /lib/modules/$(uname -r)/build clearly depends
 ## heavily on the native package manager of the system.  The purpose
 ## of the logic below is to remove the dependence on those package
@@ -27,7 +27,6 @@ with pkgs;
   {
     ## ONL with Debian9 created from commit 7c3bfd
     release = "4.14.151-OpenNetworkLinux";
-    distinguisher = "";
     build = callPackage ./onl.nix {
       deb = ./onl-kernel-4.14-lts-x86-64-all_1.0.0_amd64.deb;
     };
@@ -35,7 +34,6 @@ with pkgs;
   {
     ## ONL with Debian10, based on commit 1537d8
     release = "4.19.81-OpenNetworkLinux";
-    distinguisher = "";
     build = callPackage ./onl.nix {
       deb = ./onl-kernel-4.19-lts-x86-64-all_1.0.0_amd64.deb;
     };
@@ -46,8 +44,8 @@ with pkgs;
   ## directory.  The deb files are available for download and don't
   ## need to be stored in the bf-sde-nixpkgs repo.
   {
+    ## Standard kernel for Debian10 (buster)
     release = "4.19.0-11-amd64";
-    distinguisher = "";
     build = callPackage ./debian.nix {
       arch = {
         name = "linux-headers-4.19.0-11-amd64_4.19.146-1_amd64.deb";

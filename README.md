@@ -61,24 +61,28 @@ clones the `nixpkgs` Git sub-module.
 ### Fetch and verify source archives
 
 Download the `bf-sde` and `bf-reference-bsp` archives for the desired
-version of the SDE from the Barefoot FASTER website (requires
-registration and NDA).  The only versions currently supported are
-9.1.1 and 9.2.0.  Please verify that the `sha256` sums are as follows
+version of the SDE from the Intel website (requires registration and
+NDA). Please verify that the `sha256` sums are as follows
 
 | File  | sha256 |
 | ------|--------|
 | bf-sde-9.1.1.tar | `be166d6322cb7d4f8eff590f6b0704add8de80e2f2cf16eb318e43b70526be11` |
 | bf-sde-9.2.0.tar | `94cf6acf8a69928aaca4043e9ba2c665cc37d72b904dcadb797d5d520fb0dd26` |
+| bf-sde-9.3.0.tgz | `566994d074ba93908307890761f8d14b4e22fb8759085da3d71c7a2f820fe2ec` |
 | bf-reference-bsp-9.1.1.tar | `aebe8ba0ae956afd0452172747858aae20550651e920d3d56961f622c8d78fb8` |
 | bf-reference-bsp-9.2.0.tar | `d817f609a76b3b5e6805c25c578897f9ba2204e7d694e5f76593694ca74f67ac` |
+| bf-reference-bsp-9.3.0.tgz | `dd5e51aebd836bd63d0d7c37400e995fb6b1e3650ef08014a164124ba44e6a06` |
 
 ### Add archives to the Nix store
 
 Execute (as any user)
 
 ```
-$ nix-store --add-fixed sha256 bf-sde-<version>.tar bf-reference-bsp-<version>.tar
+$ nix-store --add-fixed sha256 <bf-sde-archive> <bf-reference-bsp-archive>
 ```
+
+Note that the suffixes of the files differ between releases.  The
+names are exactly as they appear on the download site.
 
 If this step is omitted, the build will fail with a somewhat cryptic
 error similar to the following
@@ -1102,121 +1106,70 @@ Tofino ASIC, for example to expose the CPU PCIe port as a Linux
 network interface.  The modules have to be built to match the kernel
 on the host on which they will be loaded.
 
-For this reason, the SDE Nix package requires as additional input to
-the build process (apart from the SDE version) the following
-information about the kernel for which it should be built.
+In general, compiling a kernel module requires the presence of the
+directory `/lib/modules/$(uname -r)/build`, where `uname -r` provides
+the release identifier of the running kernel.  The `build` directory
+is an artefact of the build procedure of the kernel itself. It
+contains everything needed to compile a kernel that will work with
+that specific kernel.
 
-   * Kernel version
-   * Local version
-   * Kernel configuration
-   * Distinguisher
+How exactly a kernel is built and how the build directory is
+instantiated on a system depends heavily on the native package manager
+of a given Linux distribution.  Since one of the purposes of the Nix
+packaging of the SDE is to gain independence of the native package
+manager of any particular Linux distribution, we need a mechanism that
+extends this independence to the compilation of kernel modules.
 
-The version must be one of the official kernel releases available on
-the [kernel CDN site](http://cdn.kernel.org/pub/linux/kernel).  For
-example, if the version is specified to be 4.14.151, Nix will download
-the file
-`http://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.14.151.tar.xz`.
+This is achived by adding an abstraction layer to `bf-sde-nixpkgs`
+which takes a set of native packages of a given distribution and
+creates a plain build directory from them in which the SDE kernel
+modules can be compiled successfully.
 
-The local version is the string appended to the version number in the
-output of `uname -r`, e.g. for
+The current version of `bf-sde-nixpkgs` supports two distributions
 
-```
-$ uname -r
-4.19.81-OpenNetworkLinux
-```
+   * OpenNetworkLinux (ONL)
+   * Debian
 
-the local version is `-OpenNetworkLinux`.  This is also the value of
-the `CONFIG_LOCALVERSION` kernel configuration option, e.g.
+ONL is based on Debian but it uses a different method to package the
+kernel than standard Debian. It already supplies the entire build
+directory in a single `deb` file.  The script `bf-sde/kernels/onl.nix`
+performs the conversion to the format expected by the SDE build
+script.
 
-```
-$ zcat /proc/config.gz | grep LOCALVERSION=
-CONFIG_LOCALVERSION="-OpenNetworkLinux"
-```
+Debian splits the contents of the build directory accross three
+separate `deb` files and also adds some non-generic processing, which
+have to be converted back to the behaviour of a generic kernel build
+directory.  The details can be found in `bf-sde/kernels/debian.nix`.
 
-The kernel configuration is a file with the complete set of kernel
-configuration options.  One way to obtain it is to copy it from
-`/proc/config.gz` (as shown above) from a system that already runs the
-required kernel.
+It is worth noting that the native packages contain (apart from header
+files and Makefiles) precompiled binaries.  Those need to be patched
+to resolve all runtime dependencies (shared objects) from `/nix/store`
+rather than the regular locations on the build host.  The conversion
+scripts take care of this as well.
 
-The triple of `version`, `localVersion` and configuration uniquely
-identify a kernel.  However, at the time when a module needs to be
-loaded, only `version` and `localVersion` are available through the
-kernel release identifier from the `uname -r` command.  To be able to
-distinguish between kernels that have the same kernel release name but
-were built with different configurations, we add another identifier
-when looking up the proper module to load.  This identifier is called
-`distinguisher` in the list above.
+Every kernel which needs to be supported by the SDE must be added to
+the list returned by the Nix expression in
+`bf-sde/kernels/default.nix`.
 
-When the SDE is built, the modules for a particular kernel are stored
-in the directory
+Each kernel is described by an attribute set containing the attributes
+`release` and `build`.  The former must be the exact output of `uname
+-r` as it appears on the system on which the SDE will be deployed.
+The latter is a derivation (i.e. a path in `/nix/store`) which
+contains the kernel build directory for this particular kernel.  The
+method used to produce it depends on the flavor of the Linux
+distribution of the target system as explained above.
 
-```
-lib/modules/<version><localVersion><distinguisher>
-```
-
-relative to the root of the SDE package.  The SDE also contains a
-shell script in its `bin` directory to load each kernel module:
-
-```
-bin/bf_kdrv_mod_load
-bin/bf_knet_mod_load
-bin/bf_kpkt_mod_load
-```
-
-These scripts use the following code to locate the module
+The result of all of this is that the final package for the SDE
+contains a subdirectory in `lib/modules` for each kernel release,
+which contains the modules for that kernel. For example:
 
 ```
-insmod lib/modules/$(uname -r)${SDE_KERNEL_DISTINGUISHER:-}/bf_...
 ```
 
-To load a module for a kernel with a non-empty distinguisher, simply
-set the environment variable `SDE_KERNEL_DISTINGUISHER` to the
-appropriate value when calling the scripts.
-
-The list of kernels supported by the SDE Nix package can be found in
-`overlays/bf-sde/kernels/default.nix`. In the current version, the
-essential part of that file is a list of sets:
-
-```
-[
-  {
-    version = "4.14.151";
-    localVersion = "-OpenNetworkLinux";
-    distinguisher = "";
-    sha256 = "1bizb1wwni5r4m5i0mrsqbc5qw73lwrfrdadm09vbfz9ir19qlgz";
-  }
-  {
-    version = "4.19.81";
-    localVersion = "-OpenNetworkLinux";
-    distinguisher = "";
-    sha256 = "17g2wiaa7l7mxi72k79drxij2zqk3nsj8wi17bl4nfvb1ypc2gi9";
-  }
-]
-```
-
-The `version`, `localVersion` and `distinguisher` attributes are
-exactly those explained above.  The `sha256` attribute is a hash of
-the kernel archive.  It can be calculated in advance by using the
-`nix-prefetech-url` command, for example
-
-```
-$ nix-prefetch-url  http://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.14.151.tar.xz 
-[96.5 MiB DL]
-path is '/nix/store/3wwkk9a4gl9fnxcp4w2hvmbm5cxpdly1-linux-4.14.151.tar.xz'
-1bizb1wwni5r4m5i0mrsqbc5qw73lwrfrdadm09vbfz9ir19qlgz
-```
-
-The kernel configuration file for a kernel is expected to be in
-
-```
-bf-sde/kernels/<version><localVersion><distinguisher>-kernel-config.gz
-```
-
-relative to the root of this repository.
-
-To add a new kernel, add a new set to the list in
-`overlays/bf-sde/kernels/default.nix` and install the corresponding
-configuration file using this naming convetion.
+The `bin` directory of the SDE package also contains commands to load
+and unload each of the modules.  The load commands use `uname -r` to
+locate the module in `lib/modules` and the load it into the kernel
+using `insmod`.
 
 ## Deployment models
 

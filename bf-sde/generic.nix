@@ -1,6 +1,6 @@
-{ self, lib, version, srcHash, bspHash, kernels, passthruFun,
-  system, stdenv, writeText, gmp, glibc, python2, python3,
-  pkg-config, file, thrift, openssl, boost, grpc,
+{ self, lib, version, srcName, srcHash, bspName, bspHash,
+  kernels, passthruFun, system, stdenv, writeText, gmp, glibc,
+  python2, python3, pkg-config, file, thrift, openssl, boost, grpc,
   protobuf, zlib, libpcap, libusb, curl_7_52, cscope,
   runtimeShell
 }:
@@ -14,8 +14,8 @@ let
         outputHashMode = "flat";
         outputHashAlgo = "sha256";
       };
-    src = fixedDerivation "bf-sde-${version}.tar" srcHash;
-    bsp = fixedDerivation "bf-reference-bsp-${version}.tar" bspHash;
+    src = fixedDerivation srcName srcHash;
+    bsp = fixedDerivation bspName bspHash;
     passthru = passthruFun { inherit self; };
 
     profile = writeText "bf-studio-profile"

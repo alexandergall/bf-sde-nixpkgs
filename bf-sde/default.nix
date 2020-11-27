@@ -62,30 +62,36 @@ let
     let
       self = callPackage ./generic.nix ({
         inherit self kernels;
-        stdenv = gcc8Stdenv;
       } // sdeDef);
     in self;
 
-  ## Download bf-sde-${version}.tar and bf-reference-bsp-${version}.tar
-  ## from the BF FORUM repository and add them manually to the Nix store
+  ## Download the SDE and BSP packages from the Intel repository
+  ## and add them manually to the Nix store
   ##   nix-store --add-fixed sha256 <...>
   ## The hashes below are the "sha256sum" of these files.
   bf-sde = lib.mapAttrs (n: sdeDef: mkSDE (sdeDef // { inherit passthruFun; })) {
-    v9_1_1 = {
+    v9_1_1 = rec {
       version = "9.1.1";
+      srcName = "bf-sde-${version}.tar";
       srcHash = "be166d6322cb7d4f8eff590f6b0704add8de80e2f2cf16eb318e43b70526be11";
+      bspName = "bf-reference-bsp-${version}.tar";
       bspHash = "aebe8ba0ae956afd0452172747858aae20550651e920d3d56961f622c8d78fb8";
     };
-    v9_2_0 = {
+    v9_2_0 = rec {
       version = "9.2.0";
+      srcName = "bf-sde-${version}.tar";
       srcHash = "94cf6acf8a69928aaca4043e9ba2c665cc37d72b904dcadb797d5d520fb0dd26";
+      bspName = "bf-reference-bsp-${version}.tar";
       bspHash = "d817f609a76b3b5e6805c25c578897f9ba2204e7d694e5f76593694ca74f67ac";
     };
-    v9_3_0 = {
+    v9_3_0 = rec {
       version = "9.3.0";
+      srcName = "bf-sde-${version}.tgz";
       srcHash = "566994d074ba93908307890761f8d14b4e22fb8759085da3d71c7a2f820fe2ec";
+      bspName = "bf-reference-bsp-${version}.tgz";
       bspHash = "dd5e51aebd836bd63d0d7c37400e995fb6b1e3650ef08014a164124ba44e6a06";
       thrift = thrift_0_13;
+      stdenv = gcc8Stdenv;
     };
   };
 
