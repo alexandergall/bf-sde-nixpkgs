@@ -94,6 +94,21 @@ cannot build derivation '/nix/store/38s8lsm2f7vg93f7n5x98hwbzmdlxfq8-bf-sde-9.2.
 error: build of '/nix/store/38s8lsm2f7vg93f7n5x98hwbzmdlxfq8-bf-sde-9.2.0.drv' failed
 ```
 
+The `nix-store --add-fixed` command prints the name of the resulting
+path in the Nix store, e.g.
+
+```
+$ nix-store --add-fixed sha256 bf-sde-9.3.0.tgz bf-reference-bsp-9.3.0.tgz
+/nix/store/2bvvrxg0msqacn4i6v7fydpw07d4jbzj-bf-sde-9.3.0.tgz
+/nix/store/4kiww8687ryxmx1xymi5rn5199yr5alj-bf-reference-bsp-9.3.0.tgz
+```
+
+As with any path in `/nix/store`, these objects can only be deleted
+with `nix-store --delete <path>`, provided they are not referenced by
+any other object in `/nix/store` (in that case the command will fail).
+
+More information on the Nix store can be found [below](#nix-store).
+
 ## <a name="part1"></a>Part 1:  P4 Program Development
 
 In this mode, the SDE is used as an actual development system, in
@@ -690,6 +705,56 @@ store, it first checks whether it can be found in the binary cache.
 If so, it will fetch the pre-built package, otherwise it will proceed
 to build the package from source.
 
+### <a name="nix-store"></a>The Nix store
+
+Every package built by Nix (or, in Nix parlance, every "derivation")
+is stored in `/nix/store`. This directory is managed by the Nix
+utilities and must never be modified by hand.  To enforce this, it is
+mounted as read-only except for brief moments when the Nix tools need
+to modify it (this only applies to the multi-user installation of
+Nix).
+
+All package dependencies are tracked in a separate database and the
+Nix tools make sure that the Nix store is always in a consistent
+state.
+
+Nix never deletes anything from the store by itself.  A user can
+attempt to delete an object with
+
+```
+$ nix-store --delete /nix/store/...
+```
+
+However, it is possible that this fails. The reason is that Nix uses a
+garbage collector to keep track of objects that are deemed to be
+"live".  An object is considered to be live if it is either marked as
+a "garbage collection root" or is a direct or indirect dependency of
+such a root.  Live objects cannot be removed from the Nix store.
+
+The two main mechanisms which can cause an object to become a garbage
+collection root are profiles and `nix-build`.  Any store path
+referenced by a profile (created by `nix-env`) automatically becomes a
+root.
+
+Any successful execution of `nix-build` creates one or more symbolic
+links to the objects that it has created. These links are located in
+the directory where `nix-build` was executed and are called `result`
+or `result-<number>`.  All of the objects in `/nix/store` to which
+these links point also become garbage collection roots.
+
+All currently known roots can be listed with
+
+```
+$ nix-store --gc --print-roots
+```
+
+To delete all objects which are not live in a single go, any user can
+execute
+
+```
+$ nix-collect-garbage
+```
+
 ## Customising a package collection
 
 As described above, a package collection is represented as a single
@@ -1164,6 +1229,16 @@ contains a subdirectory in `lib/modules` for each kernel release,
 which contains the modules for that kernel. For example:
 
 ```
+$ ls -l /nix/store/gbhsy1rz1g4r66jj590lyr1a2pk5y2sm-bf-sde-9.3.0/lib/modules/
+total 12
+dr-xr-xr-x 2 root root 4096 Jan  1  1970 4.14.151-OpenNetworkLinux
+dr-xr-xr-x 2 root root 4096 Jan  1  1970 4.19.0-11-amd64
+dr-xr-xr-x 2 root root 4096 Jan  1  1970 4.19.81-OpenNetworkLinux
+$ ls -l /nix/store/gbhsy1rz1g4r66jj590lyr1a2pk5y2sm-bf-sde-9.3.0/lib/modules/4.19.0-11-amd64/
+total 16356
+-r--r--r-- 1 root root    34480 Jan  1  1970 bf_kdrv.ko
+-r--r--r-- 1 root root    61952 Jan  1  1970 bf_knet.ko
+-r--r--r-- 1 root root 16642352 Jan  1  1970 bf_kpkt.ko
 ```
 
 The `bin` directory of the SDE package also contains commands to load
