@@ -1,4 +1,4 @@
-{ self, version, srcHash, bspHash, kernels, passthruFun,
+{ self, lib, version, srcHash, bspHash, kernels, passthruFun,
   system, stdenv, writeText, gmp, glibc, python2, python3,
   pkg-config, file, thrift, openssl, boost, grpc,
   protobuf, zlib, libpcap, libusb, curl_7_52, cscope,
@@ -62,10 +62,10 @@ let
     python3Env = python3.withPackages (ps: with ps;
       [ packaging jsl jsonschema ]);
 
-    kernelDevPaths = builtins.concatStringsSep " "
-      (map (spec: spec.kernel.dev + ":" +
-                  spec.version + spec.localVersion + ":" +
-                  spec.distinguisher) kernels);
+    kernelSpecToStr = { release, build, distinguisher ? "" }:
+      builtins.concatStringsSep ":" [ release distinguisher build ];
+    kernelSpecs = builtins.concatStringsSep " "
+      (map (spec: kernelSpecToStr spec) kernels);
 
 in stdenv.mkDerivation rec {
   inherit version src passthru;
@@ -86,8 +86,7 @@ in stdenv.mkDerivation rec {
                   ## bf-diags
                   libpcap
                   ## bf-platforms
-                  libusb curl_7_52 ] ++
-                  (map (spec: spec.kernel.dev) kernels);
+                  libusb curl_7_52 ];
 
   patches = [ ./run_switchd.patch ];
 
@@ -196,6 +195,7 @@ in stdenv.mkDerivation rec {
     patchShebangs .
 
     ## sudo is not needed in the build environment
+    substituteInPlace p4studio_build.py --replace "sudo -E" ""
     substituteInPlace p4studio_build.py --replace sudo ""
     ## Pick up PKG_CONFIG_PATH from the build environment
     substituteInPlace p4studio_build.py --replace PKG_CONFIG_PATH= 'PKG_CONFIG_PATH=$PKG_CONFIG_PATH:'
@@ -225,20 +225,21 @@ in stdenv.mkDerivation rec {
     pushd build/bf-drivers
     ../../pkgsrc/bf-drivers/configure --prefix=$SDE_INSTALL enable_thrift=no \
        enable_grpc=no enable_bfrt=no enable_p4rt=no enable_pi=no --with-kdrv=yes
-    for spec in ${kernelDevPaths}; do
+    for spec in ${kernelSpecs}; do
+      oldIFS=$IFS
       IFS=":"
       set -- $spec
-      path=$1
-      version=$2
-      distinguisher=$3
-      IFS=" "
+      release=$1
+      distinguisher=$2
+      build=$3
+      IFS=$oldIFS
 
-      echo "Kernel $version$distinguisher"
-      export KDIR=$path/lib/modules/$version/build
+      echo "Kernel $release$distinguisher"
+      export KDIR=$build
       pushd kdrv
       make install
 
-      mod_dir=$SDE_INSTALL/lib/modules/$version$distinguisher
+      mod_dir=$SDE_INSTALL/lib/modules/$release$distinguisher
       mkdir -p $mod_dir
       mv $SDE_INSTALL/lib/modules/*.ko $mod_dir
 

@@ -62,6 +62,7 @@ let
     let
       self = callPackage ./generic.nix ({
         inherit self kernels;
+        stdenv = gcc8Stdenv;
       } // sdeDef);
     in self;
 
