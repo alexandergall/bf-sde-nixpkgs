@@ -1,8 +1,10 @@
 { self, lib, version, srcName, srcHash, bspName, bspHash,
-  kernels, passthruFun, system, stdenv, writeText, gmp, glibc,
+  kernels, passthruFun, system, stdenv, writeText,
   python2, python3, pkg-config, file, thrift, openssl, boost, grpc,
-  protobuf, zlib, libpcap, libusb, curl_7_52, cscope,
-  runtimeShell
+  protobuf, libpcap, libusb, curl_7_52, cscope,
+  runtimeShell,
+  ## Runtime dependencies of packaged binaries
+  glibc, libcli, gmp, zlib
 }:
 
 let
@@ -82,13 +84,16 @@ in stdenv.mkDerivation rec {
   ## this problem.
   propagatedBuildInputs = [ python2Env python3Env ];
   buildInputs = [ pkg-config file thrift
-                  openssl boost grpc protobuf zlib cscope
+                  openssl boost grpc protobuf cscope
                   ## bf-diags
                   libpcap
                   ## bf-platforms
                   libusb curl_7_52 ];
 
   patches = [ ./run_switchd.patch ];
+
+  ## patchelf bug: some binaries break when stripped after patching
+  dontStrip = true;
 
   buildPhase = ''
     function fixup() {
@@ -120,6 +125,17 @@ in stdenv.mkDerivation rec {
       rm -rf $dir
     }
 
+    function addPath () {
+      path=$1
+      obj=$2
+      if ! [ -f $path/$obj ]; then
+        echo "Object $obj not present in $path"
+        exit 1
+      fi
+      echo "Adding RPATH $path for $obj"
+      paths[$path]=1
+    }
+
     function patchElf() {
       local archive=$1
 
@@ -130,20 +146,49 @@ in stdenv.mkDerivation rec {
       tar xf ../$1
       cd *
 
-      for f in $(find . -type f -exec file {} \; | grep -i elf | cut -d' ' -f1 | sed -e 's/:$//'); do
-        echo $f
+      for f in $(find . -type f); do
+        read type arch rest <<<$(file -b $f)
+        [ "$type" == "ELF" ] || continue
+        [[ "$rest" =~ "dynamically linked" ]] || continue
+        if [ "$arch" != "64-bit" ]; then
+          echo "Skipping $f ELF/$arch"
+          continue
+        fi
+
+        echo "Patching $type/$arch $f"
         patchelf --set-interpreter ${glibc}/lib/ld-linux* $f || true
-        case $f in
-          *p4c-build-logs)
-            patchelf --set-rpath ${zlib}/lib $f
-            ;;
-          *p4i-9.1.1-0.linux)
-            patchelf --set-rpath ${stdenv.cc.cc.lib}/lib64 $f
-            ;;
-          *p4obfuscator)
-            patchelf --set-rpath ${stdenv.cc.cc.lib}/lib64:${gmp}/lib $f
-            ;;
-        esac
+
+        unset paths
+        declare -A paths
+        for path in $(patchelf --print-rpath $f); do
+          paths[$path]=1
+        done
+
+        for lib in $(patchelf --print-needed $f); do
+          match=
+          case ''${match:=$lib} in
+            libdl.so.2|libc.so.6|libm.so.6|ld-linux-x86-64.so.2|librt.so.1|libpthread.so.0)
+              addPath ${glibc}/lib $match
+              ;;
+            libstdc++.so.6|libgcc_s.so.1)
+              addPath ${stdenv.cc.cc.lib}/lib $match
+              ;;
+            libz.so.1)
+              addPath ${zlib}/lib $match
+              ;;
+            libgmp.so.10)
+              addPath ${gmp}/lib $match
+              ;;
+            libcli.so.1.9)
+              addPath ${libcli}/lib $match
+              ;;
+            *)
+              echo "Unhandled object $match in $f"
+              exit 1
+              ;;
+          esac
+        done
+        patchelf --set-rpath $(echo ''${!paths[@]} | tr ' ' ':') $f
       done
 
       for f in *; do
@@ -152,7 +197,7 @@ in stdenv.mkDerivation rec {
         fi
       done
 
-      patchShebangs .
+      patchShebangs $(realpath .)
 
       cd ..
       tar cjf ../$archive *
@@ -183,10 +228,17 @@ in stdenv.mkDerivation rec {
       "chmod u+x p4-build/tools/*.py"
 
     patchElf packages/p4-compilers-*
-    patchElf packages/p4i-*
+    if [ $(version ${version}) -lt $(version 9.3.0) ]; then
+      ## p4i in 9.3.0 has a large amount of runtime dependencies,
+      ## including X11 and graphics libraries, which need yet to be
+      ## tracked. For now, we ignore them and accept that p4i is
+      ## not working for 9.3.0.
+      patchElf packages/p4i-*
+    fi
     patchElf packages/p4o-*
+    patchElf packages/tofino-model-*
 
-    mkdir -p $out/install
+    mkdir -p $out
     export SDE=$(pwd)
     export SDE_INSTALL=$out
     
