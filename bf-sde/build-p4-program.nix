@@ -84,7 +84,7 @@ stdenv.mkDerivation rec {
     if [ -n "\$1" ]; then
       cd \$1
     fi
-    ${bf-sde}/run_switchd.sh -p $exec_name
+    ${bf-sde}/bin/run_switchd.sh -p $exec_name
     EOF
     chmod a+x $command
   '';
