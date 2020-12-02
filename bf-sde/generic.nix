@@ -316,17 +316,17 @@ in stdenv.mkDerivation rec {
       echo "$script.wrapped $SDE_INSTALL" >>$script
       chmod a+x $script
     done
-    tar -cf - bf-sde-${version}.manifest run_bfshell.sh run_switchd.sh run_tofino_model.sh | tar -xf - -C $out
     tar cf - pkgsrc/p4-build | tar -xf - -C $out
     tar cf - pkgsrc/p4-examples/tofino* | tar -xf - -C $out
+    cp bf-sde-${version}.manifest $out
+    cp run_*sh $out/bin
+    chmod a+x $out/bin/*.sh
 
     ## These scripts were copied from the tools provided for
     ## the BF Academy courses.
     cp ${./p4_build.sh} $out/bin/p4_build.sh
     cp ${./veth_setup.sh} $out/bin/veth_setup.sh
     cp ${./veth_teardown.sh} $out/bin/veth_teardown.sh
-    mv run_*sh $out/bin
-    chmod a+x $out/bin/*.sh
 
     ## The support output contains a script that starts a
     ## nix-shell in which P4 programs can be compiled and
