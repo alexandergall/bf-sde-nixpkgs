@@ -6,7 +6,7 @@ Note: The SDE for the Tofino series of programmable NPUs is currently
 only available under NDA from Intel/Barefoot.  The users of this
 repositories are assumed to be authorized to download and use the SDE.
 
-In its current form (version 9.2.0 at the time of writing), the SDE
+In its current form (version 9.3.0 at the time of writing), the SDE
 officially supports only a very specific set of operating systems.
 The main reason for this restriction is the management of build- and
 run-time dependencies.  Packaging of the SDE with Nix removes these
@@ -173,7 +173,7 @@ where `<version>` can be any of the values listed by `make env-list-versions`, c
 
 ```
 $ make env-list-versions
-[ "latest" "v9_1_1" "v9_2_0" ]
+[ "latest" "v9_1_1" "v9_2_0" "v9_3_0"]
 ```
 
 ### Usage from a Nix Profile
@@ -1175,7 +1175,7 @@ In general, compiling a kernel module requires the presence of the
 directory `/lib/modules/$(uname -r)/build`, where `uname -r` provides
 the release identifier of the running kernel.  The `build` directory
 is an artefact of the build procedure of the kernel itself. It
-contains everything needed to compile a kernel that will work with
+contains everything needed to compile a module that will work with
 that specific kernel.
 
 How exactly a kernel is built and how the build directory is
