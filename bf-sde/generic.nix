@@ -1,5 +1,5 @@
 { self, lib, version, srcName, srcHash, bspName, bspHash,
-  kernels, passthruFun, system, stdenv, writeText,
+  passthruFun, system, stdenv, writeText,
   python2, python3, pkg-config, file, thrift, openssl, boost, grpc,
   protobuf, libpcap, libusb, curl_7_52, cscope,
   runtimeShell,
@@ -18,7 +18,7 @@ let
       };
     src = fixedDerivation srcName srcHash;
     bsp = fixedDerivation bspName bspHash;
-    passthru = passthruFun { inherit self; };
+    passthru = passthruFun { inherit self version; };
 
     profile = writeText "bf-studio-profile"
       ''
@@ -64,16 +64,11 @@ let
     python3Env = python3.withPackages (ps: with ps;
       [ packaging jsl jsonschema ]);
 
-    kernelSpecToStr = { release, build, distinguisher ? "" }:
-      builtins.concatStringsSep ":" [ release distinguisher build ];
-    kernelSpecs = builtins.concatStringsSep " "
-      (map (spec: kernelSpecToStr spec) kernels);
-
 in stdenv.mkDerivation rec {
   inherit version src passthru;
   name = "bf-sde-${version}";
 
-  outputs = [ "out" "support" ];
+  outputs = [ "out" "support" "driver_src" ];
 
   ## We really only need python2Env as propagated input, but
   ## propagated inputs end up after regular inputs in the environment
@@ -92,7 +87,8 @@ in stdenv.mkDerivation rec {
 
   patches = [ ./run_switchd.patch ];
 
-  ## patchelf bug: some binaries break when stripped after patching
+  ## patchelf bug: some binaries break when stripped after patching. This
+  ## appears to be a problem with binutils <2.32.
   dontStrip = true;
 
   buildPhase = ''
@@ -273,32 +269,6 @@ in stdenv.mkDerivation rec {
 
     popd
 
-    echo "Building kernel modules"
-    pushd build/bf-drivers
-    ../../pkgsrc/bf-drivers/configure --prefix=$SDE_INSTALL enable_thrift=no \
-       enable_grpc=no enable_bfrt=no enable_p4rt=no enable_pi=no --with-kdrv=yes
-    for spec in ${kernelSpecs}; do
-      oldIFS=$IFS
-      IFS=":"
-      set -- $spec
-      release=$1
-      distinguisher=$2
-      build=$3
-      IFS=$oldIFS
-
-      echo "Kernel $release$distinguisher"
-      export KDIR=$build
-      pushd kdrv
-      make install
-
-      mod_dir=$SDE_INSTALL/lib/modules/$release$distinguisher
-      mkdir -p $mod_dir
-      mv $SDE_INSTALL/lib/modules/*.ko $mod_dir
-
-      make clean
-      popd
-    done
-    popd
   '';
 
   installPhase = ''
@@ -307,15 +277,6 @@ in stdenv.mkDerivation rec {
       ln -sr $out/bin/bf-p4c $out/bin/p4c
     fi
 
-    for mod in kpkt kdrv knet; do
-      script=$SDE_INSTALL/bin/bf_''${mod}_mod_load
-      substituteInPlace  $script \
-        --replace lib/modules "lib/modules/\$(uname -r)\''${SDE_KERNEL_DISTINGUISHER:-}"
-      mv $script ''${script}.wrapped
-      echo '#!${runtimeShell}' >>$script
-      echo "$script.wrapped $SDE_INSTALL" >>$script
-      chmod a+x $script
-    done
     tar cf - pkgsrc/p4-build | tar -xf - -C $out
     tar cf - pkgsrc/p4-examples/tofino* | tar -xf - -C $out
     cp bf-sde-${version}.manifest $out
@@ -335,5 +296,8 @@ in stdenv.mkDerivation rec {
     substitute ${./sde-env.sh} $support/bin/sde-env-${version} \
       --subst-var-by VERSION ${builtins.replaceStrings [ "." ] [ "_" ] version}
     chmod a+x $support/bin/sde-env-${version}
+
+    mkdir $driver_src
+    cp packages/bf-drivers-${version}.tgz $driver_src
   '';
 }

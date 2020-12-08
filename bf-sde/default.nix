@@ -3,13 +3,79 @@
 with pkgs;
 
 let
-  passthruFun = { self }:
+  kernels = import kernels/. callPackage;
+  localRelease = import (runCommand "local-kernel-release" {}
+    ''
+      echo \"$(uname -r)\" >$out
+    '');
+  kernelID = builtins.getEnv "SDE_KERNEL_ID";
+  selectLocalKernelID =
+    if kernelID == ""
+      then
+        let
+          matches = lib.filterAttrs (id: spec: spec.release == localRelease) kernels;
+          ids = lib.attrNames matches;
+          nMatches = builtins.length ids;
+        in if nMatches == 0 then
+            builtins.trace "Kernel ${localRelease} is unsupported, creating dummy package" ""
+          else
+            if nMatches == 1
+              then
+                lib.last ids
+              else
+                throw ''
+                  Multiple matches for kernel ${localRelease}.
+                  Chose one by setting SDE_KERNEL_ID to one of: ${lib.concatStringsSep ", " ids}
+                ''
+    else
+      kernelID;
+
+  ## If we are trying to build modules for the local kernel and
+  ## that kernel is not in the list of supported kernels,
+  ## we create this derivation instead which contains module load/unload
+  ## commands terminating with an error.  This helps making P4
+  ## programs create with buildP4Program fail in a clean manner.
+  errorModules = stdenv.mkDerivation {
+    name = "bf-sde-error-modules";
+    unpackPhase = "true";
+    installPhase = ''
+        mkdir -p $out/bin
+        for mod in kpkt kdrv knet; do
+          load_cmd=$out/bin/bf_''${mod}_mod_load
+          cat <<EOF >$load_cmd
+        #!${runtimeShell}
+        echo "No modules available for this kernel ($(uname -r))"
+        exit 1
+        EOF
+        chmod a+x $load_cmd
+        cp $load_cmd $out/bin/bf_''${mod}_mod_unload
+        done
+    '';
+  };
+
+  passthruFun = { self, version }:
     {
+      inherit version;
       ## A function that compiles a given P4 program in the context of
       ## the SDE.
       buildP4Program = callPackage ./build-p4-program.nix {
         bf-sde = self;
       };
+
+      ## A function which compiles the kernel modules for
+      ## a particular kernel, identified by the attribute
+      ## name of the set returned by kernels/default.nix
+      buildModules = kernelID:
+        if kernelID != "" then
+          callPackage ./kernels/build-modules.nix {
+            spec =  kernels.${kernelID};
+            bf-sde = self;
+          }
+        else
+          errorModules;
+
+      buildModulesForLocalKernel =
+        self.buildModules selectLocalKernelID;
 
       ## A function that can be used with nix-shell to create an
       ## environment for developing data-plane and control-plane
@@ -23,7 +89,7 @@ let
           inputs = (builtins.tryEval inputFn).value pkgs;
         in mkShell {
           ## kmod provides insmod, procps provides sysctl
-          buildInputs = [ self kmod procps utillinux which ] ++ inputs;
+          buildInputs = [ self self.buildModulesForLocalKernel kmod procps utillinux which ] ++ inputs;
           shellHook = ''
             export P4_INSTALL=~/.bf-sde/${self.version}
             export SDE=${self}
@@ -57,11 +123,10 @@ let
           '';
         };
     };
-  kernels = import ./kernels pkgs;
   mkSDE = sdeDef:
     let
       self = callPackage ./generic.nix ({
-        inherit self kernels;
+        inherit self;
       } // sdeDef);
     in self;
 
