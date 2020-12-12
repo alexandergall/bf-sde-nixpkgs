@@ -17,23 +17,55 @@
 
 callPackage:
 
-{
+let
+  mkKbuild = callPackage ./make-kbuild.nix {};
+  mk = arg: pkg:
+    callPackage pkg (arg // { inherit mkKbuild; });
+  mkONL = arg:
+    mk arg ./onl.nix;
+  mkDebian = arg:
+    mk arg ./debian.nix;
+  mkMion = arg:
+    mk arg ./mion.nix;
+in {
+  ## Mion/Yocto doesn't currently supply a working kernel build
+  ## directory.  We create one by compiling a pristine kernel with the
+  ## configuration copied from a running mion image (from
+  ## /proc/config.gz).
+  mion =
+    let
+      version = "5.4.49";
+      localVersion = "-yocto-standard";
+    in {
+      release = "${version}${localVersion}";
+      build = mkMion {
+        inherit version localVersion;
+        kbuild = (callPackage ./build-kernel.nix {
+          kernel = {
+            inherit version localVersion;
+            config = ./mion-5.4.49-config.gz;
+            sha256 = "0g2psjf2q10mfc3vv6brjn6s2nkg73ll1s04gpshw907d9irpn2m";
+          };
+        }).dev;
+      };
+    };
 
   ## OpenNetworkLinux creates a single deb file that essentially
   ## contains the full build directory.  The deb files themselves are
-  ## stored in this repo, because they are the result of building ONL
-  ## locally.
+  ## stored in this repo, because they are not available for download
+  ## (they are the result of building ONL
+  ## locally).
   ONL9 = {
     ## ONL with Debian9 created from commit 7c3bfd
     release = "4.14.151-OpenNetworkLinux";
-    build = callPackage ./onl.nix {
+    build = mkONL {
       deb = ./onl-kernel-4.14-lts-x86-64-all_1.0.0_amd64.deb;
     };
   };
   ONL10 = {
     ## ONL with Debian10, based on commit 1537d8
     release = "4.19.81-OpenNetworkLinux";
-    build = callPackage ./onl.nix {
+    build = mkONL {
       deb = ./onl-kernel-4.19-lts-x86-64-all_1.0.0_amd64.deb;
     };
   };
@@ -45,7 +77,7 @@ callPackage:
   Debian10 = {
     ## Standard kernel for Debian10 (buster)
     release = "4.19.0-11-amd64";
-    build = callPackage ./debian.nix {
+    build = mkDebian {
       arch = {
         name = "linux-headers-4.19.0-11-amd64_4.19.146-1_amd64.deb";
         sha256 = "1j0d10898sfnsw58fg7f28m4xx0gnrvm6jvdyxj7a8gzp02j1dzi";

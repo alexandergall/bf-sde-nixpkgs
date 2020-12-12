@@ -1,5 +1,4 @@
-{ arch, common, kbuild, stdenv, lib, fetchurl, runCommand,
- glibc, findutils, file, binutils-unwrapped, openssl, elfutils }:
+{ arch, common, kbuild, mkKbuild, fetchurl }:
 
 let
   fetch_deb = { name, sha256 }:
@@ -7,12 +6,9 @@ let
       url = "http://ftp.ch.debian.org/debian/pool/main/l/linux/${name}";
       inherit sha256;
     };
-in runCommand "debian-kbuild" {}
-  ''
-    set -e
-
-    PATH=$PATH:${lib.makeBinPath [ binutils-unwrapped findutils file ]}
-
+in mkKbuild.overrideAttrs (_: {
+  name = "debian-kbuild";
+  unpackPhase = ''
     arch=${fetch_deb arch}
     common=${fetch_deb common}
     kbuild=${fetch_deb kbuild}
@@ -55,33 +51,5 @@ in runCommand "debian-kbuild" {}
     ## sure we select a stdenv which supplies a suitable version of
     ## the compiler.
     sed -i -e 's/gcc-.*$/gcc/' $out/.kernelvariables
-
-    echo "Fixing up binaries"
-    for dirs in $out/scripts $out/tools; do
-      for f in $(find $dirs -type f); do
-        if file -b $f | grep ELF >/dev/null; then
-          echo $f
-          patchelf --set-interpreter ${glibc}/lib/ld-linux* $f || true
-	  rpath=
-	  for lib in $(patchelf --print-needed $f); do
-	    case $lib in
-	      libc.so.6)
-	        rpath=$rpath:${glibc}/lib
-		;;
-	      libcrypto.so.1.1)
-	        rpath=$rpath:${openssl}/lib
-		;;
-	      libelf.so.1)
-	        rpath=$rpath:${elfutils}/lib
-	      ;;
-	      *)
-	        echo "Unhandled object $lib in $f"
-		exit 1
-		;;
-	    esac
-	  done
-	  patchelf --set-rpath ''${rpath/#:/} $f
-        fi
-      done
-    done
-  ''
+  '';
+})
