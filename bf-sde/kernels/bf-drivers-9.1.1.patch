@@ -1,0 +1,53 @@
+--- a/kdrv/bf_kpkt/bf_kpkt_txrx.c
++++ b/kdrv/bf_kpkt/bf_kpkt_txrx.c
+@@ -496,7 +496,7 @@
+     printk(KERN_ERR "bf_kpkt error allocating frag\n");
+     return -1;
+   }
+-  page = virt_to_page(frag);
++  page = virt_to_head_page(frag);
+   offset = frag - page_address(page);
+   memcpy((u8 *)frag, tail->data, fragsz);
+   skb_add_rx_frag(skb, skb_shinfo(skb)->nr_frags, page, offset, fragsz, fragsz);
+@@ -704,11 +704,6 @@
+       }
+       return;
+     case BF_PKT_START:
+-      if(bf_skb_frag_add(rx_ring->pkt_first, skb) == 0) {
+-        dev_kfree_skb_any(skb);
+-      } else {
+-        goto err_and_exit;
+-      }
+       if (s != 0) {
+         dev_err(adapter->dev,
+                 "error incorrect middle rx_cb cos %d s:e %d:%d",
+@@ -717,6 +712,11 @@
+                 e);
+         goto err_and_exit;
+       }
++      if(bf_skb_frag_add(rx_ring->pkt_first, skb) == 0) {
++        dev_kfree_skb_any(skb);
++      } else {
++        goto err_and_exit;
++      }
+       /* mark the irx_buffer free. skb would be freed by kernel stack */
+       bf_kpkt_set_rx_ring_buff_free(adapter, rx_ring, buff_index);
+       rx_ring->stats.bytes += data_sz;
+@@ -807,7 +807,7 @@
+    */
+   count = 0;
+   for (f = 0; f < skb_shinfo(skb)->nr_frags; f++) {
+-    count += skb_shinfo(skb)->frags[f].size;
++    count += skb_frag_size(&(skb_shinfo(skb)->frags[f]));
+   }
+   /* start with sk_buff->len part. Check alignment.
+    * if not-aligned, then,
+@@ -911,7 +911,7 @@
+     u8 *frag_addr;
+     dma_addr_t frag_dma;
+     u16 frag_size;
+-    struct skb_frag_struct *frag = &skb_shinfo(skb)->frags[i];
++    skb_frag_t *frag = &(skb_shinfo(skb)->frags[i]);
+ 
+     end = (frag_count ? 0 : 1);
+     frag_size = skb_frag_size(frag);

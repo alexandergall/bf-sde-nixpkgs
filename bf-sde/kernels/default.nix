@@ -48,6 +48,9 @@ in {
           };
         }).dev;
       };
+      patches = {
+        "9.1.1" = [ ./bf-drivers-9.1.1.patch ];
+      };
     };
 
   ## OpenNetworkLinux creates a single deb file that essentially

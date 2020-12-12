@@ -68,7 +68,7 @@ let
       buildModules = kernelID:
         if kernelID != "" then
           callPackage ./kernels/build-modules.nix {
-            spec =  kernels.${kernelID};
+            spec =  { patches = []; } // kernels.${kernelID};
             bf-sde = self;
           }
         else

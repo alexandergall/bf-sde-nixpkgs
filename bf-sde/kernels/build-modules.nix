@@ -1,35 +1,39 @@
 ## Build the SDE modules for a specific kernel
 
-{ lib, stdenv, python2, runtimeShell, kmod, callPackage, runCommand, bf-sde, spec }:
+{ lib, stdenv, python2, runtimeShell, kmod, callPackage,
+  runCommand, bf-sde, spec }:
 
 stdenv.mkDerivation {
   name = "bf-sde-${bf-sde.version}-kernel-modules-${spec.release}";
 
   src = bf-sde.driver_src;
-
+  patches = lib.optionals (spec.patches ? ${bf-sde.version})
+                          spec.patches.${bf-sde.version};
   buildInputs = [ bf-sde python2 kmod ];
+  configureFlags = [
+    " --with-kdrv=yes"
+    "enable_thrift=no"
+    "enable_grpc=no"
+    "enable_bfrt=no"
+    "enable_p4rt=no"
+    "enable_pi=no"
+  ];
+  KDIR = "${spec.build}";
 
-  buildPhase = ''
-    tar xf * --strip-components 1
-    mkdir $out
+  unpackCmd = ''
+    mkdir source
+    tar -C source -xf $curSrc/* --strip-components 1
+  '';
 
-    mkdir build
-    pushd build
-    ../configure --prefix=$out enable_thrift=no \
-      enable_grpc=no enable_bfrt=no enable_p4rt=no enable_pi=no --with-kdrv=yes
-    echo "Kernel ${spec.release}"
-    export KDIR=${spec.build}
-    pushd kdrv
-    make install
+  preBuild = ''
+    cd kdrv
+  '';
 
+  postInstall = ''
     mod_dir=$out/lib/modules/${spec.release}
     mkdir -p $mod_dir
     mv $out/lib/modules/*.ko $mod_dir
-    popd
-    popd
-  '';
 
-  installPhase = ''
     for mod in kpkt kdrv knet; do
       script=$out/bin/bf_''${mod}_mod_load
       substituteInPlace  $script \
