@@ -18,7 +18,11 @@
   requiredKernelModule ? null,
 # The flags passed to the p4_build.sh script
   buildFlags ? "",
-  src
+  src,
+# Optional derivation overrides. They need to be applied here in
+# order to make the overridden derivation visibile to the
+# makeModuleWrapper passthru function
+  overrides ? {}
 }:
 
 assert requiredKernelModule != null -> lib.any (e: requiredKernelModule == e)
@@ -32,12 +36,12 @@ let
       if requiredKernelModule != null then
         callPackage ./modules-wrapper.nix {
           modules = bf-sde.buildModulesForLocalKernel;
-          inherit execName requiredKernelModule derivation;
+          inherit execName requiredKernelModule self;
         }
       else
         throw "${pname} does not require a kernel module";
   };
-  derivation = stdenv.mkDerivation rec {
+  self = (stdenv.mkDerivation rec {
     buildInputs = [ bf-sde getopt which procps ];
 
     inherit pname version src p4Name passthru;
@@ -83,6 +87,7 @@ let
       exec ${bf-sde}/bin/run_switchd.sh -p $exec_name
       EOF
       chmod a+x $command
+      runHook postInstall
     '';
-  };
-in derivation
+  }).overrideAttrs (_: overrides );
+in self

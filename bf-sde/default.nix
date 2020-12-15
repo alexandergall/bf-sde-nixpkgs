@@ -62,6 +62,35 @@ let
         bf-sde = self;
       };
 
+      ## A function that creates a command to run bf_switchd
+      ## without a P4 program.
+      buildP4DummyProgram =
+        let
+          p4Name = "bf-switchd-no_p4";
+        in self.buildP4Program {
+          pname = "bf-switchd-dummy";
+          version = "1.0";
+          src = null;
+          requiredKernelModule = "bf_kpkt";
+          inherit p4Name;
+          overrides = {
+            unpackPhase = "true";
+            buildPhase = ''
+              mkdir $out
+              exec_name=${p4Name}
+            '';
+            postInstall = ''
+              nlines=$(cat $command | wc -l)
+              head -$((nlines - 1)) $command >$command.new
+              cat <<EOF >> $command.new
+              exec ${self}/bin/run_switchd.sh --skip-p4 -c ${self}/share/p4/targets/tofino/skip_p4.conf
+              EOF
+              mv $command.new $command
+              chmod a+x $command
+            '';
+          };
+        };
+
       ## A function which compiles the kernel modules for
       ## a particular kernel, identified by the attribute
       ## name of the set returned by kernels/default.nix

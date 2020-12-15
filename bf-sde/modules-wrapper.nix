@@ -1,4 +1,4 @@
-{ lib, writeShellScriptBin, kmod, gawk, gnugrep, modules, execName, requiredKernelModule, derivation }:
+{ lib, writeShellScriptBin, kmod, gawk, gnugrep, modules, execName, requiredKernelModule, self }:
 
 writeShellScriptBin "${execName}-module-wrapper"
   ''
@@ -23,5 +23,5 @@ writeShellScriptBin "${execName}-module-wrapper"
         sudo ${modules}/bin/${requiredKernelModule}_mod_load
     fi
 
-    exec ${derivation}/bin/${execName} "$@"
+    exec ${self}/bin/${execName} "$@"
   ''
