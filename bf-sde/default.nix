@@ -186,6 +186,9 @@ let
       bspHash = "dd5e51aebd836bd63d0d7c37400e995fb6b1e3650ef08014a164124ba44e6a06";
       thrift = thrift_0_13;
       stdenv = gcc8Stdenv;
+      patches = {
+        bf-drivers = ./9.3.0-bfrtTable.py.patch;
+      };
     };
   };
 

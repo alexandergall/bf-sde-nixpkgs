@@ -1,5 +1,5 @@
 { self, lib, version, srcName, srcHash, bspName, bspHash,
-  passthruFun, system, stdenv, writeText,
+  passthruFun, patches ? {}, system, stdenv, writeText,
   python2, python3, pkg-config, file, thrift, openssl, boost, grpc,
   protobuf, libpcap, libusb, curl_7_52, cscope,
   runtimeShell,
@@ -19,6 +19,9 @@ let
     src = fixedDerivation srcName srcHash;
     bsp = fixedDerivation bspName bspHash;
     passthru = passthruFun { inherit self version; };
+    maybePatch = component:
+      builtins.trace "PATCH ${component}" lib.optionalString (builtins.hasAttr component patches)
+      ''"patch -p1 -i ${patches.${component}}"'';
 
     profile = writeText "bf-studio-profile"
       ''
@@ -206,7 +209,7 @@ in stdenv.mkDerivation rec {
     }
 
     fixup packages/bf-drivers-${version}.tgz \
-      "patch -p1 -i ${./bf_switchd_model.patch}"
+      "patch -p1 -i ${./bf_switchd_model.patch}" ${maybePatch "bf-drivers"}
     fixup packages/bf-syslibs-${version}.tgz
 
     ## judy/libedit/klish (erroneously?) add $lt_sysroot to the

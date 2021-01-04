@@ -1,0 +1,12 @@
+diff -Naur bf-drivers-9.3.0.orig/src/bf_rt/bf_rt_python/bfrtTable.py bf-drivers-9.3.0/src/bf_rt/bf_rt_python/bfrtTable.py
+--- bf-drivers-9.3.0.orig/src/bf_rt/bf_rt_python/bfrtTable.py	2020-10-14 04:36:45.000000000 +0200
++++ bf-drivers-9.3.0/src/bf_rt/bf_rt_python/bfrtTable.py	2021-01-04 15:45:49.742549616 +0100
+@@ -94,7 +94,7 @@
+             print("CLI Error: Init data fields for table {} failed.".format(self.name))
+             raise BfRtTableError("Table init field failed.", None, -1)
+         self.compress_input = False
+-        if len(self.key_fields) + len(self.data_fields) > 245:
++        if len(self.key_fields)*2 + len(self.data_fields) > 245:
+             self.compress_input = True
+ 
+     def set_frontend(self, bfrt_leaf):
