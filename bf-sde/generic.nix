@@ -20,8 +20,8 @@ let
     bsp = fixedDerivation bspName bspHash;
     passthru = passthruFun { inherit self version; };
     maybePatch = component:
-      builtins.trace "PATCH ${component}" lib.optionalString (builtins.hasAttr component patches)
-      ''"patch -p1 -i ${patches.${component}}"'';
+      lib.optionalString (builtins.hasAttr component patches)
+                         ''"patch -p1 -i ${patches.${component}}"'';
 
     profile = writeText "bf-studio-profile"
       ''
