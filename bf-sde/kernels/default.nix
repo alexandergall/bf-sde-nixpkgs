@@ -43,8 +43,9 @@ in {
         kbuild = (callPackage ./build-kernel.nix {
           kernel = {
             inherit version localVersion;
+            url = "http://git.yoctoproject.org/cgit.cgi/linux-yocto/snapshot/linux-yocto-5.4.49.tar.bz2";
+            sha256 = "18q4jbgw7kvwh41a4fxmr7wba99pj85ymayswlljj2gx9914p5br";
             config = ./mion-5.4.49-config.gz;
-            sha256 = "0g2psjf2q10mfc3vv6brjn6s2nkg73ll1s04gpshw907d9irpn2m";
           };
         }).dev;
       };
