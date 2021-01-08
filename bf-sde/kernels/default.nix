@@ -15,7 +15,9 @@
 ## managers to create a distribution-agnostic version of the kernel
 ## build directory.
 
-callPackage:
+pkgs:
+
+with pkgs;
 
 let
   mkKbuild = callPackage ./make-kbuild.nix {};
@@ -28,31 +30,29 @@ let
   mkMion = arg:
     mk arg ./mion.nix;
 in {
-  ## Mion/Yocto doesn't currently supply a working kernel build
-  ## directory.  We create one by compiling a pristine kernel with the
-  ## configuration copied from a running mion image (from
-  ## /proc/config.gz).
-  mion =
-    let
-      version = "5.4.49";
-      localVersion = "-yocto-standard";
-    in {
-      release = "${version}${localVersion}";
-      build = mkMion {
-        inherit version localVersion;
-        kbuild = (callPackage ./build-kernel.nix {
-          kernel = {
-            inherit version localVersion;
-            url = "http://git.yoctoproject.org/cgit.cgi/linux-yocto/snapshot/linux-yocto-5.4.49.tar.bz2";
-            sha256 = "18q4jbgw7kvwh41a4fxmr7wba99pj85ymayswlljj2gx9914p5br";
-            config = ./mion-5.4.49-config.gz;
-          };
-        }).dev;
+  ## Mion stores the kernel build artifacts in
+  ## build/tmp-glibc/work-shared/<machine>/kernel-build-artifacts, but
+  ## it also requires access to the full kernel sources.  The former
+  ## must be present here as a tar archive, the latter is fetched from
+  ## the Yocto kernel repository.  The git commit fetched here must
+  ## match exactly the commit for the kernel from the version of
+  ## https://github.com/NetworkGradeLinux/meta-mion-bsp.git used to
+  ## build the mion image, for example
+  ## https://github.com/NetworkGradeLinux/meta-mion-bsp/blob/dunfell/meta-mion-accton/recipes-kernel/linux/linux-yocto_5.4.bbappend
+  mion = rec {
+    release = "5.4.49-yocto-standard";
+    build = mkMion {
+      source = fetchurl {
+        url = "http://git.yoctoproject.org/cgit/cgit.cgi/linux-yocto/snapshot/v5.4.49-129-gec485bd4afef.tar.gz";
+        sha256 = "1cvm4g6x7z93rj071jcqgmml91pgy8nf6ablbj50j1aawd2rza5q";
       };
-      patches = {
-        "9.1.1" = [ ./bf-drivers-9.1.1.patch ];
-      };
+      kbuild = ./5.4.49-yocto-standard-build.xz;
     };
+    stdenv = gcc8Stdenv;
+    patches = {
+      "9.1.1" = [ ./bf-drivers-9.1.1.patch ];
+    };
+  };
 
   ## OpenNetworkLinux creates a single deb file that essentially
   ## contains the full build directory.  The deb files themselves are

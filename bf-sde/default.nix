@@ -3,7 +3,7 @@
 with pkgs;
 
 let
-  kernels = import kernels/. callPackage;
+  kernels = import kernels/. pkgs;
   localRelease = import (runCommand "local-kernel-release" {}
     ''
       echo \"$(uname -r)\" >$out
@@ -95,11 +95,13 @@ let
       ## a particular kernel, identified by the attribute
       ## name of the set returned by kernels/default.nix
       buildModules = kernelID:
-        if kernelID != "" then
-          callPackage ./kernels/build-modules.nix {
-            spec =  { patches = []; } // kernels.${kernelID};
+        let
+	  kernelSpec = kernels.${kernelID};
+        in if kernelID != "" then
+          callPackage ./kernels/build-modules.nix (rec {
+            spec =  { patches = []; } // kernelSpec;
             bf-sde = self;
-          }
+          } // (lib.optionalAttrs (builtins.hasAttr "stdenv" kernelSpec) { inherit (kernelSpec) stdenv; }))
         else
           errorModules;
 
