@@ -8,7 +8,8 @@ let
   modulesForSDE = sde:
     builtins.foldl' (result: kernelID: result // { ${kernelID} = sde.buildModules kernelID; }) {} (pkgs.lib.attrNames kernels);
   kernelModules = pkgs.lib.mapAttrs (version: sde: modulesForSDE sde) bf-sde;
+  sdePkgs = pkgs.lib.mapAttrs (version: sde: sde.pkgs) bf-sde;
 in {
   inherit bf-sde kernelModules;
-  inherit (bf-sde) pkgs;
+  pkgs = sdePkgs;
 }
