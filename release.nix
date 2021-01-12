@@ -10,4 +10,5 @@ let
   kernelModules = pkgs.lib.mapAttrs (version: sde: modulesForSDE sde) bf-sde;
 in {
   inherit bf-sde kernelModules;
+  inherit (bf-sde) pkgs;
 }
