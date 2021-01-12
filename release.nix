@@ -7,9 +7,10 @@ let
   kernels = import ./bf-sde/kernels pkgs.callPackage;
   modulesForSDE = sde:
     builtins.foldl' (result: kernelID: result // { ${kernelID} = sde.buildModules kernelID; }) {} (pkgs.lib.attrNames kernels);
-  kernelModules = pkgs.lib.mapAttrs (version: sde: modulesForSDE sde) bf-sde;
-  sdePkgs = pkgs.lib.mapAttrs (version: sde: sde.pkgs) bf-sde;
-in {
-  inherit bf-sde kernelModules;
-  pkgs = sdePkgs;
-}
+  mk = sde: {
+    inherit sde;
+    inherit (sde) pkgs;
+    kernelModules = modulesForSDE sde;
+  };
+  versions = pkgs.lib.mapAttrs (version: sde: mk sde) bf-sde;
+in versions
