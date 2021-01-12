@@ -1,15 +1,15 @@
 ## Build the SDE modules for a specific kernel
 
-{ lib, stdenv, python2, runtimeShell, kmod, callPackage,
-  runCommand, bf-sde, spec }:
+{ lib, stdenv, python2, runtimeShell, kmod,
+  version, src, spec, bf-syslibs }:
 
 stdenv.mkDerivation {
-  name = "bf-sde-${bf-sde.version}-kernel-modules-${spec.release}";
+  name = "bf-sde-${version}-kernel-modules-${spec.release}";
+  inherit src;
 
-  src = bf-sde.driver_src;
-  patches = lib.optionals (spec.patches ? ${bf-sde.version})
-                          spec.patches.${bf-sde.version};
-  buildInputs = [ bf-sde python2 kmod ];
+  patches = lib.optionals (spec.patches ? ${version})
+                          spec.patches.${version};
+  buildInputs = [ bf-syslibs python2 kmod ];
   configureFlags = [
     " --with-kdrv=yes"
     "enable_thrift=no"
@@ -19,11 +19,6 @@ stdenv.mkDerivation {
     "enable_pi=no"
   ];
   KDIR = "${spec.build}";
-
-  unpackCmd = ''
-    mkdir source
-    tar -C source -xf $curSrc/* --strip-components 1
-  '';
 
   preBuild = ''
     cd kdrv

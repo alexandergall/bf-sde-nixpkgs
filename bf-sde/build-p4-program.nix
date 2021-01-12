@@ -1,5 +1,5 @@
 { stdenv, callPackage, lib, bf-sde, getopt, which, coreutils, gnugrep,
-  gnused, procps, utillinux, runtimeShell }:
+  gnused, procps, utillinux, runtimeShell, python2 }:
 
 { pname,
   version,
@@ -29,6 +29,19 @@ assert requiredKernelModule != null -> lib.any (e: requiredKernelModule == e)
                                                [ "bf_kdrv" "bf_kpkt" "bf_knet" ];
 
 let
+
+  ## A stripped-down version of the SDE environment which only
+  ## contains the components needed at runtime
+  runtimeEnv = callPackage ({ version, buildEnv, bf-syslibs,
+                              bf-drivers, bf-utils, bf-platforms, tools }:
+    buildEnv {
+      name = "bf-sde-${version}-runtime";
+      paths = [ bf-syslibs bf-drivers bf-utils bf-platforms tools ];
+      ignoreCollisions = if (lib.versionAtLeast version "9.3.0")
+                           then true
+                           else false;
+    }) {};
+
   passthru = {
     ## Build a shell script to load the required kernel module for the
     ## current system before executing the program.
@@ -41,8 +54,9 @@ let
       else
         throw "${pname} does not require a kernel module";
   };
+
   self = (stdenv.mkDerivation rec {
-    buildInputs = [ bf-sde getopt which procps ];
+    buildInputs = [ bf-sde getopt which procps python2 ];
 
     inherit pname version src p4Name passthru;
 
@@ -72,8 +86,8 @@ let
       mkdir $out/bin
       cat <<EOF > $command
       #!${runtimeShell}
-      export SDE=${bf-sde}
-      export SDE_INSTALL=${bf-sde}
+      export SDE=${runtimeEnv}
+      export SDE_INSTALL=\$SDE
       export P4_INSTALL=$out
 
       ## We would like to make this self-contained with nixpkgs, but
@@ -84,7 +98,7 @@ let
       if [ -n "\$1" ]; then
         cd \$1
       fi
-      exec ${bf-sde}/bin/run_switchd.sh -p $exec_name
+      exec ${runtimeEnv}/bin/run_switchd.sh -p $exec_name
       EOF
       chmod a+x $command
       runHook postInstall
