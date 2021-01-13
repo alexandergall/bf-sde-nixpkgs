@@ -52,11 +52,10 @@ installation.
 ### Clone into the repository
 
 ```
-$ git clone --branch <tag> --recursive --shallow-submodules <...>
+$ git clone --branch <tag> <...>
 ```
 
-Replace `<tag>` with the desired release tag, e.g. `v1`.  This also
-clones the `nixpkgs` Git sub-module.
+Replace `<tag>` with the desired release tag, e.g. `v1`.
 
 ### Fetch and verify source archives
 
@@ -821,55 +820,30 @@ upgraded from one release to another.  There are actually different
 methods how to achieve this. This repository choses an approach which
 is essentially a hybrid of the fork and overlay mehtods.
 
-This works as follows.  We add the [Nixpkgs Git
-repository](https://github.com/NixOS/nixpkgs) to our repository as a
-sub-module and select one particular commit as our "default Nix
-expression".  In our case, we chose the release branch 19.03
+This works as follows.  We select a particular commit of the [Nixpkgs
+Git repository](https://github.com/NixOS/nixpkgs) repository as our
+base package collection and import it into our Nix expression in
+`default.nix`, for example
 
 ```
-[~/bf-sde-nixpkgs]$ cat ./.gitmodules 
-[submodule "nixpkgs"]
-        path = nixpkgs
-        url = https://github.com/NixOS/nixpkgs.git
-        branch = nixos-19.03
-```
-
-and commit
-
-```
-[~/bf-sde-nixpkgs]$ git submodule status
- 34c7eb7545d155cc5b6f499b23a7cb1c96ab4d59 nixpkgs (19.03-1562-g34c7eb7545d)
-```
-
-The submodule lives in the `nixpkgs` subdirectory
-
-```
-[~/bf-sde-nixpkgs]$ ls -l nixpkgs/
-total 32
--rw-r--r--  1 gall users 1097 Aug 19 12:25 COPYING
--rw-r--r--  1 gall users  968 Aug 19 12:25 default.nix
-drwxr-xr-x  5 gall users 4096 Aug 19 12:25 doc
-drwxr-xr-x  4 gall users 4096 Aug 19 12:25 lib
-drwxr-xr-x  3 gall users 4096 Aug 19 12:25 maintainers
-drwxr-xr-x  7 gall users 4096 Aug 19 12:25 nixos
-drwxr-xr-x 17 gall users 4096 Aug 19 12:25 pkgs
--rw-r--r--  1 gall users 2374 Aug 19 12:25 README.md
-```
-
-We will keep this version fixed until there is a reason to change it,
-e.g. to pick up new dependencies for fututre versions of the SDE.
-
-The actual overlay is stored in the `overlay.nix` file, which is
-combined with the Nix expression from the submodule with the following
-code found in `default.nix`
-
-```
+$ cat default.nix
 { overlays ? [], ... } @attrs:
 
-import ./nixpkgs ( attrs // {
+let
+  nixpkgs = (fetchTarball https://github.com/NixOS/nixpkgs/archive/19.03-1562-g34c7eb7545d.tar.gz);
+in import nixpkgs ( attrs // {
   overlays = import ./overlay.nix ++ overlays;
 })
 ```
+
+In this case, the commit is `34c7eb7545d`, which is part of the
+`19.03` branch of `nixpkgs`.
+
+We will keep this version fixed until there is a reason to change it,
+e.g. to pick up new dependencies for future versions of the SDE.
+
+The actual overlay is stored in the `overlay.nix` file, which is
+combined with the Nix expression as shown above.
 
 The upcoming Nix version 3.0 introduces the concept of
 [Flakes](https://nixos.wiki/wiki/Flakes), which provides a similar
