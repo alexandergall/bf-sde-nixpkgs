@@ -13,7 +13,5 @@ buildEnv {
             p4c tofino-model tools ];
 
   ## bfrt Python modules overlap in bfUtils and bfDrivers
-  ignoreCollisions = if (lib.versionAtLeast version "9.3.0")
-                       then true
-                       else false;
+  ignoreCollisions = lib.versionAtLeast version "9.3.0";
 }

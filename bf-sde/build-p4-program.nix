@@ -37,9 +37,7 @@ let
     buildEnv {
       name = "bf-sde-${version}-runtime";
       paths = [ bf-syslibs bf-drivers bf-utils bf-platforms tools ];
-      ignoreCollisions = if (lib.versionAtLeast version "9.3.0")
-                           then true
-                           else false;
+      ignoreCollisions = lib.versionAtLeast version "9.3.0";
     }) {};
 
   passthru = {
