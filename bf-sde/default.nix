@@ -177,7 +177,10 @@ let
             inputs = (builtins.tryEval inputFn).value pkgs;
           in mkShell {
             ## kmod provides insmod, procps provides sysctl
-            buildInputs = [ self self.buildModulesForLocalKernel kmod procps utillinux which ] ++ inputs;
+            ## bf-drivers pulls in a Python2 environment with
+            ## grpcio through its propagated build input.
+            buildInputs = [ self self.pkgs.bf-drivers self.buildModulesForLocalKernel
+                            kmod procps utillinux which ] ++ inputs;
             shellHook = ''
               export P4_INSTALL=~/.bf-sde/${self.version}
               export SDE=${self}
@@ -186,7 +189,7 @@ let
               export SDE_LOGS=$P4_INSTALL/logs
               ## See comment in ./build_p4_program.nix regarding /usr/bin
               export PATH=$PATH:/usr/bin
-              export PYTHONPATH=${self}/lib/python2.7/site-packages/tofino:$PYTHONPATH
+              export PYTHONPATH=${self.pkgs.bf-drivers}/lib/python2.7/site-packages/tofino:$PYTHONPATH
               mkdir -p $P4_INSTALL $SDE_BUILD $SDE_LOGS
 
               cat <<EOF
