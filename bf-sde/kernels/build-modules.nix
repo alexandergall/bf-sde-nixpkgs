@@ -18,7 +18,7 @@ stdenv.mkDerivation {
     "enable_p4rt=no"
     "enable_pi=no"
   ];
-  KDIR = "${spec.build}";
+  KDIR = "${spec.buildTree}";
 
   preBuild = ''
     cd kdrv

@@ -152,13 +152,16 @@ let
         ## name of the set returned by kernels/default.nix
         buildModules = kernelID:
           let
-            kernelSpec = kernels.${kernelID};
+            defaults = {
+              patches = [];
+              buildModulesOverrides = {};
+            };
+            spec = defaults // kernels.${kernelID};
           in if kernelID != "" then
-            callPackage ./kernels/build-modules.nix (rec {
-              spec =  { patches = []; } // kernelSpec;
+            callPackage ./kernels/build-modules.nix ({
+              inherit spec;
               src = extractSource "bf-drivers";
-            } // (lib.optionalAttrs (kernelSpec ? "stdenv")
-                                    { inherit (kernelSpec) stdenv; }))
+            } // spec.buildModulesOverrides)
           else
             errorModules;
 
