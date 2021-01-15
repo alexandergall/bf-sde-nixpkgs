@@ -1,16 +1,20 @@
+## Used by the Hydra CI system to build all components for all
+## SDE versions.
 { }:
 
 let
   pkgs = import ./. {};
+in with pkgs;
+with lib;
+
+let
   ## Hydra doesn't like non-derivation attributes
-  bf-sde = with pkgs.lib; filterAttrs (n: v: attrsets.isDerivation v) pkgs.bf-sde;
-  kernels = import ./bf-sde/kernels pkgs.callPackage;
-  modulesForSDE = sde:
-    builtins.foldl' (result: kernelID: result // { ${kernelID} = sde.buildModules kernelID; }) {} (pkgs.lib.attrNames kernels);
+  bf-sde = filterAttrs (n: v: attrsets.isDerivation v) pkgs.bf-sde;
+  kernels = import ./bf-sde/kernels pkgs;
   mk = sde: {
     inherit sde;
     inherit (sde) pkgs;
-    kernelModules = modulesForSDE sde;
+    kernelModules = mapAttrs (kernelID: _: sde.buildModules kernelID) kernels;
   };
-  versions = pkgs.lib.mapAttrs (version: sde: mk sde) bf-sde;
+  versions = mapAttrs (version: sde: mk sde) bf-sde;
 in versions
