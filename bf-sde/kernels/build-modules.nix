@@ -7,8 +7,7 @@ stdenv.mkDerivation {
   name = "bf-sde-${version}-kernel-modules-${spec.release}";
   inherit src;
 
-  patches = lib.optionals (spec.patches ? ${version})
-                          spec.patches.${version};
+  patches = spec.patches.${version} or [];
   buildInputs = [ bf-syslibs python2 kmod ];
   configureFlags = [
     " --with-kdrv=yes"

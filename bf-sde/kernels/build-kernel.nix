@@ -17,11 +17,8 @@ let
       inherit stdenv modDirVersion;
       configfile = uncompress kernel.config;
       src = fetchurl {
-        url = if builtins.hasAttr "url" kernel
-	  then
-	    kernel.url
-	  else
-	    "mirror://kernel/linux/kernel/v${firstCharacterOf kernel.version}.x/linux-${kernel.version}.tar.xz";
+        url = kernel.url or
+	      "mirror://kernel/linux/kernel/v${firstCharacterOf kernel.version}.x/linux-${kernel.version}.tar.xz";
         inherit (kernel) sha256;
       };
       kernelPatches = [];

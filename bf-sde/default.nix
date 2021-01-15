@@ -82,8 +82,7 @@ let
       mkSrc = component: {
         pname = component;
         src = extractSource component;
-        patches = lib.optionals (sdeSpec.patches ? ${component})
-                                sdeSpec.patches.${component};
+        patches = sdeSpec.patches.${component} or [];
       };
 
       callPackage = lib.callPackageWith
