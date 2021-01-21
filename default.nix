@@ -1,7 +1,7 @@
 { overlays ? [], ... } @attrs:
 
 let
-  nixpkgs = (fetchTarball https://github.com/NixOS/nixpkgs/archive/19.03-1562-g34c7eb7545d.tar.gz);
+  nixpkgs = (fetchTarball https://github.com/NixOS/nixpkgs/archive/20.09-1181-gfee7f3fcb41.tar.gz);
 in import nixpkgs ( attrs // {
   overlays = import ./overlay.nix ++ overlays;
 })

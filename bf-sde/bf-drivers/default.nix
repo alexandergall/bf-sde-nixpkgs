@@ -5,11 +5,14 @@ assert stdenv.isx86_64 || stdenv.isi686;
 
 let
   ## grpcio is a runtime dependency for using the brft-python
-  ## interface.  The other dependencies are needed to build the
-  ## bf-diags package, though it is not actually clear why this
-  ## appears to be the only way to make this work.
+  ## interface.  It also creates the "google" namespace package which
+  ## bfrt-python is a part of via
+  ## lib/python2.7/site-packages/tofino/google.  The setuptools
+  ## package is needed to make that namespace package work with python
+  ## applications that have bf-drivers as a dependency. tenjin overrides
+  ## the broken tenjin included in third-party.
   python2Env = python2.withPackages (ps: with ps;
-    [ grpcio tenjin six ]);
+    [ grpcio tenjin setuptools ]);
   arch = if stdenv.isx86_64
     then
       "x86_64"

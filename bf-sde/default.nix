@@ -85,8 +85,7 @@ let
         patches = sdeSpec.patches.${component} or [];
       };
 
-      callPackage = lib.callPackageWith
-        (pkgs // sdePkgs // (lib.filterAttrs (n: v: n != "patches") sdeSpec));
+      callPackage = lib.callPackageWith (pkgs // sdePkgs // sdeSpec);
       sdePkgs = {
         bf-syslibs = callPackage ./bf-syslibs (mkSrc "bf-syslibs");
         bf-utils = callPackage ./bf-utils (mkSrc "bf-utils" // {
@@ -236,7 +235,11 @@ let
   ## and add them manually to the Nix store
   ##   nix-store --add-fixed sha256 <...>
   ## The hashes below are the "sha256sum" of these files.
-  bf-sde = lib.mapAttrs (_: sdeSpec: mkSDE ({ patches = {}; } // sdeSpec)) {
+  common = {
+    curl = curl_7_52;
+    patches = [];
+  };
+  bf-sde = lib.mapAttrs (_: sdeSpec: mkSDE (common // sdeSpec)) {
     v9_1_1 = rec {
       version = "9.1.1";
       sde = {
@@ -247,6 +250,8 @@ let
         name = "bf-reference-bsp-${version}.tar";
         outputHash = "aebe8ba0ae956afd0452172747858aae20550651e920d3d56961f622c8d78fb8";
       };
+      stdenv = gcc7Stdenv;
+      thrift = thrift_0_12;
     };
     v9_2_0 = rec {
       version = "9.2.0";
@@ -258,6 +263,8 @@ let
         name = "bf-reference-bsp-${version}.tar";
         outputHash = "d817f609a76b3b5e6805c25c578897f9ba2204e7d694e5f76593694ca74f67ac";
       };
+      stdenv = gcc7Stdenv;
+      thrift = thrift_0_12;
     };
     v9_3_0 = rec {
       version = "9.3.0";
@@ -269,8 +276,8 @@ let
         name = "bf-reference-bsp-${version}.tgz";
         outputHash = "dd5e51aebd836bd63d0d7c37400e995fb6b1e3650ef08014a164124ba44e6a06";
       };
-      thrift = thrift_0_13;
       stdenv = gcc8Stdenv;
+      thrift = thrift_0_13;
       patches = {
         bf-drivers = [ ./bf-drivers/9.3.0-bfrtTable.py.patch ];
       };

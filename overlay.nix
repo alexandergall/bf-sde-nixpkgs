@@ -1,5 +1,5 @@
 let
-  grpc_1_17_0 = super: pname: fetchSubmodules: sha256: rec {
+  grpc_1_17_0_attrs = super: pname: fetchSubmodules: sha256: rec {
     version = "1.17.0";
     name = "${pname}-${version}";
     src = super.fetchFromGitHub {
@@ -8,6 +8,8 @@ let
       rev = "v${version}";
       inherit fetchSubmodules sha256;
     };
+    ## Fix issue with glibc 2.30 and later
+    patches = [ ./grpc/1.17.0-glibc.patch ];
   };
 
   overlay = self: super: rec {
@@ -29,24 +31,7 @@ let
       patches = [];
     });
 
-    ## Make the default explicit for future upgrades of the
-    ## underlying nixpkgs
-    protobuf = self.protobuf3_6;
-
-    grpc = super.grpc.overrideAttrs(oldAttrs:
-      (grpc_1_17_0 super "grpc" false "17y8lhkx22qahjk89fa0bh76q76mk9vwza59wbwcpzmy0yhl2k23") // {
-      # grpc has a CMakefile and a standard (non-autoconf) Makefile. We
-      # use cmake to build the package but that method does not support
-      # pkg-config. We have to use the Makefile for that explicitely.
-      postInstall = ''
-          cd ..
-          export BUILDDIR_ABSOLUTE=$out prefix=$out
-          make install-pkg-config_c
-          make install-pkg-config_cxx
-      '';
-    });
-
-    thrift = super.thrift.overrideAttrs(oldAttrs: rec {
+    thrift_0_12 = super.thrift.overrideAttrs(oldAttrs: rec {
       version = "0.12.0";
       name = "thrift-${version}";
 
@@ -68,10 +53,27 @@ let
 
     });
 
+    ## Override protobuf globally because grpc and grpcio depend on it and
+    ## they are both dependencies of bf-drivers.
+    protobuf = self.protobuf3_6;
+
+    grpc = super.grpc.overrideAttrs(oldAttrs:
+      (grpc_1_17_0_attrs super "grpc" false "17y8lhkx22qahjk89fa0bh76q76mk9vwza59wbwcpzmy0yhl2k23") // {
+      # grpc has a CMakefile and a standard (non-autoconf) Makefile. We
+      # use cmake to build the package but that method does not support
+      # pkg-config. We have to use the Makefile for that explicitely.
+      postInstall = ''
+          cd ..
+          export BUILDDIR_ABSOLUTE=$out prefix=$out
+          make install-pkg-config_c
+          make install-pkg-config_cxx
+      '';
+    });
+
     python2 = super.python2.override {
       packageOverrides = python-self: python-super: {
         grpcio = python-super.grpcio.overrideAttrs(oldAttrs:
-            grpc_1_17_0 super "grpcio" true "06jpr27l71wz0fbifizdsalxvpraix7s5dg30pgd2wvd77ky5p3h");
+            grpc_1_17_0_attrs super "grpcio" true "06jpr27l71wz0fbifizdsalxvpraix7s5dg30pgd2wvd77ky5p3h");
 
         ## tenjin.py is included in the bf-drivers packages and
         ## installed in
@@ -114,7 +116,7 @@ let
 
     ## This set contains one derivation per SDE version.  The names of
     ## the attributes are of the form "v<version>" with dots replaced
-    ## by undetscores, e.g. "v9_2_0".
+    ## by underscores, e.g. "v9_2_0".
     bf-sde = self.recurseIntoAttrs (import ./bf-sde { pkgs = self; });
   };
 in [ overlay ]

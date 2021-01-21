@@ -1,0 +1,21 @@
+diff -Naur source/src/core/lib/gpr/log_linux.cc grpc-1.17.0/src/core/lib/gpr/log_linux.cc
+--- source/src/core/lib/gpr/log_linux.cc	1970-01-01 01:00:01.000000000 +0100
++++ grpc-1.17.0/src/core/lib/gpr/log_linux.cc	2021-01-19 22:03:28.110175176 +0100
+@@ -40,7 +40,7 @@
+ #include <time.h>
+ #include <unistd.h>
+ 
+-static long gettid(void) { return syscall(__NR_gettid); }
++static long sys_gettid(void) { return syscall(__NR_gettid); }
+ 
+ void gpr_log(const char* file, int line, gpr_log_severity severity,
+              const char* format, ...) {
+@@ -70,7 +70,7 @@
+   gpr_timespec now = gpr_now(GPR_CLOCK_REALTIME);
+   struct tm tm;
+   static __thread long tid = 0;
+-  if (tid == 0) tid = gettid();
++  if (tid == 0) tid = sys_gettid();
+ 
+   timer = static_cast<time_t>(now.tv_sec);
+   final_slash = strrchr(args->file, '/');
