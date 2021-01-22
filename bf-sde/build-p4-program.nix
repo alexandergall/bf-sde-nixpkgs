@@ -29,17 +29,24 @@ assert requiredKernelModule != null -> lib.any (e: requiredKernelModule == e)
                                                [ "bf_kdrv" "bf_kpkt" "bf_knet" ];
 
 let
+  makeModuleWrapper' = { modules }:
+    if requiredKernelModule != null then
+      callPackage ./modules-wrapper.nix {
+        inherit modules execName requiredKernelModule self;
+      }
+    else
+      throw "${pname} does not require a kernel module";
+
   passthru = {
-    ## Build a shell script to load the required kernel module for the
-    ## current system before executing the program.
-    makeModuleWrapper =
-      if requiredKernelModule != null then
-        callPackage ./modules-wrapper.nix {
-          modules = bf-sde.buildModulesForLocalKernel;
-          inherit execName requiredKernelModule self;
-        }
-      else
-        throw "${pname} does not require a kernel module";
+    ## Build a shell script to load the required kernel module for a given
+    ## kernel before executing the program.
+    ## Used by release.nix to pre-build wrappers for all kernels
+    makeModuleWrapperForKernel = kernelID:
+      makeModuleWrapper' { modules = bf-sde.buildModules kernelID; };
+    ## Build the wrapper for the running system
+    makeModuleWrapper = makeModuleWrapper' {
+      modules = bf-sde.buildModulesForLocalKernel;
+    };
   };
 
   self = (stdenv.mkDerivation rec {
