@@ -103,6 +103,9 @@ let
         tools = callPackage ./tools {
           src = sde;
         };
+        ## A stripped-down version of the SDE environment which only
+        ## contains the components needed at runtime
+        runtimeEnv = callPackage ./sde-runtime.nix {};
       };
 
       passthru = {

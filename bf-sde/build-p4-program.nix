@@ -1,5 +1,5 @@
-{ stdenv, callPackage, lib, bf-sde, getopt, which, coreutils, gnugrep,
-  gnused, procps, utillinux, runtimeShell, python2 }:
+{ stdenv, callPackage, lib, bf-sde, runtimeEnv, getopt, which, coreutils,
+  gnugrep, gnused, procps, utillinux, runtimeShell, python2 }:
 
 { pname,
   version,
@@ -29,17 +29,6 @@ assert requiredKernelModule != null -> lib.any (e: requiredKernelModule == e)
                                                [ "bf_kdrv" "bf_kpkt" "bf_knet" ];
 
 let
-
-  ## A stripped-down version of the SDE environment which only
-  ## contains the components needed at runtime
-  runtimeEnv = callPackage ({ version, buildEnv, bf-syslibs,
-                              bf-drivers, bf-utils, bf-platforms, tools }:
-    buildEnv {
-      name = "bf-sde-${version}-runtime";
-      paths = [ bf-syslibs bf-drivers bf-utils bf-platforms tools ];
-      ignoreCollisions = lib.versionAtLeast version "9.3.0";
-    }) {};
-
   passthru = {
     ## Build a shell script to load the required kernel module for the
     ## current system before executing the program.
