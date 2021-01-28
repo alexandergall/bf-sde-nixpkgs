@@ -40,6 +40,10 @@ let
       throw "${pname} does not require a kernel module";
 
   passthru = {
+    ## Preserve the name of the program. Used by the test.cases
+    ## attribute of the sde package.
+    inherit p4Name;
+
     ## Build a shell script to load the required kernel module for a given
     ## kernel before executing the program.
     ## Used by release.nix to pre-build wrappers for all kernels

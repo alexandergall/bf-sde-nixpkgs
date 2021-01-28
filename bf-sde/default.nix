@@ -123,8 +123,7 @@ let
             let
               runTest = program:
                 let
-                  name = program.name;
-                  args = (import (./p4-16-examples + "/${self.version}.nix")).${name}.args or {};
+                  args = (import (./p4-16-examples + "/${self.version}.nix")).args.${program.p4Name} or {};
                 in program.runTest args;
              in lib.mapAttrs (_: program: runTest program) programs;
           failed-cases = lib.filterAttrs (n: v: (import (v + "/passed") == false)) cases;
