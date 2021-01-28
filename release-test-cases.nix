@@ -12,7 +12,7 @@ let
   ## Hydra doesn't like non-derivation attributes
   bf-sde' = filterAttrs (n: v: attrsets.isDerivation v) bf-sde;
   mk = sde: {
-    inherit (sde) testCases failedTests;
+    inherit (sde.test) programs cases;
   };
   versions = mapAttrs (version: sde: mk sde) bf-sde';
 in versions

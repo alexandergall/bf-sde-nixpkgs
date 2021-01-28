@@ -114,6 +114,21 @@ let
       passthru = {
         inherit (sdeSpec) version;
         pkgs = sdePkgs;
+        test = rec {
+          programs = import ./p4-16-examples (mkSrc "p4-examples" // {
+            bf-sde = self;
+            inherit (pkgs) lib;
+          });
+          cases =
+            let
+              runTest = program:
+                let
+                  name = program.name;
+                  args = (import (./p4-16-examples + "/${self.version}.nix")).${name}.args or {};
+                in program.runTest args;
+             in lib.mapAttrs (_: program: runTest program) programs;
+          failed-cases = lib.filterAttrs (n: v: (import (v + "/passed") == false)) cases;
+        };
 
         ## A function that compiles a given P4 program in the context of
         ## the SDE.
@@ -222,13 +237,6 @@ let
             '';
           };
 
-        testCases = import ./test-cases {
-          inherit pkgs;
-          bf-sde = self;
-          srcSpec = mkSrc "p4-examples";
-        };
-        failedTests = lib.filterAttrs (n: v: (import (v + "/passed") == false))
-                                      passthru.testCases;
 
         ## A derivation containing a script that starts a nix-shell in
         ## which P4 programs can be compiled and run in the context of
@@ -252,7 +260,7 @@ let
   common = {
     curl = curl_7_52;
     patches = {
-      p4-examples = [ ./test-cases/ptf.patch ];
+      p4-examples = [ ./p4-16-examples/ptf.patch ];
     };
   };
   bf-sde = lib.mapAttrs (_: sdeSpec: mkSDE (lib.recursiveUpdate common sdeSpec)) {
