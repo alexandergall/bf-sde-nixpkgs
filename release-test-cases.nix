@@ -11,11 +11,8 @@ with lib;
 let
   ## Hydra doesn't like non-derivation attributes
   bf-sde' = filterAttrs (n: v: attrsets.isDerivation v) bf-sde;
-  kernels = import ./bf-sde/kernels pkgs;
   mk = sde: {
-    inherit sde;
-    inherit (sde) pkgs;
-    kernelModules = mapAttrs (kernelID: _: sde.buildModules kernelID) kernels;
+    inherit (sde) testCases failedTests;
   };
   versions = mapAttrs (version: sde: mk sde) bf-sde';
 in versions
