@@ -15,7 +15,7 @@
         }
     },
     "stable-test-cases": {
-        "enabled": 0,
+        "enabled": 1,
         "hidden": false,
         "description": "Barefoot Tofino SDE",
         "nixexprinput": "src",
@@ -45,7 +45,7 @@
         }
     },
     "testing-test-cases": {
-        "enabled": 0,
+        "enabled": 1,
         "hidden": false,
         "description": "Barefoot Tofino SDE",
         "nixexprinput": "src",

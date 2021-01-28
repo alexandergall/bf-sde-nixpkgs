@@ -12,7 +12,7 @@ with lib;
 
 let
   mk = sde: {
-    inherit (sde.test) programs cases;
+    inherit (sde.test) programs;
   };
   versions = mapAttrs (version: sde: mk sde) bf-sde;
 in versions
