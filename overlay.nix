@@ -94,6 +94,15 @@ let
           };
         };
 
+        ply = python-super.ply.overrideAttrs (_: rec {
+          pname = "ply";
+          version = "3.9";
+
+          src = python-super.fetchPypi {
+            inherit pname version;
+            sha256 = "0gpl0yli3w03ipyqfrp3w5nf0iawhsq65anf5wwm2wf5p502jzhd";
+          };
+        });
       };
     };
 

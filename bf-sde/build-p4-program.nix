@@ -47,6 +47,8 @@ let
     makeModuleWrapper = makeModuleWrapper' {
       modules = bf-sde.buildModulesForLocalKernel;
     };
+    runTest = { ... }@params:
+      callPackage ./run-test.nix (params // { inherit bf-sde; });
   };
 
   self = (stdenv.mkDerivation rec {

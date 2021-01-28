@@ -1,0 +1,45 @@
+diff -Naur p4-examples-9.3.0.orig/p4_16_programs/tna_checksum/test.py p4-examples-9.3.0/p4_16_programs/tna_checksum/test.py
+--- p4-examples-9.3.0.orig/p4_16_programs/tna_checksum/test.py	2020-10-14 04:42:23.000000000 +0200
++++ p4-examples-9.3.0/p4_16_programs/tna_checksum/test.py	2021-01-26 18:46:40.873694888 +0100
+@@ -19,6 +19,7 @@
+ ################################################################################
+ 
+ import logging
++import struct
+ 
+ from ptf import config
+ import ptf.testutils as testutils
+diff -Naur p4-examples-9.3.0.orig/p4_16_programs/tna_pktgen/test.py p4-examples-9.3.0/p4_16_programs/tna_pktgen/test.py
+--- p4-examples-9.3.0.orig/p4_16_programs/tna_pktgen/test.py	2020-10-14 04:42:24.000000000 +0200
++++ p4-examples-9.3.0/p4_16_programs/tna_pktgen/test.py	2021-01-26 19:57:01.584196017 +0100
+@@ -20,6 +20,8 @@
+ 
+ import logging
+ 
++import subprocess
++import time
+ import ptf
+ from ptf import config
+ from ptf.thriftutils import *
+diff -Naur p4-examples-9.3.0.orig/p4_16_programs/tna_snapshot/test.py p4-examples-9.3.0/p4_16_programs/tna_snapshot/test.py
+--- p4-examples-9.3.0.orig/p4_16_programs/tna_snapshot/test.py	2020-10-14 04:42:23.000000000 +0200
++++ p4-examples-9.3.0/p4_16_programs/tna_snapshot/test.py	2021-01-27 11:05:11.583908895 +0100
+@@ -20,6 +20,7 @@
+ 
+ import logging
+ 
++import time
+ from ptf import config
+ import ptf.testutils as testutils
+ from bfruntime_client_base_tests import BfRuntimeTest
+diff -Naur p4-examples-9.3.0.orig/p4_16_programs/tna_timestamp/test.py p4-examples-9.3.0/p4_16_programs/tna_timestamp/test.py
+--- p4-examples-9.3.0.orig/p4_16_programs/tna_timestamp/test.py	2020-10-14 04:42:23.000000000 +0200
++++ p4-examples-9.3.0/p4_16_programs/tna_timestamp/test.py	2021-01-26 18:47:13.793516765 +0100
+@@ -19,6 +19,7 @@
+ ################################################################################
+ 
+ import logging
++import struct
+ 
+ from ptf import config
+ import ptf.testutils as testutils

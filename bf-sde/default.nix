@@ -100,6 +100,9 @@ let
         };
         p4c = callPackage ./p4c (mkSrc "p4-compilers");
         tofino-model = callPackage ./tofino-model (mkSrc "tofino-model");
+        p4-hlir = callPackage ./p4-hlir (mkSrc "p4-hlir");
+        ptf-modules = callPackage ./ptf-modules (mkSrc "ptf-modules");
+        ptf-utils = callPackage ./ptf-modules/utils.nix (mkSrc "ptf-modules");
         tools = callPackage ./tools {
           src = sde;
         };
@@ -219,6 +222,14 @@ let
             '';
           };
 
+        testCases = import ./test-cases {
+          inherit pkgs;
+          bf-sde = self;
+          srcSpec = mkSrc "p4-examples";
+        };
+        failedTests = lib.filterAttrs (n: v: (import (v + "/passed") == false))
+                                      passthru.testCases;
+
         ## A derivation containing a script that starts a nix-shell in
         ## which P4 programs can be compiled and run in the context of
         ## the SDE
@@ -240,9 +251,11 @@ let
   ## The hashes below are the "sha256sum" of these files.
   common = {
     curl = curl_7_52;
-    patches = [];
+    patches = {
+      p4-examples = [ ./test-cases/ptf.patch ];
+    };
   };
-  bf-sde = lib.mapAttrs (_: sdeSpec: mkSDE (common // sdeSpec)) {
+  bf-sde = lib.mapAttrs (_: sdeSpec: mkSDE (lib.recursiveUpdate common sdeSpec)) {
     v9_1_1 = rec {
       version = "9.1.1";
       sde = {
