@@ -14,7 +14,7 @@ let
   kernels = import ./bf-sde/kernels pkgs;
   mk = sde: {
     inherit sde;
-    inherit (sde) pkgs;
+    inherit (sde) pkgs testCases failedTests;
     kernelModules = mapAttrs (kernelID: _: sde.buildModules kernelID) kernels;
   };
   versions = mapAttrs (version: sde: mk sde) bf-sde';
