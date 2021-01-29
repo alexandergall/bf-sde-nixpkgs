@@ -1,6 +1,6 @@
 ## Build the SDE modules for a specific kernel
 
-{ lib, stdenv, python2, runtimeShell, kmod,
+{ lib, stdenv, python2, runtimeShell, kmod, coreutils,
   version, src, spec, bf-syslibs }:
 
 stdenv.mkDerivation {
@@ -31,7 +31,7 @@ stdenv.mkDerivation {
     for mod in kpkt kdrv knet; do
       script=$out/bin/bf_''${mod}_mod_load
       substituteInPlace  $script \
-        --replace lib/modules "lib/modules/\$(uname -r)" \
+        --replace lib/modules "lib/modules/\$(${coreutils}/bin/uname -r)" \
         --replace insmod ${kmod}/bin/insmod
       substituteInPlace $out/bin/bf_''${mod}_mod_unload \
         --replace rmmod ${kmod}/bin/rmmod

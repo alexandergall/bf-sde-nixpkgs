@@ -4,8 +4,7 @@ writeShellScriptBin "${execName}-module-wrapper"
   ''
     set -e
 
-    ## Include /usr/bin for sudo
-    export PATH=${lib.strings.makeBinPath [ gawk gnugrep kmod ]}:/usr/bin
+    export PATH=${lib.strings.makeBinPath [ gawk gnugrep kmod ]}:${self}/mock-sudo
 
     function mod_exists {
         lsmod | awk '{print $1}' | grep $1 >/dev/null
