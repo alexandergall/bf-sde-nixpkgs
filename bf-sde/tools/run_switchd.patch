@@ -1,6 +1,6 @@
 diff -Naur bf-sde-9.3.0.orig/run_switchd.sh bf-sde-9.3.0/run_switchd.sh
 --- bf-sde-9.3.0.orig/run_switchd.sh	2020-10-14 04:44:53.000000000 +0200
-+++ bf-sde-9.3.0/run_switchd.sh	2021-01-29 17:16:52.222120143 +0100
++++ bf-sde-9.3.0/run_switchd.sh	2021-01-29 20:08:30.309055960 +0100
 @@ -1,5 +1,6 @@
  #!/bin/bash
  # Start running switchd application program
@@ -8,7 +8,23 @@ diff -Naur bf-sde-9.3.0.orig/run_switchd.sh bf-sde-9.3.0/run_switchd.sh
  
  function print_help() {
    echo "USAGE: $(basename ""$0"") {-p <...> | -c <...>} [OPTIONS -- SWITCHD_OPTIONS]"
-@@ -188,7 +189,7 @@
+@@ -71,9 +72,13 @@
+     sudo mount -t hugetlbfs nodev /mnt/huge
+ }
+ 
+-OLD_STTY_SETTINGS=`stty -g`
++if [ -t 0 ]; then
++    OLD_STTY_SETTINGS=`stty -g`
++fi
+ function finish {
+-   stty $OLD_STTY_SETTINGS
++    if [ -n "$OLD_STTY_SETTINGS" ]; then
++        stty $OLD_STTY_SETTINGS
++    fi
+    exit
+ }
+ trap finish EXIT
+@@ -188,7 +193,7 @@
      echo "Detected custom conf file $(<$CUSTOM_CONF_FILE)"
      TARGET_CONFIG_FILE=$SDE_INSTALL/share/p4/targets/$CHIP_ARCH/$(<$CUSTOM_CONF_FILE)
    else
