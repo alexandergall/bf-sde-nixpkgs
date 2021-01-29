@@ -4,7 +4,7 @@ with pkgs;
 
 let
   kernels = import kernels/. pkgs;
-  localRelease = import (runCommand "local-kernel-release" {}
+  localRelease = import (runCommandLocal "local-kernel-release" {}
     ''
       echo \"$(uname -r)\" >$out
     '');
