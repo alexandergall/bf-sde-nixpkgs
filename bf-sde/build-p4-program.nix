@@ -1,5 +1,5 @@
 { stdenv, callPackage, lib, bf-sde, runtimeEnv, getopt, which, coreutils,
-  gnugrep, gnused, procps, utillinux, findutils, runtimeShell, python2 }:
+  gnugrep, gnused, procps, utillinux, findutils, bash, runtimeShell, python2 }:
 
 { pname,
   version,
@@ -138,7 +138,7 @@ let
       export SDE_INSTALL=\$SDE
       export P4_INSTALL=$out
 
-      export PATH=${lib.strings.makeBinPath [ coreutils gnugrep gnused utillinux procps findutils ]}:$out/mock-sudo
+      export PATH=${lib.strings.makeBinPath [ coreutils gnugrep gnused utillinux procps findutils bash ]}:$out/mock-sudo
 
       ## Force failure if not run as root
       sudo true
