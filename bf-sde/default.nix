@@ -305,6 +305,19 @@ let
         bf-drivers = [ ./bf-drivers/9.3.0-bfrtTable.py.patch ];
       };
     };
+    v9_3_1 = rec {
+      version = "9.3.1";
+      sde = {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "71db320fa7d12757127c7da1c16ea98453f4c88ecca7853c73b2bd4dccd1d891";
+      };
+      bsp = {
+        name = "bf-reference-bsp-${version}.tgz";
+        outputHash = "b934601c77b08c3281f8dcb235450b80316a42e2683ff29e4c9f2485fffbb51f";
+      };
+      stdenv = gcc8Stdenv;
+      thrift = thrift_0_13;
+    };
   };
 
-in bf-sde // { latest = bf-sde.v9_3_0; }
+in bf-sde // { latest = bf-sde.v9_3_1; }
