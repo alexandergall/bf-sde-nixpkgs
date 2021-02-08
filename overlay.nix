@@ -73,7 +73,7 @@ let
     python2 = super.python2.override {
       packageOverrides = python-self: python-super: {
         grpcio = python-super.grpcio.overrideAttrs(oldAttrs:
-            grpc_1_17_0_attrs super "grpcio" true "06jpr27l71wz0fbifizdsalxvpraix7s5dg30pgd2wvd77ky5p3h");
+          grpc_1_17_0_attrs super "grpcio" true "06jpr27l71wz0fbifizdsalxvpraix7s5dg30pgd2wvd77ky5p3h");
 
         ## tenjin.py is included in the bf-drivers packages and
         ## installed in

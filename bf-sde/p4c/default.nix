@@ -1,13 +1,9 @@
 { pname, version, src, patches, stdenv, python3, autoPatchelfHook, zlib }:
 
-let
-  python3Env = python3.withPackages (ps: with ps;
-    [ packaging jsonschema jsl ]);
-in stdenv.mkDerivation {
+stdenv.mkDerivation {
   inherit pname version src patches;
 
-  propagatedBuildInputs = [ python3Env ];
-  buildInputs = [ autoPatchelfHook zlib ];
+  buildInputs = [ autoPatchelfHook zlib python3.pkgs.wrapPython ];
 
   installPhase = ''
     mkdir $out
@@ -17,5 +13,10 @@ in stdenv.mkDerivation {
     if ! [ -e $out/bin/p4c ]; then
       ln -sr $out/bin/bf-p4c $out/bin/p4c
     fi
+  '';
+
+  pythonPath = with python3.pkgs; [ packaging jsonschema jsl ];
+  postFixup = ''
+    wrapPythonPrograms
   '';
 }

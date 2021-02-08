@@ -1,5 +1,5 @@
 { version, passthru, lib, buildEnv, bf-syslibs, bf-drivers, bf-utils, bf-platforms,
-  p4c, tofino-model, tools }:
+  ptf-modules, ptf-utils, p4-hlir, p4c, tofino-model, tools }:
 
 ## This environment mimics the setup of the SDE/SDE_INSTALL tree of a
 ## regular installation of the SDE by merging the outputs of all
@@ -10,7 +10,7 @@ buildEnv {
   name = "bf-sde-${version}";
   inherit passthru;
   paths = [ bf-syslibs bf-drivers bf-drivers.dev bf-utils bf-platforms
-            p4c tofino-model tools ];
+            p4c tofino-model tools ptf-modules ptf-utils p4-hlir ];
 
   ## bfrt Python modules overlap in bfUtils and bfDrivers
   ignoreCollisions = lib.versionAtLeast version "9.3.0";

@@ -13,25 +13,29 @@
 ## The file "passed" can be imported as a Nix expression
 
 { self, p4Name, src, testDir, lib, buildEnv, vmTools, runCommand,
-  procps, utillinux, getopt, python2, fontconfig,
+  procps, utillinux, getopt, fontconfig,
   bf-sde, p4-hlir, ptf-modules, ptf-utils, pythonModules ? [] }:
 
 let
   prefix = "bf-sde-${bf-sde.version}";
 
-  ## The test environment is the sde environment (as constructed by
-  ## ./sde.nix) augmented with the ptf packages and the package of the
-  ## P4 program being tested.
+  ## The test  environment is the  sde environment (as  constructed by
+  ## ./sde.nix) augmented  with the  package of  the P4  program being
+  ## tested.
   testEnv = buildEnv {
     name = "${prefix}-${p4Name}-test-environment";
-    paths = [ bf-sde p4-hlir ptf-modules ptf-utils self ];
+    paths = [ bf-sde self ];
     ignoreCollisions = true;
   };
+
+  ## bf-drivers is also required, but it is already part of the
+  ## environment of the ptf command (see comments in
+  ## ptf-modules/default.nix)
+  python = ptf-modules.python;
+  ptfModules = map (mod: python.pkgs.${mod}) pythonModules;
 in vmTools.runInLinuxVM (
   runCommand "${prefix}-test-case-${p4Name}" {
     memSize = 6*1024;
-    buildInputs = [ (with python2.pkgs; [ six ]) ] ++
-                  (map (mod: python2.pkgs.${mod}) pythonModules);
     postVM = ''
       mv xchg/*.log $out
       if [ $(cat xchg/test.status) -eq 0 ]; then
@@ -55,7 +59,7 @@ in vmTools.runInLinuxVM (
     export SDE_INSTALL=$SDE
     export P4_INSTALL=$SDE
     export PATH=/tmp/mock_sudo:${lib.strings.makeBinPath
-           [ testEnv procps utillinux getopt python2 fontconfig ]}:$PATH
+           [ testEnv procps utillinux getopt python fontconfig ]}:$PATH
     export FONTCONFIG_FILE=${fontconfig.out}/etc/fonts/fonts.conf
 
     echo "============================================="
@@ -73,6 +77,7 @@ in vmTools.runInLinuxVM (
 
     echo "Starting tests"
     set +e
+    export PTF_PYTHONPATH=${python.pkgs.makePythonPath ptfModules}:$PYTHONPATH
     run_p4_tests.sh -p ${p4Name} -t ${src}/${testDir} 2>&1 | tee /tmp/xchg/test.log
     echo $? >/tmp/xchg/test.status
     exit 0

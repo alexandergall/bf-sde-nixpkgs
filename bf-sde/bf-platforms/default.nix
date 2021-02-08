@@ -1,10 +1,12 @@
-{ pname, version, src, stdenv, python3, thrift, boost, libusb, curl,
+{ pname, version, src, stdenv, thrift, boost, libusb, curl,
   bf-syslibs, bf-drivers, bf-utils }:
 
-stdenv.mkDerivation rec {
+let
+  python = bf-drivers.pythonModule;
+in stdenv.mkDerivation rec {
   inherit pname version src;
 
-  buildInputs = [ python3 thrift boost libusb curl bf-syslibs.dev
+  buildInputs = [ python thrift boost libusb curl bf-syslibs.dev
                   bf-drivers.dev bf-utils ];
   outputs = [ "out" "dev" ];
   enableParallelBuilding = true;

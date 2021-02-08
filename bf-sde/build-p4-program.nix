@@ -17,7 +17,7 @@
 # support function to load the module before executing bf_switchd.
   requiredKernelModule ? null,
 # The flags passed to the p4_build.sh script
-  buildFlags ? "",
+  buildFlags ? [],
   src,
 # Optional patches
   patches ? [],
@@ -60,8 +60,7 @@ let
         src' = stdenv.mkDerivation {
           name = "${pname}-${version}-source";
           inherit src patches;
-          configurePhase = "true";
-          buildPhase = "true";
+          phases = [ "unpackPhase" "installPhase" ];
           installPhase = ''
             mkdir $out
             tar cf - . | tar -C $out -xf -
@@ -79,7 +78,7 @@ let
   self = (stdenv.mkDerivation rec {
     buildInputs = [ bf-sde getopt which procps python2 ];
 
-    inherit pname version src p4Name patches passthru;
+    inherit pname version src p4Name patches buildFlags passthru;
 
     buildPhase = ''
       set -e
@@ -95,7 +94,7 @@ let
         ln -s ${p4Name}.p4 $path/${execName}.p4
         exec_name=${execName}
       fi
-      cmd="${bf-sde}/bin/p4_build.sh ${buildFlags} $path/$exec_name.p4"
+      cmd="${bf-sde}/bin/p4_build.sh $buildFlags $path/$exec_name.p4"
       echo "Build command: $cmd"
       $cmd
     '';

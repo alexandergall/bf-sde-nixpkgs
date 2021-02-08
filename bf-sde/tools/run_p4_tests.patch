@@ -1,0 +1,30 @@
+diff -Naur bf-sde-9.3.1.orig/run_p4_tests.sh bf-sde-9.3.1/run_p4_tests.sh
+--- bf-sde-9.3.1.orig/run_p4_tests.sh	2021-01-11 08:54:45.000000000 +0100
++++ bf-sde-9.3.1/run_p4_tests.sh	2021-02-06 18:10:49.511151562 +0100
+@@ -178,8 +178,6 @@
+ echo "Arch is $ARCH"
+ echo "Target is $TARGET"
+ PYTHON_VER=`python --version 2>&1 | awk {'print $2'} | awk -F"." {'print $1"."$2'}`
+-export PYTHONPATH=$SDE_INSTALL/lib/python$PYTHON_VER/site-packages/p4testutils:$SDE_INSTALL/lib/python$PYTHON_VER/site-packages/${ARCH}pd/:$SDE_INSTALL/lib/python$PYTHON_VER/site-packages/tofino:$SDE_INSTALL/lib/python$PYTHON_VER/site-packages/:$PYTHONPATH
+-
+ 
+ if [ $NO_VETH = true ]; then
+   CPUPORT=None
+@@ -205,7 +203,7 @@
+   STS_HOST_STR="--host $STS_HOST"
+ fi
+ if [ $SKIP_STATUS_SRV = false ]; then
+-  python $SDE_INSTALL/lib/python$PYTHON_VER/site-packages/p4testutils/bf_switchd_dev_status.py \
++  $SDE_INSTALL/lib/python$PYTHON_VER/site-packages/p4testutils/bf_switchd_dev_status.py \
+     $STS_HOST_STR $STS_PORT_STR
+ fi
+ 
+@@ -234,7 +232,7 @@
+ fi
+ 
+ #Run PTF tests
+-sudo env "PATH=$PATH" "PYTHONPATH=$PYTHONPATH" "GEN_XML_OUTPUT=$GEN_XML_OUTPUT" python \
++sudo env "PATH=$PATH" "PYTHONPATH=$PYTHONPATH" "GEN_XML_OUTPUT=$GEN_XML_OUTPUT" \
+     $SDE_INSTALL/lib/python$PYTHON_VER/site-packages/p4testutils/run_ptf_tests.py \
+     --arch $ARCH \
+     --target $TARGET \

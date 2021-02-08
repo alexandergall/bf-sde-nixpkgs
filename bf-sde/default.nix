@@ -37,7 +37,7 @@ let
   ## programs create with buildP4Program fail in a clean manner.
   errorModules = stdenv.mkDerivation {
     name = "bf-sde-error-modules";
-    unpackPhase = "true";
+    phases = [ "installPhase" ];
     installPhase = ''
         mkdir -p $out/bin
         for mod in kpkt kdrv knet; do
@@ -91,7 +91,9 @@ let
         bf-utils = callPackage ./bf-utils (mkSrc "bf-utils" // {
           bf-drivers-src = extractSource "bf-drivers";
         });
-        bf-drivers = callPackage ./bf-drivers (mkSrc "bf-drivers");
+        bf-drivers = callPackage ./bf-drivers (mkSrc "bf-drivers"// {
+          python = sdeSpec.python_bf_drivers;
+        });
         ## bf-diags is currently not used
         bf-diags = callPackage ./bf-diags (mkSrc "bf-diags");
         bf-platforms = callPackage ./bf-platforms {
@@ -189,28 +191,28 @@ let
         ## A function that can be used with nix-shell to create an
         ## environment for developing data-plane and control-plane
         ## programs in the context of the SDE (see ./sde-env.sh).  The
-        ## function takes an optional argument which must be a function
-        ## that is called with the package set and returns a list of
-        ## of packages to be included in the environment.
-        ## packages to be included in the environment.
+        ## function takes an optional argument which must be a
+        ## function, which, given the set of Python packages returns
+        ## the list of packages to add to the environment.
         mkShell = { inputFn ? pkgs: [] }:
           let
-            inputs = (builtins.tryEval inputFn).value pkgs;
+            bf-drivers = self.pkgs.bf-drivers;
+            python = bf-drivers.pythonModule;
+            pythonModules = (builtins.tryEval inputFn).value python.pkgs;
+            pythonEnv = python.withPackages (ps: [ bf-drivers ] ++ pythonModules);
           in mkShell {
             ## kmod provides insmod, procps provides sysctl
-            ## bf-drivers pulls in a Python2 environment with
-            ## grpcio through its propagated build input.
-            buildInputs = [ self self.pkgs.bf-drivers self.buildModulesForLocalKernel
-                            kmod procps utillinux which ] ++ inputs;
+            buildInputs = [ self self.buildModulesForLocalKernel
+                            kmod procps utillinux which pythonEnv ];
             shellHook = ''
               export P4_INSTALL=~/.bf-sde/${self.version}
               export SDE=${self}
               export SDE_INSTALL=${self}
               export SDE_BUILD=$P4_INSTALL/build
               export SDE_LOGS=$P4_INSTALL/logs
-              ## See comment in ./build_p4_program.nix regarding /usr/bin
+              export PTF_PYTHONPATH=${python.pkgs.makePythonPath pythonModules}
+              ## Make sure we can find sudo.  The environment isn't pure anyway.
               export PATH=$PATH:/usr/bin
-              export PYTHONPATH=${self.pkgs.bf-drivers}/lib/python2.7/site-packages/tofino:$PYTHONPATH
               mkdir -p $P4_INSTALL $SDE_BUILD $SDE_LOGS
 
               cat <<EOF
@@ -226,6 +228,8 @@ let
                        $ run_tofino_model -p <p4name>
                        $ run_switchd -p <p4name> -- --model
                        $ sudo \$(type -p veth_teardown.sh)
+              Run PTF tests: run the Tofino model, then
+                       $ run_p4_tests.sh -p <p4name> -t <path-to-dir-with-test-scripts>
 
               Build artefacts and logs are stored in $P4_INSTALL
 
@@ -258,6 +262,10 @@ let
   ## The hashes below are the "sha256sum" of these files.
   common = {
     curl = curl_7_52;
+    ## The Python version to use when building bf-drivers. Every
+    ## derivation using bf-drivers as input must use the same version
+    ## by referencing bf-drivers.pythonModule
+    python_bf_drivers = python2;
     patches = {
       p4-examples = [ ./p4-16-examples/ptf.patch ];
     };

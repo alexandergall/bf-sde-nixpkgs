@@ -1,10 +1,12 @@
-{ pname, version, src, patches, lib, stdenv, python2, makeWrapper,
+{ pname, version, src, patches, lib, stdenv, bf-drivers, makeWrapper,
   bridge-utils, inetutils }:
 
-stdenv.mkDerivation rec {
+let
+  python = bf-drivers.pythonModule;
+in stdenv.mkDerivation rec {
   inherit pname version src patches;
 
-  buildInputs = [ python2 makeWrapper ];
+  buildInputs = [ python python.pkgs.wrapPython makeWrapper ];
 
   preConfigure = ''
     cd ptf-utils
@@ -16,7 +18,8 @@ stdenv.mkDerivation rec {
     substituteInPlace run_ptf_tests.py --replace six.print '#six.print'
   '';
   postInstall = ''
-    chmod a+x $out/lib/python*/site-packages/p4testutils/run_ptf_tests.py
+    utilsPath=$out/lib/${python.libPrefix}/site-packages/p4testutils/
+    chmod a+x $utilsPath/run_ptf_tests.py $utilsPath/bf_switchd_dev_status.py
     for program in $out/bin/port_*; do
       wrapProgram $program --prefix PATH : "${lib.strings.makeBinPath [ bridge-utils inetutils ]}"
     done
@@ -26,5 +29,9 @@ stdenv.mkDerivation rec {
     rm -f $out/bin/veth*
   '';
 
+  pythonPath = with python.pkgs; [ six ];
+  postFixup = ''
+    wrapPythonProgramsIn $utilsPath "$utilsPath $pythonPath"
+  '';
 }
 

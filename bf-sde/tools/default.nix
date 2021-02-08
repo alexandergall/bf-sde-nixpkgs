@@ -5,7 +5,7 @@ stdenv.mkDerivation {
   name = "bf-tools-${version}";
 
   buildInputs = [ python2 makeWrapper ethtool iproute ];
-  patches = [ ./run_switchd.patch ];
+  patches = [ ./run_switchd.patch ./run_p4_tests.patch ];
 
   installPhase = ''
     mkdir -p $out/bin
@@ -20,10 +20,19 @@ stdenv.mkDerivation {
       wrapProgram $program --prefix PATH : "${lib.strings.makeBinPath [ ethtool iproute ]}"
     done
 
+    cp *manifest $out
     cp run_switchd.sh $out/bin
     cp run_tofino_model.sh $out/bin
+
+    ## A test script could need additional Python modules at runtime.
+    ## The bare ptf command has an option --pypath for this purpose,
+    ## but it is hidden behind the run_p4_test.sh wrapper. We could
+    ## simply set PYTHONPATH directly before running run_p4_test.sh,
+    ## but this could interfere with other Python programs run in the
+    ## same environment.  To isolate the additional modules, we use
+    ## PTF_PYTHONPATH and translate it to PYTHONPATH in the wrapper.
     cp run_p4_tests.sh $out/bin
-    cp *manifest $out
+    wrapProgram $out/bin/run_p4_tests.sh --run "export PYTHONPATH=\$PTF_PYTHONPATH:\$PYTHONPATH"
 
     mkdir -p $out/pkgsrc/p4-build
     tar -C $out/pkgsrc/p4-build -xf packages/p4-build* --strip-component 1
