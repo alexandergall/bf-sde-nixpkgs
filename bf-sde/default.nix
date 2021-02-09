@@ -210,7 +210,7 @@ let
               export SDE_INSTALL=${self}
               export SDE_BUILD=$P4_INSTALL/build
               export SDE_LOGS=$P4_INSTALL/logs
-              export PTF_PYTHONPATH=${python.pkgs.makePythonPath pythonModules}
+              export PTF_PYTHONPATH=${python.pkgs.makePythonPath pythonModules}:${bf-drivers.sitePackagesPath}/tofino
               ## Make sure we can find sudo.  The environment isn't pure anyway.
               export PATH=$PATH:/usr/bin
               mkdir -p $P4_INSTALL $SDE_BUILD $SDE_LOGS
