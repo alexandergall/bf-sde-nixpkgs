@@ -7,6 +7,10 @@ let
   bf-drivers = stdenv.mkDerivation {
     inherit pname version src;
 
+    passthru = {
+      sitePackagesPath = "${bf-drivers}/lib/${python.libPrefix}/site-packages";
+    };
+
     propagatedBuildInputs = with python.pkgs; [ grpcio  ];
     buildInputs = [ thrift openssl boost pkg-config grpc protobuf zlib
                     bf-syslibs.dev bf-utils python.pkgs.wrapPython ];
@@ -50,27 +54,26 @@ let
           --replace "am__append_1 = bfrt_examples" "am__append_1 ="
       '';
 
-    ## Add a __init__.py for setuptools-style namespace packages to
-    ## site-packages/google.
-    preInstall = ''
-      cp ${./namespace-init.py} third-party/py_out/google/__init__.py
-    '';
-
-    ## Create links for the tofino and tofino_pd_api modules in the
-    ## top-level site-packages directory to avoid having to add those
-    ## directories to the search path in Python scripts explicitely.
-    ## This way, the Nix Python wrappers will pick everything up
-    ## automatically.
-    ##
-    ## Also remove the included tenjin module. For some reason
-    ## it causes "NameError: global name 'six' is not defined"
+    ## Remove the included tenjin module. For some reason it causes
+    ## "NameError: global name 'six' is not defined"
     ## when generate_tofino_pd is run.
     postInstall = ''
       path=$out/lib/${python.libPrefix}/site-packages
       rm $path/tofino_pd_api/tenjin.*
-      for obj in $path/tofino*/*; do
-        ln -sr $obj $path
-      done
+    '' +
+
+    ## Turn google/rpc into a "google" namespace package
+    ## by adding a .pth file, creating a link to google
+    ## in the top-level site-packages directory and removing
+    ## __init__.py.  To make this work, all portions of the
+    ## name space have to be added with site.addsite(), for
+    ## example by adding bf-drivers and the protobuf Python
+    ## package to a Python environment (just adding them to
+    ## PYTHONPATH is not sufficient).
+    ''
+      cp ${./rpc-nspkg.pth} $path/rpc-nspkg.pth
+      ln -sr $path/tofino/google $path
+      rm -f $path/tofino/google/__init__.py*
     '';
 
     pythonPath = with python.pkgs; [ tenjin six ];
