@@ -60,7 +60,7 @@ let
         src' = stdenv.mkDerivation {
           name = "${pname}-${version}-source";
           inherit src patches;
-          phases = [ "unpackPhase" "installPhase" ];
+          phases = [ "unpackPhase" "patchPhase" "installPhase" ];
           installPhase = ''
             mkdir $out
             tar cf - . | tar -C $out -xf -
