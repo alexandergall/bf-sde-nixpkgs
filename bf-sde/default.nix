@@ -338,6 +338,9 @@ let
       };
       stdenv = gcc8Stdenv;
       thrift = thrift_0_13;
+      patches = {
+        p4-examples = [ ./p4-16-examples/9.4.0-ptf.patch ];
+      };
     };
   };
 
