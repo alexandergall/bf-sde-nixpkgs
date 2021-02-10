@@ -326,6 +326,19 @@ let
       stdenv = gcc8Stdenv;
       thrift = thrift_0_13;
     };
+    v9_4_0 = rec {
+      version = "9.4.0";
+      sde = {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "daec162c2a857ae0175e57ab670b59341d39f3ac2ecd5ba99ec36afa15566c4e";
+      };
+      bsp = {
+        name = "bf-reference-bsp-${version}.tgz";
+        outputHash = "269eecaf3186d7c9a061f6b66ce3d1c85d8f2022ce3be81ee9e532d136552fa4";
+      };
+      stdenv = gcc8Stdenv;
+      thrift = thrift_0_13;
+    };
   };
 
-in bf-sde // { latest = bf-sde.v9_3_1; }
+in bf-sde // { latest = bf-sde.v9_4_0; }
