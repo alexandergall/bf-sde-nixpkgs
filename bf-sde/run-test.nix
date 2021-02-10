@@ -77,7 +77,7 @@ in vmTools.runInLinuxVM (
 
     echo "Starting tests"
     set +e
-    export PTF_PYTHONPATH=${python.pkgs.makePythonPath ptfModules}:$PYTHONPATH
+    export PTF_PYTHONPATH=${python.pkgs.makePythonPath ptfModules}:$PYTHONPATH:${bf-sde.pkgs.bf-drivers.sitePackagesPath}/tofino
     run_p4_tests.sh -p ${p4Name} -t ${src}/${testDir} 2>&1 | tee /tmp/xchg/test.log
     echo $? >/tmp/xchg/test.status
     exit 0
