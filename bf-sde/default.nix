@@ -102,7 +102,6 @@ let
         };
         p4c = callPackage ./p4c (mkSrc "p4-compilers");
         tofino-model = callPackage ./tofino-model (mkSrc "tofino-model");
-        p4-hlir = callPackage ./p4-hlir (mkSrc "p4-hlir");
         ptf-modules = callPackage ./ptf-modules (mkSrc "ptf-modules");
         ptf-utils = callPackage ./ptf-modules/utils.nix (mkSrc "ptf-modules");
         tools = callPackage ./tools {

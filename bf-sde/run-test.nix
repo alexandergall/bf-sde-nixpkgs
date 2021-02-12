@@ -14,7 +14,7 @@
 
 { self, p4Name, src, testDir, lib, buildEnv, vmTools, runCommand,
   procps, utillinux, getopt, fontconfig,
-  bf-sde, p4-hlir, ptf-modules, ptf-utils, pythonModules ? [] }:
+  bf-sde, ptf-modules, ptf-utils, pythonModules ? [] }:
 
 let
   prefix = "bf-sde-${bf-sde.version}";
