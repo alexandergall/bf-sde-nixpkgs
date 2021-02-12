@@ -17,7 +17,7 @@ install-sde: clean
 
 NIX_PURE =
 env:
-	nix-shell $(NIX_PURE) -I nixpkgs=$(THIS_DIR) -E "with import <nixpkgs> {}; bf-sde.$(VERSION).mkShell" $(if $(INPUT_FN),--arg inputFn "$(INPUT_FN)") || true
+	@nix-shell $(NIX_PURE) -I nixpkgs=$(THIS_DIR) -E "with import <nixpkgs> {}; bf-sde.$(VERSION).mkShell" $(if $(INPUT_FN),--arg inputFn "$(INPUT_FN)") || true
 
 env-list-versions:
 	@nix-instantiate  -I nixpkgs=$(THIS_DIR) --eval -E "with import <nixpkgs> {}; builtins.attrNames (lib.filterAttrs (n: v: lib.isDerivation v) bf-sde)"
