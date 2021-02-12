@@ -55,9 +55,16 @@ let
 
   fixedDerivation = { name, outputHash }:
     builtins.derivation {
-      inherit name outputHash;
-      inherit system;
-      builder = "none";
+      inherit name outputHash system;
+      builder = runCommand "SDE-archive-error" {} ''
+        echo
+        echo "Missing SDE component ${name}"
+        echo "Please add it to the Nix store with"
+        echo
+        echo "  nix-store --add-fixed sha256 ${name}"
+        echo
+        exit 1
+      '';
       outputHashMode = "flat";
       outputHashAlgo = "sha256";
     };
