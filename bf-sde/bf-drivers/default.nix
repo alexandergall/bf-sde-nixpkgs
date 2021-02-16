@@ -7,10 +7,6 @@ let
   bf-drivers = stdenv.mkDerivation {
     inherit pname version src;
 
-    passthru = {
-      sitePackagesPath = "${bf-drivers}/lib/${python.libPrefix}/site-packages";
-    };
-
     propagatedBuildInputs = with python.pkgs; [ grpcio  ];
     buildInputs = [ thrift openssl boost pkg-config grpc protobuf zlib
                     bf-syslibs.dev bf-utils python.pkgs.wrapPython ];
@@ -58,22 +54,32 @@ let
     ## "NameError: global name 'six' is not defined"
     ## when generate_tofino_pd is run.
     postInstall = ''
-      path=$out/lib/${python.libPrefix}/site-packages
-      rm $path/tofino_pd_api/tenjin.*
+      sitePath=$out/lib/${python.libPrefix}/site-packages
+      rm $sitePath/tofino_pd_api/tenjin.*
     '' +
 
-    ## Turn google/rpc into a "google" namespace package
+    ## Link the directories in site-packages/tofino and
+    ## site-packages/tofino_pd_api to site-packages. This allows
+    ## importing those modules without having to add the tofino and
+    ## tofino_pd_api directories to the search path. This should be
+    ## fine as long as it doesn't create conflicts, which is currently
+    ## not the case.
+    ##
+    ## Also, turn google/rpc into a "google" namespace package
     ## by adding a .pth file, creating a link to google
-    ## in the top-level site-packages directory and removing
+    ## in the top-level siteq-packages directory and removing
     ## __init__.py.  To make this work, all portions of the
     ## name space have to be added with site.addsite(), for
     ## example by adding bf-drivers and the protobuf Python
     ## package to a Python environment (just adding them to
     ## PYTHONPATH is not sufficient).
+
     ''
-      cp ${./rpc-nspkg.pth} $path/rpc-nspkg.pth
-      ln -sr $path/tofino/google $path
-      rm -f $path/tofino/google/__init__.py*
+      for obj in $sitePath/tofino/* $sitePath/tofino_pd_api/*; do
+        ln -sr $obj $sitePath
+      done
+      cp ${./rpc-nspkg.pth} $sitePath/rpc-nspkg.pth
+      rm -f $sitePath/tofino/google/__init__.py*
     '';
 
     pythonPath = with python.pkgs; [ tenjin six ];
