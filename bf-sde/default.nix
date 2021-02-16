@@ -37,6 +37,8 @@ let
   ## programs create with buildP4Program fail in a clean manner.
   errorModules = stdenv.mkDerivation {
     name = "bf-sde-error-modules";
+    allowSubstitutes = false;
+    preferLocalBuild = true;
     phases = [ "installPhase" ];
     installPhase = ''
         mkdir -p $out/bin
