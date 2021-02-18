@@ -196,6 +196,9 @@ let
         buildModulesForLocalKernel =
           self.buildModules selectLocalKernelID;
 
+        buildModulesForAllKernels =
+          builtins.mapAttrs (kernelID: _: self.buildModules kernelID) kernels;
+
         ## A function that can be used with nix-shell to create an
         ## environment for developing data-plane and control-plane
         ## programs in the context of the SDE (see ./sde-env.sh).  The
