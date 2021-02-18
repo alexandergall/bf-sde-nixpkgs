@@ -2,7 +2,7 @@
     "stable": {
         "enabled": 1,
         "hidden": false,
-        "description": "Barefoot Tofino SDE",
+        "description": "Barefoot Tofino SDE stable",
         "nixexprinput": "src",
         "nixexprpath": "release.nix",
         "checkinterval": 300,
@@ -17,7 +17,7 @@
     "stable-test-cases": {
         "enabled": 1,
         "hidden": false,
-        "description": "Barefoot Tofino SDE",
+        "description": "Barefoot Tofino SDE stable test cases",
         "nixexprinput": "src",
         "nixexprpath": "release-test-cases.nix",
         "checkinterval": 300,
@@ -32,7 +32,7 @@
     "testing": {
         "enabled": 1,
         "hidden": false,
-        "description": "Barefoot Tofino SDE",
+        "description": "Barefoot Tofino SDE unstable",
         "nixexprinput": "src",
         "nixexprpath": "release.nix",
         "checkinterval": 300,
@@ -47,7 +47,7 @@
     "testing-test-cases": {
         "enabled": 1,
         "hidden": false,
-        "description": "Barefoot Tofino SDE",
+        "description": "Barefoot Tofino SDE unstable test cases",
         "nixexprinput": "src",
         "nixexprpath": "release-test-cases.nix",
         "checkinterval": 300,
