@@ -54,7 +54,7 @@ in {
   ## https://github.com/NetworkGradeLinux/meta-mion-bsp.git used to
   ## build the mion image, for example
   ## https://github.com/NetworkGradeLinux/meta-mion-bsp/blob/dunfell/meta-mion-accton/recipes-kernel/linux/linux-yocto_5.4.bbappend
-  mion = rec {
+  mion = {
     release = "5.4.49-yocto-standard";
     buildTree = mkMion {
       spec = {
