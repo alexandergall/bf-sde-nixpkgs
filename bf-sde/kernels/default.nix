@@ -25,7 +25,7 @@
 ##     patches.
 ##
 ##   buildModulesOverrides
-##     An optional attribute set of overrides for the function
+##     An optional attribute set of overrides for the derivation
 ##     returned by ./build-modules.nix.
 
 pkgs:

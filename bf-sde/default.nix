@@ -186,10 +186,10 @@ let
             };
             spec = defaults // kernels.${kernelID};
           in if kernelID != "" then
-            callPackage ./kernels/build-modules.nix ({
+            (callPackage ./kernels/build-modules.nix {
               inherit spec;
               src = extractSource "bf-drivers";
-            } // spec.buildModulesOverrides)
+            }).override spec.buildModulesOverrides
           else
             errorModules;
 
