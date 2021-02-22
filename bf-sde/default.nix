@@ -201,27 +201,34 @@ let
 
         ## A function that can be used with nix-shell to create an
         ## environment for developing data-plane and control-plane
-        ## programs in the context of the SDE (see ./sde-env.sh).  The
-        ## function takes an optional argument which must be a
-        ## function, which, given the set of Python packages returns
-        ## the list of packages to add to the environment.
-        mkShell = { inputFn ? pkgs: [] }:
+        ## programs in the context of the SDE (see ./sde-env.sh).
+        mkShell = { inputFn ? { pkgs, pythonPkgs }: {} }:
           let
             bf-drivers = self.pkgs.bf-drivers;
             python = bf-drivers.pythonModule;
-            pythonModules = (builtins.tryEval inputFn).value python.pkgs;
-            pythonEnv = python.withPackages (ps: [ bf-drivers ] ++ pythonModules);
+            defaultInputs = {
+              pkgs = [];
+              cpModules = [];
+              ptfModules = [];
+            };
+            inputs = defaultInputs // (builtins.tryEval inputFn).value {
+              inherit pkgs;
+              pythonPkgs = python.pkgs;
+            };
+            pythonEnv = python.withPackages (ps: [ bf-drivers ]
+                                                 ++ inputs.cpModules);
           in mkShell {
             ## kmod provides insmod, procps provides sysctl
             buildInputs = [ self self.buildModulesForLocalKernel
-                            kmod procps utillinux which pythonEnv ];
+                            kmod procps utillinux which pythonEnv ]
+                            ++ inputs.pkgs;
             shellHook = ''
               export P4_INSTALL=~/.bf-sde/${self.version}
               export SDE=${self}
               export SDE_INSTALL=${self}
               export SDE_BUILD=$P4_INSTALL/build
               export SDE_LOGS=$P4_INSTALL/logs
-              export PTF_PYTHONPATH=${python.pkgs.makePythonPath pythonModules}
+              export PTF_PYTHONPATH=${python.pkgs.makePythonPath inputs.ptfModules}
               ## Make sure we can find sudo.  The environment isn't pure anyway.
               export PATH=$PATH:/usr/bin
               mkdir -p $P4_INSTALL $SDE_BUILD $SDE_LOGS
