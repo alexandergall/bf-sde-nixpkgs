@@ -151,6 +151,14 @@ let
         buildP4DummyProgram =
           let
             p4Name = "bf-switchd-no_p4";
+            examples = stdenv.mkDerivation {
+              pname = "p4-examples";
+              version = "${self.version}";
+              inherit (mkSrc "p4-examples") src;
+            };
+            skipP4Conf = runCommand "tofino-skip_p4.conf" {} ''
+              cp ${examples}/share/p4/targets/tofino/skip_p4.conf $out
+            '';
           in self.buildP4Program {
             pname = "bf-switchd-dummy";
             version = "1.0";
@@ -167,7 +175,7 @@ let
                 nlines=$(cat $command | wc -l)
                 head -$((nlines - 1)) $command >$command.new
                 cat <<EOF >> $command.new
-                exec ${self}/bin/run_switchd.sh --skip-p4 -c ${self}/share/p4/targets/tofino/skip_p4.conf
+                exec ${self.pkgs.runtimeEnv}/bin/run_switchd.sh --skip-p4 -c ${skipP4Conf}
                 EOF
                 mv $command.new $command
                 chmod a+x $command
