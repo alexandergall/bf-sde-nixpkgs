@@ -106,7 +106,7 @@ in {
   ## need to be stored in the bf-sde-nixpkgs repo.
   Debian10 = {
     ## Standard kernel for Debian10 (buster)
-    release = "4.19.0-11-amd64";
+    release = "4.19.0-14-amd64";
     buildTree = mkDebian {
       spec = {
         arch = {
