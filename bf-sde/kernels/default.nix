@@ -110,16 +110,16 @@ in {
     buildTree = mkDebian {
       spec = {
         arch = {
-          name = "linux-headers-4.19.0-11-amd64_4.19.146-1_amd64.deb";
-          sha256 = "1j0d10898sfnsw58fg7f28m4xx0gnrvm6jvdyxj7a8gzp02j1dzi";
+          name = "linux-headers-4.19.0-14-amd64_4.19.171-2_amd64.deb";
+          sha256 = "0f0m80ml35wc26z03rmlv159pdq5k0c3c8596827945347h0k1f4";
         };
         common = {
-          name = "linux-headers-4.19.0-11-common_4.19.146-1_all.deb";
-          sha256 = "1s1qyfaywkzdwrs5lk10g9gg7pskryiqrnvbqayk6cd4sc90hl9v";
+          name = "linux-headers-4.19.0-14-common_4.19.171-2_all.deb";
+          sha256 = "0vlrqy2av70hbckdzfnfjxzgqfi5czcffvw5by3ipy94vqw3xy73";
         };
         kbuild = {
-          name = "linux-kbuild-4.19_4.19.152-1_amd64.deb";
-          sha256 = "0j4w4jiyw8jpdgxdf9mwk13772hb0zkbykj9k5hyh7jaivgxvsc5";
+          name = "linux-kbuild-4.19_4.19.171-2_amd64.deb";
+          sha256 = "028a36y2jwqlkyi15npjc2h78hskgm3w37mv39l1ra0za6s1vnn1";
         };
       };
       patchelfInputs = [ openssl_1_1.out elfutils ];
