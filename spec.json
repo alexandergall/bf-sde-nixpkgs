@@ -11,7 +11,7 @@
         "emailoverride": "",
         "keepnr": 3,
         "inputs": {
-            "src": { "type": "git", "value": "https://gitlab+deploy-token-72:rF5zRLsyjunzkdDd5fpe@gitlab-int.switch.ch/network/bf-sde-nixpkgs.git release", "emailresponsible": false }
+            "src": { "type": "git", "value": "https://github.com/alexandergall/bf-sde-nixpkgs.git release", "emailresponsible": false }
         }
     },
     "stable-test-cases": {
@@ -26,7 +26,7 @@
         "emailoverride": "",
         "keepnr": 3,
         "inputs": {
-            "src": { "type": "git", "value": "https://gitlab+deploy-token-72:rF5zRLsyjunzkdDd5fpe@gitlab-int.switch.ch/network/bf-sde-nixpkgs.git release", "emailresponsible": false }
+            "src": { "type": "git", "value": "https://github.com/alexandergall/bf-sde-nixpkgs.git release", "emailresponsible": false }
         }
     },
     "testing": {
@@ -41,7 +41,7 @@
         "emailoverride": "",
         "keepnr": 3,
         "inputs": {
-            "src": { "type": "git", "value": "https://gitlab+deploy-token-72:rF5zRLsyjunzkdDd5fpe@gitlab-int.switch.ch/network/bf-sde-nixpkgs.git", "emailresponsible": false }
+            "src": { "type": "git", "value": "https://github.com/alexandergall/bf-sde-nixpkgs.git", "emailresponsible": false }
         }
     },
     "testing-test-cases": {
@@ -56,7 +56,7 @@
         "emailoverride": "",
         "keepnr": 3,
         "inputs": {
-            "src": { "type": "git", "value": "https://gitlab+deploy-token-72:rF5zRLsyjunzkdDd5fpe@gitlab-int.switch.ch/network/bf-sde-nixpkgs.git", "emailresponsible": false }
+            "src": { "type": "git", "value": "https://github.com/alexandergall/bf-sde-nixpkgs.git", "emailresponsible": false }
         }
     }
 }
