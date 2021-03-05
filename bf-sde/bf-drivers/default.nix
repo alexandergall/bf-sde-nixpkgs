@@ -1,15 +1,23 @@
 { pname, version, src, patches, stdenv, python, thrift, openssl, boost,
-  pkg-config, grpc, protobuf, zlib, bf-syslibs, bf-utils }:
+  pkg-config, grpc, protobuf, zlib, bf-syslibs, bf-utils, lib, autoreconfHook,
+
+## The runtime version of the package doesn't include the gencli and
+## generate_tofino_pd components.  They are not used at runtime but,
+## more importantly, they are not allowed to be distributed to third
+## parties by Intel.
+  runtime ? false }:
 
 assert stdenv.isx86_64 || stdenv.isi686;
 
 let
   bf-drivers = stdenv.mkDerivation {
-    inherit pname version src;
+    pname = pname + lib.optionalString runtime "-runtime";
+    inherit version src;
 
     propagatedBuildInputs = with python.pkgs; [ grpcio  ];
     buildInputs = [ thrift openssl boost pkg-config grpc protobuf zlib
-                    bf-syslibs.dev bf-utils python.pkgs.wrapPython ];
+                    bf-syslibs.dev bf-utils bf-utils.dev python.pkgs.wrapPython ]
+                    ++ lib.optional runtime autoreconfHook;
     outputs = [ "out" "dev" ];
     enableParallelBuilding = true;
 
@@ -25,8 +33,12 @@ let
     ];
 
     buildFlags = [
-      "CFLAGS+=-I${bf-utils}/include/python3.4m"
+      "CFLAGS+=-I${bf-utils.dev}/include/python3.4m"
     ];
+
+    preConfigure = lib.optionalString runtime ''
+      substituteInPlace Makefile.am --replace "SUBDIRS = third-party include src pd_api_gen doc" "SUBDIRS = third-party include src doc"
+    '';
 
     ## Install the precompiled avago library and make it available to
     ## the builder.  Also disable building of bfrt examples.
@@ -55,6 +67,7 @@ let
     ## when generate_tofino_pd is run.
     postInstall = ''
       sitePath=$out/lib/${python.libPrefix}/site-packages
+    '' + lib.optionalString (! runtime) ''
       rm $sitePath/tofino_pd_api/tenjin.*
     '' +
 
@@ -73,11 +86,11 @@ let
     ## example by adding bf-drivers and the protobuf Python
     ## package to a Python environment (just adding them to
     ## PYTHONPATH is not sufficient).
-
-    ''
+    lib.optionalString (! runtime) ''
       for obj in $sitePath/tofino/* $sitePath/tofino_pd_api/*; do
         ln -sr $obj $sitePath
       done
+    '' + ''
       cp ${./rpc-nspkg.pth} $sitePath/rpc-nspkg.pth
       rm -f $sitePath/tofino/google/__init__.py*
     '';

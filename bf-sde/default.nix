@@ -103,6 +103,7 @@ let
         bf-drivers = callPackage ./bf-drivers (mkSrc "bf-drivers"// {
           python = sdeSpec.python_bf_drivers;
         });
+        bf-drivers-runtime = sdePkgs.bf-drivers.override { runtime = true; };
         ## bf-diags is currently not used
         bf-diags = callPackage ./bf-diags (mkSrc "bf-diags");
         bf-platforms = callPackage ./bf-platforms {

@@ -12,6 +12,8 @@ stdenv.mkDerivation {
   enableParallelBuilding = true;
   dontDisableStatic = true;
 
+  outputs = [ "out" "dev" ];
+
   ## bf-python is an awful mess in 9.3.0.  bf-utils contains a full
   ## Python interpreter (version 3.4) with a customized IPython
   ## module. This is called from bf_switchd when "bfrt_python" is
@@ -38,4 +40,19 @@ stdenv.mkDerivation {
     ''
       patchShebangs third-party
     '';
+
+  ## Hacks to get rid of issues when creating the "dev" output.  They
+  ## should be harmless because they would only affect someone wanting
+  ## to build Python stuff for the Interpreter embedded in the
+  ## package, which nobody should ever want to do (the embedded
+  ## interpreter is used to provide a modified version of IPython used
+  ## by bfrt_python inside bfshell).
+  preFixup = ''
+    mv $out/include/python*/pyconfig.h $dev/include/python*/
+    rmdir $out/include/python*
+
+    for file in $out/lib/python*/_sysconfigdata.py $out/lib/python*/config*/Makefile $out/lib/python*/__pycache__/_sysconfigdata*; do
+      substituteInPlace $file --replace $dev /removed-bf-utils-dev-reference
+    done
+  '';
 }

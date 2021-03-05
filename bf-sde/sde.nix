@@ -9,8 +9,8 @@
 buildEnv {
   name = "bf-sde-${version}";
   inherit passthru;
-  paths = [ bf-syslibs bf-drivers bf-drivers.dev bf-utils bf-platforms
-            p4c tofino-model tools ptf-modules ptf-utils ];
+  paths = [ bf-syslibs bf-drivers bf-drivers.dev bf-utils bf-utils.dev
+            bf-platforms p4c tofino-model tools ptf-modules ptf-utils ];
 
   ## bfrt Python modules overlap in bfUtils and bfDrivers
   ignoreCollisions = lib.versionAtLeast version "9.3.0";
