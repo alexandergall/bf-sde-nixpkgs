@@ -18,7 +18,7 @@ let
     buildInputs = [ thrift openssl boost pkg-config grpc protobuf zlib
                     bf-syslibs.dev bf-utils bf-utils.dev python.pkgs.wrapPython ]
                     ++ lib.optional runtime autoreconfHook;
-    outputs = [ "out" "dev" ];
+    outputs = [ "out" ] ++ lib.optional (! runtime) "dev";
     enableParallelBuilding = true;
 
     patches = patches ++ [ ./bf_switchd_model.patch ];
@@ -90,9 +90,13 @@ let
       for obj in $sitePath/tofino/* ${lib.optionalString (! runtime) "$sitePath/tofino_pd_api/*"}; do
         ln -sr $obj $sitePath
       done
-    '' + ''
       cp ${./rpc-nspkg.pth} $sitePath/rpc-nspkg.pth
       rm -f $sitePath/tofino/google/__init__.py*
+    '' +
+
+    ## The runtime version doesn't have a "dev" output.
+    lib.optionalString runtime ''
+      rm -rf $out/include
     '';
 
     pythonPath = with python.pkgs; [ tenjin six ];
