@@ -86,8 +86,8 @@ let
     ## example by adding bf-drivers and the protobuf Python
     ## package to a Python environment (just adding them to
     ## PYTHONPATH is not sufficient).
-    lib.optionalString (! runtime) ''
-      for obj in $sitePath/tofino/* $sitePath/tofino_pd_api/*; do
+    ''
+      for obj in $sitePath/tofino/* ${lib.optionalString (! runtime) "$sitePath/tofino_pd_api/*"}; do
         ln -sr $obj $sitePath
       done
     '' + ''
