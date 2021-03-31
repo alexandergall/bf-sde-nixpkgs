@@ -104,7 +104,7 @@ in {
   ## packages that need to be combined to form the complete build
   ## directory.  The deb files are available for download and don't
   ## need to be stored in the bf-sde-nixpkgs repo.
-  Debian10 = {
+  Debian10_8 = {
     ## Standard kernel for Debian10 (buster)
     release = "4.19.0-14-amd64";
     buildTree = mkDebian {
@@ -120,6 +120,27 @@ in {
         kbuild = {
           name = "linux-kbuild-4.19_4.19.171-2_amd64.deb";
           sha256 = "028a36y2jwqlkyi15npjc2h78hskgm3w37mv39l1ra0za6s1vnn1";
+        };
+      };
+      patchelfInputs = [ openssl_1_1.out elfutils ];
+    };
+  };
+  Debian10_9 = {
+    ## Standard kernel for Debian10 (buster)
+    release = "4.19.0-16-amd64";
+    buildTree = mkDebian {
+      spec = {
+        arch = {
+          name = "linux-headers-4.19.0-16-amd64_4.19.181-1_amd64.deb";
+          sha256 = "05as3x898missk9277bb51drzg4zgk0mdd4ij8sninpnws73fg75";
+        };
+        common = {
+          name = "linux-headers-4.19.0-16-common_4.19.181-1_all.deb";
+          sha256 = "07nd5sjbygwb9r4lbl347hyz1ymf6s38kfh2gf604hnrh5nkqvfm";
+        };
+        kbuild = {
+          name = "linux-kbuild-4.19_4.19.181-1_amd64.deb";
+          sha256 = "01ygxscag9r6pqs1vfydprglqd2g5pa9c49ja5na68bpw3vnzdzv";
         };
       };
       patchelfInputs = [ openssl_1_1.out elfutils ];
