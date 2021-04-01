@@ -118,8 +118,8 @@ in {
           sha256 = "0vlrqy2av70hbckdzfnfjxzgqfi5czcffvw5by3ipy94vqw3xy73";
         };
         kbuild = {
-          name = "linux-kbuild-4.19_4.19.171-2_amd64.deb";
-          sha256 = "028a36y2jwqlkyi15npjc2h78hskgm3w37mv39l1ra0za6s1vnn1";
+          name = "linux-kbuild-4.19_4.19.181-1_amd64.deb";
+          sha256 = "01ygxscag9r6pqs1vfydprglqd2g5pa9c49ja5na68bpw3vnzdzv";
         };
       };
       patchelfInputs = [ openssl_1_1.out elfutils ];
