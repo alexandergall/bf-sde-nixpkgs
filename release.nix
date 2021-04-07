@@ -17,7 +17,6 @@ let
   mk = sde: {
     inherit sde;
     inherit (sde) pkgs;
-    inherit (sde.pkgs) kernel-modules;
   };
   versions = mapAttrs (version: sde: mk sde) bf-sde';
 in versions
