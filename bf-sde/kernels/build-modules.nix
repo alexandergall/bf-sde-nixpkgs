@@ -1,11 +1,16 @@
 ## Build the SDE modules for a specific kernel
 
 { lib, stdenv, python2, runtimeShell, kmod, coreutils,
-  version, src, spec, bf-syslibs }:
+  version, src, kernelID, spec, bf-syslibs }:
 
 stdenv.mkDerivation {
   name = "bf-sde-${version}-kernel-modules-${spec.release}";
   inherit src;
+
+  passthru = {
+    inherit kernelID;
+    inherit (spec) release;
+  };
 
   patches = spec.patches.${version} or [];
   buildInputs = [ bf-syslibs python2 kmod ];

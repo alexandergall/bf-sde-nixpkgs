@@ -31,14 +31,6 @@ assert requiredKernelModule != null -> lib.any (e: requiredKernelModule == e)
                                                [ "bf_kdrv" "bf_kpkt" "bf_knet" ];
 
 let
-  makeModuleWrapper' = { modules }:
-    if requiredKernelModule != null then
-      callPackage ./modules-wrapper.nix {
-        inherit modules execName requiredKernelModule self;
-      }
-    else
-      throw "${pname} does not require a kernel module";
-
   passthru = {
     ## Preserve the name of the program. Used by the test.cases
     ## attribute of the sde package.
@@ -46,13 +38,17 @@ let
 
     ## Build a shell script to load the required kernel module for a given
     ## kernel before executing the program.
-    ## Used by release.nix to pre-build wrappers for all kernels
-    makeModuleWrapperForKernel = kernelID:
-      makeModuleWrapper' { modules = bf-sde.buildModules kernelID; };
-    ## Build the wrapper for the running system
-    makeModuleWrapper = makeModuleWrapper' {
-      modules = bf-sde.buildModulesForLocalKernel;
-    };
+    moduleWrapper' = modules:
+      callPackage ./modules-wrapper.nix {
+        inherit execName requiredKernelModule modules self;
+      };
+
+    moduleWrapper = kernelID:
+      if requiredKernelModule != null then
+        self.moduleWrapper' (bf-sde.selectModules kernelID)
+      else
+        throw "${pname} does not require a kernel module";
+
     runTest = args:
       let
         ## Re-create the patched source tree to execercise

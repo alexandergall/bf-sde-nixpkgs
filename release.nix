@@ -9,13 +9,15 @@ with pkgs;
 with lib;
 
 let
+  filterDrvs = attrs:
+    filterAttrs (n: v: attrsets.isDerivation v) attrs;
   ## Hydra doesn't like non-derivation attributes
-  bf-sde' = filterAttrs (n: v: attrsets.isDerivation v) bf-sde;
+  bf-sde' = filterDrvs bf-sde;
   kernels = import ./bf-sde/kernels pkgs;
   mk = sde: {
     inherit sde;
     inherit (sde) pkgs;
-    kernelModules = sde.buildModulesForAllKernels;
+    inherit (sde.pkgs) kernel-modules;
   };
   versions = mapAttrs (version: sde: mk sde) bf-sde';
 in versions
