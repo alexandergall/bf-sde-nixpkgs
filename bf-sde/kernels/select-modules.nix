@@ -19,6 +19,10 @@ in
       builtins.trace "Kernel ${kernelRelease} is not supported, bf_switchd on TNA not available"
       stdenv.mkDerivation {
         name = "bf-sde-unsupported-kernel";
+        passthru = {
+          kernelID = "<none>";
+          release = "<unsupported>";
+        };
         phases = [ "installPhase" ];
         installPhase = ''
             mkdir -p $out/bin
