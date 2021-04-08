@@ -1,22 +1,22 @@
 { kernel-modules, lib, runCommandLocal, stdenv, runtimeShell }:
 
+kernelRelease:
+
 let
-  localKernel = import (runCommandLocal "local-kernel-release" {} ''
-    echo \"$(uname -r)\" >$out
-  '');
-  kernelID = builtins.getEnv "SDE_KERNEL_ID";
-  matches = lib.filterAttrs (_: spec: spec.release == localKernel) kernel-modules;
+  envKernelID = builtins.getEnv "SDE_KERNEL_ID";
+  matches = lib.filterAttrs (_: spec: spec.release == kernelRelease) kernel-modules;
   ids = lib.attrNames matches;
   nMatches = builtins.length ids;
 in
-  if kernelID != "" then
-    kernel-modules.${kernelID} or (throw ("The SDE_KERNEL_ID environment variable " +
-      "ist set to \"${kernelID}\" but matches no supported kernel for " +
-      "kernel release ${localKernel}"))
+  if envKernelID != "" then
+    kernel-modules.${envKernelID} or (throw ("The SDE_KERNEL_ID environment variable " +
+      "ist set to \"${envKernelID}\" but matches no supported kernel for " +
+      "kernel release ${kernelRelease}"))
   else
     if nMatches == 0 then
       ## Unsupported kernel, create a dummy modules package which
       ## exits with an error when attempting to load a module.
+      builtins.trace "Kernel ${kernelRelease} is not supported, bf_switchd on TNA not available"
       stdenv.mkDerivation {
         name = "bf-sde-unsupported-kernel";
         phases = [ "installPhase" ];
@@ -26,7 +26,7 @@ in
               load_cmd=$out/bin/bf_''${mod}_mod_load
               cat <<"EOF" >$load_cmd
             #!${runtimeShell}
-            echo "No modules available for this kernel (${localKernel})"
+            echo "No modules available for this kernel (${kernelRelease})"
             exit 1
             EOF
             chmod a+x $load_cmd
@@ -38,5 +38,5 @@ in
       if nMatches == 1 then
         kernel-modules.${builtins.head ids}
       else
-        throw ("Multiple matches exist for kernel ${localKernel}. " +
+        throw ("Multiple matches exist for kernel ${kernelRelease}. " +
           "Chose one by setting SDE_KERNEL_ID to one of: ${lib.concatStringsSep ", " ids}")

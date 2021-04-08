@@ -1,4 +1,7 @@
-## Provide a set of kernels for which the SDE can build its modules.
+## Build the SDE kernel modules for a set of kernels specified in the
+## set "kernels" below. Return a set with the names of the kernels as
+## attributes and the modules packages as values.
+##
 ##
 ## The name of each set identifies the kernel and is used as input to
 ## the buildModules passthru function of the bf-sde package to perform

@@ -92,9 +92,10 @@ let
           failed-cases = lib.filterAttrs (n: v: (import (v + "/passed") == false)) cases;
         };
 
-	modulesForLocalKernel = callPackage kernels/local-kernel.nix {
-	  inherit (self.pkgs) kernel-modules;
-	};
+	modulesForKernel = kernelRelease:
+	  (callPackage kernels/select-modules.nix {
+	     inherit (self.pkgs) kernel-modules;
+	   }) kernelRelease;
 
         ## A function that compiles a given P4 program in the context of
         ## the SDE.
@@ -143,7 +144,7 @@ let
         ## A function that can be used with nix-shell to create an
         ## environment for developing data-plane and control-plane
         ## programs in the context of the SDE (see ./sde-env.sh).
-        mkShell = { inputFn ? { pkgs, pythonPkgs }: {} }:
+        mkShell = { inputFn ? { pkgs, pythonPkgs }: {}, kernelRelease }:
           let
             bf-drivers = self.pkgs.bf-drivers;
             python = bf-drivers.pythonModule;
@@ -160,7 +161,7 @@ let
                                                  ++ inputs.cpModules);
           in mkShell {
             ## kmod provides insmod, procps provides sysctl
-            buildInputs = [ self self.modulesForLocalKernel
+            buildInputs = [ self (self.modulesForKernel kernelRelease)
                             kmod procps utillinux which pythonEnv ]
                             ++ inputs.pkgs;
             shellHook = ''
