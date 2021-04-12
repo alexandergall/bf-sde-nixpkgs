@@ -4,7 +4,7 @@ kernelRelease:
 
 let
   envKernelID = builtins.getEnv "SDE_KERNEL_ID";
-  matches = lib.filterAttrs (_: spec: spec.release == kernelRelease) kernel-modules;
+  matches = lib.filterAttrs (_: spec: spec.kernelRelease == kernelRelease) kernel-modules;
   ids = lib.attrNames matches;
   nMatches = builtins.length ids;
 in
@@ -20,8 +20,8 @@ in
       stdenv.mkDerivation {
         name = "bf-sde-unsupported-kernel";
         passthru = {
-          kernelID = "<none>";
-          release = "<unsupported>";
+          kernelID = "<unsupported>";
+	  inherit kernelRelease;
         };
         phases = [ "installPhase" ];
         installPhase = ''

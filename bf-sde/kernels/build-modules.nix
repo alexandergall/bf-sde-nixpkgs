@@ -4,12 +4,12 @@
   version, src, kernelID, spec, bf-syslibs }:
 
 stdenv.mkDerivation {
-  name = "bf-sde-${version}-kernel-modules-${spec.release}";
+  name = "bf-sde-${version}-kernel-modules-${spec.kernelRelease}";
   inherit src;
 
   passthru = {
     inherit kernelID;
-    inherit (spec) release;
+    inherit (spec) kernelRelease;
   };
 
   patches = spec.patches.${version} or [];
@@ -29,9 +29,21 @@ stdenv.mkDerivation {
   '';
 
   postInstall = ''
-    mod_dir=$out/lib/modules/${spec.release}
+    mod_dir=$out/lib/modules/${spec.kernelRelease}
     mkdir -p $mod_dir
     mv $out/lib/modules/*.ko $mod_dir
+
+    wrap () {
+    cat <<EOF >> $1
+    #!${runtimeShell}
+    kernelRelease=\$(${coreutils}/bin/uname -r)
+    if [ \$kernelRelease != ${spec.kernelRelease} ]; then
+      echo "\$0: expecting kernel ${spec.kernelRelease}, got \$kernelRelease, aborting"
+      exit 1
+    fi
+    exec $1.wrapped $out
+    EOF
+    }
 
     for mod in kpkt kdrv knet; do
       script=$out/bin/bf_''${mod}_mod_load
@@ -41,8 +53,7 @@ stdenv.mkDerivation {
       substituteInPlace $out/bin/bf_''${mod}_mod_unload \
         --replace rmmod ${kmod}/bin/rmmod
       mv $script ''${script}.wrapped
-      echo '#!${runtimeShell}' >>$script
-      echo "$script.wrapped $out" >>$script
+      wrap $script
       chmod a+x $script
     done
   '';

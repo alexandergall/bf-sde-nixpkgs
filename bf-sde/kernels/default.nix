@@ -9,7 +9,7 @@
 ##
 ## Each set has the following attributes
 ##
-##   release
+##   kernelRelease
 ##     the name of the kernel release exactly as it is reported by
 ##     "uname -r" on a system which runs that kernel.
 ##
@@ -70,7 +70,7 @@ let
     ## build the mion image, for example
     ## https://github.com/NetworkGradeLinux/meta-mion-bsp/blob/dunfell/meta-mion-accton/recipes-kernel/linux/linux-yocto_5.4.bbappend
     mion = {
-      release = "5.4.49-yocto-standard";
+      kernelRelease = "5.4.49-yocto-standard";
       buildTree = mkMion {
         spec = {
           source = fetchurl {
@@ -96,7 +96,7 @@ let
     ## locally).
     ONL9 = {
       ## ONL with Debian9 created from commit 7c3bfd
-      release = "4.14.151-OpenNetworkLinux";
+      kernelRelease = "4.14.151-OpenNetworkLinux";
       buildTree = mkONL {
         spec = {
           deb = ./onl-kernel-4.14-lts-x86-64-all_1.0.0_amd64.deb;
@@ -106,7 +106,7 @@ let
     };
     ONL10 = {
       ## ONL with Debian10, based on commit 1537d8
-      release = "4.19.81-OpenNetworkLinux";
+      kernelRelease = "4.19.81-OpenNetworkLinux";
       buildTree = mkONL {
         spec = {
           deb = ./onl-kernel-4.19-lts-x86-64-all_1.0.0_amd64.deb;
@@ -121,7 +121,7 @@ let
     ## need to be stored in the bf-sde-nixpkgs repo.
     Debian10_8 = {
       ## Standard kernel for Debian10 (buster)
-      release = "4.19.0-14-amd64";
+      kernelRelease = "4.19.0-14-amd64";
       buildTree = mkDebian {
         spec = {
           arch = {
@@ -142,7 +142,7 @@ let
     };
     Debian10_9 = {
       ## Standard kernel for Debian10 (buster)
-      release = "4.19.0-16-amd64";
+      kernelRelease = "4.19.0-16-amd64";
       buildTree = mkDebian {
         spec = {
           arch = {
@@ -156,6 +156,27 @@ let
           kbuild = {
             name = "linux-kbuild-4.19_4.19.181-1_amd64.deb";
             sha256 = "01ygxscag9r6pqs1vfydprglqd2g5pa9c49ja5na68bpw3vnzdzv";
+          };
+        };
+        patchelfInputs = [ openssl_1_1.out elfutils ];
+      };
+    };
+    Debian11 = {
+      ## Standard kernel for Debian10 (buster)
+      kernelRelease = "5.10.0-5-amd64";
+      buildTree = mkDebian {
+        spec = {
+          arch = {
+            name = "linux-headers-5.10.0-5-amd64_5.10.26-1_amd64.deb";
+            sha256 = "19xhvsi84lr9xfg8frx9hxi2nja7ipiflwdm3w6fxw1cyhf9k5ff";
+          };
+          common = {
+            name = "linux-headers-5.10.0-5-common_5.10.26-1_all.deb";
+            sha256 = "0vs3cchl1csvxgfd2qi3jz7ymq7m6c1ayjyzwn6p06x4pvf2swkk";
+          };
+          kbuild = {
+            name = "linux-kbuild-5.10_5.10.26-1_amd64.deb";
+            sha256 = "06isincrfv19licj3p1hhhvqjw8dk8lzzps5r40nj2a578p38yzf";
           };
         };
         patchelfInputs = [ openssl_1_1.out elfutils ];
