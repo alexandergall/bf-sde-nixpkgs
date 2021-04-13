@@ -12,7 +12,8 @@ stdenv.mkDerivation {
     inherit (spec) kernelRelease;
   };
 
-  patches = spec.patches.${version} or [];
+  patches = (spec.patches.all or []) ++
+            (spec.patches.${version} or []);
   buildInputs = [ bf-syslibs python2 kmod ];
   configureFlags = [
     " --with-kdrv=yes"

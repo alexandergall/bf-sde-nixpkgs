@@ -181,6 +181,15 @@ let
         };
         patchelfInputs = [ openssl_1_1.out elfutils ];
       };
+      patches =
+        let
+	  patch = [ ./bf-drivers-kernel-5.8.patch ];
+        in {
+          "9.1.1" = patch ++ [ ./bf-drivers-9.1.1.patch ];
+          "9.2.0" = patch;
+          "9.3.0" = patch;
+          "9.3.1" = patch;
+        };
     };
   };
 in

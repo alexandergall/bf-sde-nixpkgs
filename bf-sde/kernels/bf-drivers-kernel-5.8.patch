@@ -1,0 +1,30 @@
+diff -Naur bf-drivers-9.3.0.orig/kdrv/bf_kdrv/bf_kdrv.c bf-drivers-9.3.0/kdrv/bf_kdrv/bf_kdrv.c
+--- bf-drivers-9.3.0.orig/kdrv/bf_kdrv/bf_kdrv.c	2020-10-14 02:33:13.000000000 +0000
++++ bf-drivers-9.3.0/kdrv/bf_kdrv/bf_kdrv.c	2021-04-13 08:49:17.572893637 +0000
+@@ -1314,7 +1314,11 @@
+   struct bf_pci_dev *bfdev = pci_get_drvdata(dev);
+ 
+   printk(KERN_ERR "BF pci_mmio_enabled invoked after pci error\n");
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
++  pci_aer_clear_nonfatal_status(dev);
++#else
+   pci_cleanup_aer_uncorrect_error_status(dev);
++#endif
+ 
+   if (bfdev) {
+     /* send a signal to the user space program of the error */
+diff -Naur bf-drivers-9.3.0.orig/kdrv/bf_kpkt/bf_kpkt_net.c bf-drivers-9.3.0/kdrv/bf_kpkt/bf_kpkt_net.c
+--- bf-drivers-9.3.0.orig/kdrv/bf_kpkt/bf_kpkt_net.c	2020-10-14 02:33:12.000000000 +0000
++++ bf-drivers-9.3.0/kdrv/bf_kpkt/bf_kpkt_net.c	2021-04-13 08:42:15.532879986 +0000
+@@ -143,7 +143,11 @@
+  * bf_kpkt_tx_timeout - Respond to a Tx Hang
+  * @netdev: network interface device structure
+  **/
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 8, 0)
++static void bf_kpkt_tx_timeout(struct net_device *netdev, unsigned int t) {}
++#else
+ static void bf_kpkt_tx_timeout(struct net_device *netdev) {}
++#endif
+ 
+ void bf_kpkt_set_rx_ring_buff_free(struct bf_kpkt_adapter *adapter,
+                                    struct bf_kpkt_ring *rx_ring,
