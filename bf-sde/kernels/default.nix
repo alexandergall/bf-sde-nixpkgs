@@ -163,20 +163,20 @@ let
     };
     Debian11 = {
       ## Standard kernel for Debian10 (buster)
-      kernelRelease = "5.10.0-5-amd64";
+      kernelRelease = "5.10.0-6-amd64";
       buildTree = mkDebian {
         spec = {
           arch = {
-            name = "linux-headers-5.10.0-5-amd64_5.10.26-1_amd64.deb";
-            sha256 = "19xhvsi84lr9xfg8frx9hxi2nja7ipiflwdm3w6fxw1cyhf9k5ff";
+	    name = "linux-headers-5.10.0-6-amd64_5.10.28-1_amd64.deb";
+            sha256 = "0lnijmsb8hrdss76hcl33zf9w4hn5z0iciqjwj9ff8fxpqm3l1dq";
           };
           common = {
-            name = "linux-headers-5.10.0-5-common_5.10.26-1_all.deb";
-            sha256 = "0vs3cchl1csvxgfd2qi3jz7ymq7m6c1ayjyzwn6p06x4pvf2swkk";
+            name = "linux-headers-5.10.0-6-common_5.10.28-1_all.deb";
+            sha256 = "11yy6l0mxvh48qfdyfmgvirwv7par5ga0jgvwbnhbm20358pq9jf";
           };
           kbuild = {
-            name = "linux-kbuild-5.10_5.10.26-1_amd64.deb";
-            sha256 = "06isincrfv19licj3p1hhhvqjw8dk8lzzps5r40nj2a578p38yzf";
+            name = "linux-kbuild-5.10_5.10.28-1_amd64.deb";
+            sha256 = "0v2rlb2liv0s9r9kxhsnydj18rgn11y35smb2fd6j75chqg7zl85";
           };
         };
         patchelfInputs = [ openssl_1_1.out elfutils ];
