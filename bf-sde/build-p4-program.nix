@@ -43,11 +43,8 @@ let
         inherit execName requiredKernelModule modules self;
       };
 
-    moduleWrapper = kernelID:
-      if requiredKernelModule != null then
-        self.moduleWrapper' (bf-sde.selectModules kernelID)
-      else
-        throw "${pname} does not require a kernel module";
+    moduleWrapper = kernelRelease:
+      self.moduleWrapper' (bf-sde.modulesForKernel kernelRelease);
 
     runTest = args:
       let

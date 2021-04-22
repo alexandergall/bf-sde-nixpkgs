@@ -1,5 +1,8 @@
 { lib, writeShellScriptBin, kmod, gawk, gnugrep, modules, execName, requiredKernelModule, self }:
 
+assert lib.asserts.assertMsg (requiredKernelModule != null)
+  "Attempting to build a module wrapper for a program that does not require a module";
+
 (writeShellScriptBin "${execName}-module-wrapper" ''
   set -e
 
