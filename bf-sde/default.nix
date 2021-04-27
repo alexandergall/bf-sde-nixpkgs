@@ -72,7 +72,23 @@ let
         ## A stripped-down version of the SDE environment which only
         ## contains the components needed at runtime
         runtimeEnv = callPackage ./sde-runtime.nix {};
-      };
+      } // (lib.optionalAttrs (lib.strings.versionAtLeast sdeSpec.version "9.5.0") {
+
+        ## Up to 9.4.0, the test facility used the PTF from p4.org
+        ## (included with ptf-modules) with scapy to generate packets.
+        ## Due to some licensing issue with scapy (according to the
+        ## 9.5.0 release notes), the SDE uses a modified version of
+        ## the PTF that no longer depends on scapy starting with
+        ## 9.5.0.  Instead, it uses a packet generator called
+        ## "bf-pktpy" provided by Intel.  The modified PTF executable
+        ## is installed as "bf-ptf" (as expected by run_ptf_tests.py
+        ## fomr ptf-utils).  p4studio_build also moves the modules of
+        ## the PTF to a subdirectory "bf-ptf" in site-packages to make
+        ## it possible to install the original p4.org PTF on top of
+        ## it.  We don't replicate this behaviour.
+        ptf-modules = callPackage ./ptf-modules/bf-ptf.nix (mkSrc "ptf-modules");
+        bf-pktpy = callPackage ./ptf-modules/bf-pktpy.nix (mkSrc "ptf-modules");
+      });
 
       passthru = {
         inherit (sdeSpec) version;
@@ -92,10 +108,10 @@ let
           failed-cases = lib.filterAttrs (n: v: (import (v + "/passed") == false)) cases;
         };
 
-	modulesForKernel = kernelRelease:
-	  (callPackage kernels/select-modules.nix {
-	     inherit (self.pkgs) kernel-modules;
-	   }) kernelRelease;
+        modulesForKernel = kernelRelease:
+          (callPackage kernels/select-modules.nix {
+             inherit (self.pkgs) kernel-modules;
+           }) kernelRelease;
 
         ## A function that compiles a given P4 program in the context of
         ## the SDE.
@@ -302,6 +318,22 @@ let
         p4-examples = [ ./p4-16-examples/9.4.0-ptf.patch ];
       };
     };
+    v9_5_0 = rec {
+      version = "9.5.0";
+      sde = {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "61d55a06fa6f80fc1f859a80ab8897eeca43f06831d793d7ec7f6f56e6529ed7";
+      };
+      bsp = {
+        name = "bf-reference-bsp-${version}.tgz";
+        outputHash = "b6a293c8e2694d7ea8d7b12c24b1d63c08b0eca3783eeb7d54e8ecffb4494c9f";
+      };
+      stdenv = gcc8Stdenv;
+      thrift = thrift_0_13;
+      patches = {
+        p4-examples = [];
+      };
+    };
   };
 
-in bf-sde // { latest = bf-sde.v9_4_0; }
+in bf-sde // { latest = bf-sde.v9_5_0; }

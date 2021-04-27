@@ -103,6 +103,28 @@ let
             sha256 = "0gpl0yli3w03ipyqfrp3w5nf0iawhsq65anf5wwm2wf5p502jzhd";
           };
         });
+
+        ## Required by Intel's modified PTF from ptf-modules/bf-ptf
+        scapy-helper = python-super.buildPythonPackage rec {
+          pname = "scapy_helper";
+          version = "0.10.0";
+
+          buildInputs = with python-self; [ pyperclip scapy ];
+          propagatedBuildInputs = with python-self; [ tabulate ];
+          src = python-super.fetchPypi {
+            inherit pname version;
+            sha256 = "1xkmkb2vx2j5ca2367m1v4p821nnsm7rfxp621bbkxsav8kgc77g";
+          };
+        };
+        pyperclip = python-super.pyperclip.overridePythonAttrs (_:  rec {
+          pname = "pyperclip";
+          version = "1.8.2";
+
+          src = python-super.fetchPypi {
+            inherit pname version;
+            sha256 = "0mxzm43z2anr55gyz7awagvam4d5c2rlxhp9hjyg0d29n2l58lhh";
+          };
+        });
       };
     };
 

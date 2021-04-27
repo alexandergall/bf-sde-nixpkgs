@@ -10,11 +10,27 @@
 assert stdenv.isx86_64 || stdenv.isi686;
 
 let
+
+  ## This is a copy of toPythonModule from
+  ## pkgs/top-level/python-packages.nix. The problem with the original
+  ## (i.e. python.pkgs.toPyhtonModule) is that it uses the
+  ## non-overriden python, not the modified one from overlay.nix.
+  ## However, we use python from bf-driver's passthru to build python
+  ## stuff that depends on bf-drivers and need to see the overrides
+  ## there. Hence this copy that *does* use the overridden python.
+  toPythonModule = drv:
+    drv.overrideAttrs( oldAttrs: {
+      passthru = (oldAttrs.passthru or {}) // {
+        pythonModule = python;
+        pythonPath = [ ];
+        requiredPythonModules = python.pkgs.requiredPythonModules drv.propagatedBuildInputs;
+      };
+    });
   bf-drivers = stdenv.mkDerivation {
     pname = pname + lib.optionalString runtime "-runtime";
     inherit version src;
 
-    propagatedBuildInputs = with python.pkgs; [ grpcio  ];
+    propagatedBuildInputs = with python.pkgs; [ grpcio ];
     buildInputs = [ thrift openssl boost pkg-config grpc protobuf zlib
                     bf-syslibs.dev bf-utils bf-utils.dev python.pkgs.wrapPython ]
                     ++ lib.optional runtime autoreconfHook;
@@ -108,4 +124,4 @@ let
 ## This turns the derivation into a Python Module,
 ## i.e. $out/lib/python*/site-packages will be included in all of the
 ## Nix Python wrapper magic
-in python.pkgs.toPythonModule bf-drivers
+in toPythonModule bf-drivers

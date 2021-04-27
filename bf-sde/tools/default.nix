@@ -5,7 +5,11 @@ stdenv.mkDerivation {
   name = "bf-tools-${version}";
 
   buildInputs = [ python2 makeWrapper ethtool iproute ];
-  patches = [ ./run_switchd.patch ./run_p4_tests.patch ];
+  patches = [ ./run_switchd.patch ] ++
+    (if (lib.strings.versionOlder version "9.5.0") then
+       [./run_p4_tests.patch ]
+     else
+       [./run_p4_tests-9.5.0.patch ]);
 
   installPhase = ''
     mkdir -p $out/bin
