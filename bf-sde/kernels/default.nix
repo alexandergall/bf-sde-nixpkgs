@@ -120,7 +120,6 @@ let
     ## directory.  The deb files are available for download and don't
     ## need to be stored in the bf-sde-nixpkgs repo.
     Debian10_8 = {
-      ## Standard kernel for Debian10 (buster)
       kernelRelease = "4.19.0-14-amd64";
       buildTree = mkDebian {
         spec = {
@@ -141,7 +140,6 @@ let
       };
     };
     Debian10_9 = {
-      ## Standard kernel for Debian10 (buster)
       kernelRelease = "4.19.0-16-amd64";
       buildTree = mkDebian {
         spec = {
@@ -162,7 +160,7 @@ let
       };
     };
     Debian11 = {
-      ## Standard kernel for Debian10 (buster)
+      ## Moving target as long as Debian 11 (bullseye) is testing
       kernelRelease = "5.10.0-6-amd64";
       buildTree = mkDebian {
         spec = {
