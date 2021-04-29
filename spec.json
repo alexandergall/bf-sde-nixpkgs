@@ -1,38 +1,8 @@
 {
-    "stable": {
+    "SDE": {
         "enabled": 1,
         "hidden": false,
-        "description": "Barefoot Tofino SDE stable",
-        "nixexprinput": "src",
-        "nixexprpath": "release.nix",
-        "checkinterval": 300,
-        "schedulingshares": 100,
-        "enableemail": false,
-        "emailoverride": "",
-        "keepnr": 3,
-        "inputs": {
-            "src": { "type": "git", "value": "https://github.com/alexandergall/bf-sde-nixpkgs.git release", "emailresponsible": false }
-        }
-    },
-    "stable-test-cases": {
-        "enabled": 1,
-        "hidden": false,
-        "description": "Barefoot Tofino SDE stable test cases",
-        "nixexprinput": "src",
-        "nixexprpath": "release-test-cases.nix",
-        "checkinterval": 300,
-        "schedulingshares": 100,
-        "enableemail": false,
-        "emailoverride": "",
-        "keepnr": 3,
-        "inputs": {
-            "src": { "type": "git", "value": "https://github.com/alexandergall/bf-sde-nixpkgs.git release", "emailresponsible": false }
-        }
-    },
-    "testing": {
-        "enabled": 1,
-        "hidden": false,
-        "description": "Barefoot Tofino SDE unstable",
+        "description": "Barefoot Tofino SDE",
         "nixexprinput": "src",
         "nixexprpath": "release.nix",
         "checkinterval": 300,
@@ -44,10 +14,10 @@
             "src": { "type": "git", "value": "https://github.com/alexandergall/bf-sde-nixpkgs.git", "emailresponsible": false }
         }
     },
-    "testing-test-cases": {
+    "test-cases": {
         "enabled": 1,
         "hidden": false,
-        "description": "Barefoot Tofino SDE unstable test cases",
+        "description": "Barefoot Tofino SDE test cases",
         "nixexprinput": "src",
         "nixexprpath": "release-test-cases.nix",
         "checkinterval": 300,
