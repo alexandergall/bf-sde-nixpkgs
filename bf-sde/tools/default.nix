@@ -5,7 +5,7 @@ stdenv.mkDerivation {
   name = "bf-tools-${version}";
 
   buildInputs = [ python2 makeWrapper ethtool iproute ];
-  patches = [ ./run_switchd.patch ] ++
+  patches = [ ./run_switchd.patch ./run_bfshell.patch ] ++
     (if (lib.strings.versionOlder version "9.5.0") then
        [./run_p4_tests.patch ]
      else
@@ -27,6 +27,7 @@ stdenv.mkDerivation {
     cp *manifest $out
     cp run_switchd.sh $out/bin
     cp run_tofino_model.sh $out/bin
+    cp run_bfshell.sh $out/bin
 
     ## A test script could need additional Python modules at runtime.
     ## The bare ptf command has an option --pypath for this purpose,
