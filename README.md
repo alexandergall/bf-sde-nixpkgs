@@ -622,7 +622,6 @@ packages described in the next section:
    * `bf-platforms`
    * `p4c`
    * `tofino-model`
-   * `tools`
    * `ptf-modules`
    * `ptf-utils`
 
@@ -639,19 +638,24 @@ $ ls -l
 lrwxrwxrwx 1 root root 70 Jan  1  1970 /nix/store/8wh2yi3v1vajw6g9gjylankmxafp3g3k-bf-sde-9.3.1/bin/bfshell -> /nix/store/15fmcbjc42pmilzks40h56p8lywl3zpa-bf-utils-9.3.1/bin/bfshell
 ```
 
-By setting
+It also contains the following tools used to interact with the SDE
 
-```
-export SDE=$(nix-build -A bf-sde.latest)
-export SDE_INSTALL=$SDE
-```
+   * `run_switchd.sh`
+   * `run_bfshell.sh`
+   * `run_tofino_model.sh`
+   * `run_p4_test.sh`
+   * `p4_build.sh`
 
-and adding `$SDE/bin` to `PATH`, we would get an almost working SDE
-environment.  The difference is that with the traditional method, the
-P4 compiler wants to install its artifacts directly to `SDE_INSTALL`
-and also use a temporary build directory located in `SDE`. This is not
-possible with Nix, because all packages are immutable, i.e. once
-installed in the Nix store, they can never be changed.
+In the SDE built in the traditional way by P4 Studio, one needs to set
+`SDE` and `SDE_INSTALL` for these tools to work.  In the Nix package,
+this is done by shell wrappers around them, i.e. they work without
+having to modify the caller's environment.
+
+However, there is a problem when using `p4_build.sh` to compile a P4
+program.  In the traditional SDE, the build artifacts are stored in
+the SDE itself.  This is not possible with Nix, because all packages
+are immutable, i.e. once installed in the Nix store, they can never be
+changed.
 
 To solve this problem, the Nix SDE package uses slightly modified
 versions of the scripts used to compile P4 programs and run them with
@@ -665,12 +669,11 @@ Apart from this, the Nix package works just like the one built in the
 traditional manner.
 
 In principle, one could use the output of `nix-build` directly by
-setting `PATH`, `SDE`, `SDE_INSTALL`, `P4_INSTALL` and `SDE_BUILD`
-appropriately and make sure that all other dependencies are present
-(e.g. the C preprocessor `cpp`). To avoid this inconvenience, the Nix
-package offers a method to easily create a new shell in which all of
-these settings are created automatically, which is exactly what `make
-env` [described previously](#sdeShell) does.
+setting `PATH`, `P4_INSTALL` and `SDE_BUILD` appropriately. To avoid
+this inconvenience, the Nix package offers a method to easily create a
+new shell in which all of these settings are created automatically,
+which is exactly what `make env` [described previously](#sdeShell)
+does.
 
 <a name="twoStageBuild"></a>
 The output of `nix-build` is the closest thing to a binary package of
@@ -742,7 +745,6 @@ The following derivations are avaialbe
    * `ptf-utils`
    * `bf-pktpy` (SDE 9.5.0 and later)
    * `kernel-modules`
-   * `tools`
    * `runtimeEnv`
 
 All but the last three have a direct correspondence to the components
@@ -753,26 +755,24 @@ which is split into separate packages for technical reasons).
 derivations, each of which provides the modules for one of the
 supported kernels.
 
-The `tools` derivation contains the support scripts
-
-   * `p4_build.sh`
-   * `run_switchd.sh`
-   * `run_tofino_model.sh`
-   * `run_p4_tests.sh`
-   * `veth_setup.sh`
-   * `veth_teardown.sh`
-
-as well as the SDE manifest `bf-sde-<version>.manifest`.  The
-`runtimeEnv` is a user environment just like the default derivation
-obtained with `nix-build -A bf-sde.<version>` as described in the
-previoius section.  The difference is that `runtimeEnv` contains just
-the subset of packages needed to run a compiled P4 program:
+The `runtimeEnv` is a user environment just like the default
+derivation obtained with `nix-build -A bf-sde.<version>` as described
+in the previoius section.  The difference is that `runtimeEnv`
+contains just the subset of packages needed to run a compiled P4
+program:
 
    * `bf-syslibs`
    * `bf-drivers-runtime`
    * `bf-utils`
    * `bf-platforms`
-   * `tools`
+   * `ptf-utils`
+
+It also contains a reduced set of scripts
+
+   * `run_switchd.sh`
+   * `run_bfshell.sh`
+
+(Note that the `ptf-utils` package is required by `run_bfshell.sh`)
 
 In order to deploy a compiled P4 program on a system, it is sufficient
 to install the `runtimeEnv` derivation together with the derivation
@@ -894,9 +894,9 @@ The function essentially performs
 <path-to-sde>/bin/p4_build.sh ${buildFlags} <source-tree>/${path}/${p4Name}.p4
 ```
 
-where `p4_build.sh` is part of the `tools` package.  The build
-artifacts are stored in the resulting package. If `execName` is used,
-the builder first creates the symbolic link
+where `p4_build.sh` is part of the SDE package.  The build artifacts
+are stored in the resulting package. If `execName` is used, the
+builder first creates the symbolic link
 
 ```
 <source-tree>/${path}/${execName}.p4 -> <source-tree>/${path}/${p4Name}.p4
@@ -1298,9 +1298,9 @@ argument as a Nix string without having to quote it, as opposed to
 using the `--arg` option):
 
 ```
-$ nix-build packet-broker.nix -argstr kernelRelease $(uname -r)
+$ nix-build packet-broker.nix --argstr kernelRelease $(uname -r)
 [ ... ]
-/nix/store/zqif9h3rdpd8xasli1sbh7yxam0pjmcq-packet_broker-module-wrapper
+/nix/store/3dkzczr98a2hd3xj18p1yv6vk2xkl38n-packet_broker-module-wrapper
 ```
 
 ### <a name="whatsInPackageP4"></a>What's in the Package
@@ -1312,14 +1312,14 @@ reader.
 Let's see what's inside the package we just created
 
 ```
-$ ls -lR /nix/store/zqif9h3rdpd8xasli1sbh7yxam0pjmcq-packet_broker-module-wrapper
-/nix/store/zqif9h3rdpd8xasli1sbh7yxam0pjmcq-packet_broker-module-wrapper:
+$ ls -lR /nix/store/3dkzczr98a2hd3xj18p1yv6vk2xkl38n-packet_broker-module-wrapper
+/nix/store/3dkzczr98a2hd3xj18p1yv6vk2xkl38n-packet_broker-module-wrapper:
 total 4
 dr-xr-xr-x 2 root root 4096 Jan  1  1970 bin
 
-/nix/store/zqif9h3rdpd8xasli1sbh7yxam0pjmcq-packet_broker-module-wrapper/bin:
+/nix/store/3dkzczr98a2hd3xj18p1yv6vk2xkl38n-packet_broker-module-wrapper/bin:
 total 4
--r-xr-xr-x 1 root root 950 Jan  1  1970 packet_broker-module-wrapper
+-r-xr-xr-x 1 root root 898 Jan  1  1970 packet_broker-module-wrapper
 ```
 
 It's a single shell script that loads the `bf_kpkt` kernel module if
@@ -1328,7 +1328,7 @@ executing this script is enough to launch the P4 program on the Tofino
 ASIC. The last line
 
 ```
-exec /nix/store/zcilyv11nfkgrrh9cy85v6n8j8x5slgq-packet-broker-0.1/bin/packet_broker "$@"
+exec /nix/store/2hb8j26ajk7wkan2xf7r9hzhsxj9ca1z-packet-broker-0.1/bin/packet_broker "$@"
 ```
 
 references the package `packet-broker`, which occured as an
@@ -1337,13 +1337,13 @@ now become a run-time dependency of the `packet_broker-module-wrapper`
 package.  We can see all the immediate run-time dependencies with
 
 ```
-$ nix-store -q --references /nix/store/zqif9h3rdpd8xasli1sbh7yxam0pjmcq-packet_broker-module-wrapper
+$ nix-store -q --references /nix/store/3dkzczr98a2hd3xj18p1yv6vk2xkl38n-packet_broker-module-wrapper
 /nix/store/0kcx6s8gxysnygd8kxa502xfdfm1n28y-gnugrep-3.4
 /nix/store/a3fc4zqaiak11jks9zd579mz5v0li8bg-bash-4.4-p23
-/nix/store/g9qsf6rcy467dxa6gxdh4sw8wm5p6alg-gawk-5.1.0
+/nix/store/2hb8j26ajk7wkan2xf7r9hzhsxj9ca1z-packet-broker-0.1
 /nix/store/n599lhxiidv6fpiz43y2mld2nwnscc5s-kmod-27
-/nix/store/sdri45aybl84g5rgi44yrzpbp2nl90x6-bf-sde-9.4.0-kernel-modules-5.10.0-6-amd64
-/nix/store/zcilyv11nfkgrrh9cy85v6n8j8x5slgq-packet-broker-0.1
+/nix/store/d8jfwymqiiylcf3dl2pvj8ldx4c1jcnk-bf-sde-9.5.0-kernel-modules-4.19.0-16-amd64
+/nix/store/g9qsf6rcy467dxa6gxdh4sw8wm5p6alg-gawk-5.1.0
 ```
 
 Apart from the utilities required by the shell script and the
@@ -1352,27 +1352,21 @@ the kernel modules just for the local system (which happens to be a
 Debian system in this example)
 
 ```
-$ ls -l /nix/store/sdri45aybl84g5rgi44yrzpbp2nl90x6-bf-sde-9.4.0-kernel-modules-5.10.0-6-amd64/lib/modules/5.10.0-6-amd64/
+$ ls -l /nix/store/d8jfwymqiiylcf3dl2pvj8ldx4c1jcnk-bf-sde-9.5.0-kernel-modules-4.19.0-16-amd64/lib/modules/4.19.0-16-amd64/
 total 16384
--r--r--r-- 1 root root    35216 Jan  1  1970 bf_kdrv.ko
--r--r--r-- 1 root root    67176 Jan  1  1970 bf_knet.ko
--r--r--r-- 1 root root 16645840 Jan  1  1970 bf_kpkt.ko
+-r--r--r-- 1 nobody nogroup    34480 Jan  1  1970 bf_kdrv.ko
+-r--r--r-- 1 nobody nogroup    62936 Jan  1  1970 bf_knet.ko
+-r--r--r-- 1 nobody nogroup 16646848 Jan  1  1970 bf_kpkt.ko
 ```
 
 Let's dig a bit deeper into the dependency tree.  The immediate
 dependencies of the `packet-broker` package are
 
 ```
-$ nix-store -q --references /nix/store/zcilyv11nfkgrrh9cy85v6n8j8x5slgq-packet-broker-0.1/bin/packet_broker
-/nix/store/030nqx5f4v5pmav0a21hja932c929045-bf-sde-9.4.0-runtime
-/nix/store/0kcx6s8gxysnygd8kxa502xfdfm1n28y-gnugrep-3.4
-/nix/store/z1qvlavy35wanw5k54fvvfffws5bvigj-coreutils-8.31
-/nix/store/3fvzxz59gacagpwyzpfdiinc1yv46hw1-findutils-4.7.0
-/nix/store/3zbrk6iinij83qn4x139x4b8vr1b94ax-util-linux-2.36-bin
-/nix/store/89gvmj46vdnajvxsgyhg362gs6rxc1d5-gnused-4.8
+$ nix-store -q --references /nix/store/2hb8j26ajk7wkan2xf7r9hzhsxj9ca1z-packet-broker-0.1
+/nix/store/2fq251snc0qzxyiqh8hfiszqw8ibrsib-bf-sde-runtime-9.5.0
 /nix/store/a3fc4zqaiak11jks9zd579mz5v0li8bg-bash-4.4-p23
-/nix/store/jqnprhfrsbl2girajpwhcv45qd8ij5lv-procps-3.3.16
-/nix/store/zcilyv11nfkgrrh9cy85v6n8j8x5slgq-packet-broker-0.1
+/nix/store/2hb8j26ajk7wkan2xf7r9hzhsxj9ca1z-packet-broker-0.1
 ```
 
 We have finally found the actual run-time environment provided by the
@@ -1380,39 +1374,46 @@ SDE package.  We have seen this before: it is the [`runtimeEnv`
 attribute of the SDE](#subPackages). It's dependencies are
 
 ```
-$ nix-store -q --references /nix/store/030nqx5f4v5pmav0a21hja932c929045-bf-sde-9.4.0-runtime
-/nix/store/2066z3hilwxrbm7y38phpyiglkkdmlnj-bf-syslibs-9.4.0
-/nix/store/s58ds2n4sm2cnchf28acvp85lkdpdy1g-bf-utils-9.4.0
-/nix/store/1k0d7cnqb7rrb4fjfd7jfn9gdjrc1872-bf-drivers-runtime-9.4.0
-/nix/store/5sgjirn1hk40qvnzcfqy3h0mv01lgwqi-bf-platforms-9.4.0
-/nix/store/ybrk3zqii6kswf5xrxvivz4jh7ril5kv-bf-tools-9.4.0
+$ nix-store -q --references /nix/store/2fq251snc0qzxyiqh8hfiszqw8ibrsib-bf-sde-runtime-9.5.0
+/nix/store/f5chhvb8h033i2ipgijvrna0km70csd2-bf-sde-runtime-env-9.5.0
+/nix/store/s81shydji7gdm9jx82vzixfgv9h6w477-bf-tools-runtime-9.5.0
 ```
 
 This is an example of a [_user environment_ introduced
 earlier](#userEnvironment), a kind of meta-package. This means that it
-provides no contents of its own. It merely collects the `bin', 'lib'
+provides no contents of its own. It merely collects the `bin`, `lib`
 etc. directories from the packages on which it depends in a single
-hierarchy with symbolic links. For example:
+hierarchy with symbolic links. In this case, the environment contains
+two packages: `bf-sde-runtime-env-9.5.0` is itself an environment and
+`bf-tools-runtime-9.5.0` provides the runtime utility scripts
 
 ```
-$ ls -l /nix/store/030nqx5f4v5pmav0a21hja932c929045-bf-sde-9.4.0-runtime/bin/
-total 64
-lrwxrwxrwx 1 root root 70 Jan  1  1970 bfshell -> /nix/store/s58ds2n4sm2cnchf28acvp85lkdpdy1g-bf-utils-9.4.0/bin/bfshell
-lrwxrwxrwx 1 root root 83 Jan  1  1970 bf_switchd -> /nix/store/1k0d7cnqb7rrb4fjfd7jfn9gdjrc1872-bf-drivers-runtime-9.4.0/bin/bf_switchd
-lrwxrwxrwx 1 root root 78 Jan  1  1970 cp2112_util -> /nix/store/5sgjirn1hk40qvnzcfqy3h0mv01lgwqi-bf-platforms-9.4.0/bin/cp2112_util
-lrwxrwxrwx 1 root root 85 Jan  1  1970 credo_firmware.bin -> /nix/store/5sgjirn1hk40qvnzcfqy3h0mv01lgwqi-bf-platforms-9.4.0/bin/credo_firmware.bin
-lrwxrwxrwx 1 root root 74 Jan  1  1970 p4_build.sh -> /nix/store/ybrk3zqii6kswf5xrxvivz4jh7ril5kv-bf-tools-9.4.0/bin/p4_build.sh
-lrwxrwxrwx 1 root root 78 Jan  1  1970 run_p4_tests.sh -> /nix/store/ybrk3zqii6kswf5xrxvivz4jh7ril5kv-bf-tools-9.4.0/bin/run_p4_tests.sh
-lrwxrwxrwx 1 root root 77 Jan  1  1970 run_switchd.sh -> /nix/store/ybrk3zqii6kswf5xrxvivz4jh7ril5kv-bf-tools-9.4.0/bin/run_switchd.sh
-lrwxrwxrwx 1 root root 82 Jan  1  1970 run_tofino_model.sh -> /nix/store/ybrk3zqii6kswf5xrxvivz4jh7ril5kv-bf-tools-9.4.0/bin/run_tofino_model.sh
-lrwxrwxrwx 1 root root 79 Jan  1  1970 spi_i2c_util -> /nix/store/5sgjirn1hk40qvnzcfqy3h0mv01lgwqi-bf-platforms-9.4.0/bin/spi_i2c_util
-lrwxrwxrwx 1 root root 89 Jan  1  1970 tofino_i2c_rd_local.sh -> /nix/store/5sgjirn1hk40qvnzcfqy3h0mv01lgwqi-bf-platforms-9.4.0/bin/tofino_i2c_rd_local.sh
-lrwxrwxrwx 1 root root 83 Jan  1  1970 tofino_i2c_rd.sh -> /nix/store/5sgjirn1hk40qvnzcfqy3h0mv01lgwqi-bf-platforms-9.4.0/bin/tofino_i2c_rd.sh
-lrwxrwxrwx 1 root root 89 Jan  1  1970 tofino_i2c_wr_local.sh -> /nix/store/5sgjirn1hk40qvnzcfqy3h0mv01lgwqi-bf-platforms-9.4.0/bin/tofino_i2c_wr_local.sh
-lrwxrwxrwx 1 root root 83 Jan  1  1970 tofino_i2c_wr.sh -> /nix/store/5sgjirn1hk40qvnzcfqy3h0mv01lgwqi-bf-platforms-9.4.0/bin/tofino_i2c_wr.sh
-lrwxrwxrwx 1 root root 88 Jan  1  1970 tofino_pci_bringup.sh -> /nix/store/5sgjirn1hk40qvnzcfqy3h0mv01lgwqi-bf-platforms-9.4.0/bin/tofino_pci_bringup.sh
-lrwxrwxrwx 1 root root 76 Jan  1  1970 veth_setup.sh -> /nix/store/ybrk3zqii6kswf5xrxvivz4jh7ril5kv-bf-tools-9.4.0/bin/veth_setup.sh
-lrwxrwxrwx 1 root root 79 Jan  1  1970 veth_teardown.sh -> /nix/store/ybrk3zqii6kswf5xrxvivz4jh7ril5kv-bf-tools-9.4.0/bin/veth_teardown.sh
+$ ls -l /nix/store/s81shydji7gdm9jx82vzixfgv9h6w477-bf-tools-runtime-9.5.0/bin/
+total 8
+-r-xr-xr-x 1 root root 505 Jan  1  1970 run_bfshell.sh
+-r-xr-xr-x 1 root root 811 Jan  1  1970 run_switchd.sh
+```
+
+These scripts are wrapped inside shell scripts that set up the
+enviornment, e.g.
+
+```
+$ grep SDE /nix/store/s81shydji7gdm9jx82vzixfgv9h6w477-bf-tools-runtime-9.5.0/bin/run_switchd.sh
+export SDE='/nix/store/f5chhvb8h033i2ipgijvrna0km70csd2-bf-sde-runtime-env-9.5.0'
+export SDE_INSTALL='/nix/store/f5chhvb8h033i2ipgijvrna0km70csd2-bf-sde-runtime-env-9.5.0'
+```
+
+The `bf-sde-runtime-env-9.5.0` package contains the runtime version of
+the SDE itself, which, in turn, is composed of the set of packages
+
+```
+$ nix-store -q --references /nix/store/f5chhvb8h033i2ipgijvrna0km70csd2-bf-sde-runtime-env-9.5.0
+/nix/store/4qnl1kirw5jh5jh3ndxhwyvvzx9bwawx-bf-sde-misc-components-9.5.0
+/nix/store/jl2pqcxp8qq8j3ljkkjrbd842ncc1vxq-bf-syslibs-9.5.0
+/nix/store/hjfrx08hd4az8wn1zc0zvgixxza30y05-bf-utils-9.5.0
+/nix/store/76fm5r0ws19svd6v99zmcq9r9ib5wych-bf-platforms-9.5.0
+/nix/store/xz3v5fqdgpil50faa1963agjmb9swj1k-ptf-utils-9.5.0
+/nix/store/y70c74xfh5gnxaaask1hf4pzlcgjlbkk-bf-drivers-runtime-9.5.0
 ```
 
 This is how everything comes together in the end. It can't be stressed
@@ -1548,7 +1549,7 @@ This works exactly the same as for the P4 package
 ```
 $ nix-build configd.nix
 [ ... ]
-/nix/store/6a1m73139llassy63a7nqbjzfdqyl0c1-packet-broker-configd-0.1
+/nix/store/ap8gfdykxdx7154asxyphhrqizjfbz47-packet-broker-configd-0.1
 ```
 
 ## <a name="usingPackagesWithProfile"></a>Using the Packages with a Nix Profile
@@ -1559,7 +1560,7 @@ instance, the packet-broker P4 program can be started simply by
 executing
 
 ```
-$ /nix/store/frnj7191b3318mr0xm0qkvdc7m1ss1dw-packet_broker-module-wrapper/bin/packet_broker-module-wrapper
+$ /nix/store/3dkzczr98a2hd3xj18p1yv6vk2xkl38n-packet_broker-module-wrapper/bin/packet_broker-module-wrapper
 ```
 
 This is true for any Nix package: they can all be used directly from
@@ -1626,8 +1627,8 @@ invocation of `nix-build`
 
 ```
 $ nix-build pb.nix --argstr kernelRelease $(uname -r)
-/nix/store/c89f1v3hd07pvik33f2ih342yi932khz-packet-broker-configd-0.1
-/nix/store/zqif9h3rdpd8xasli1sbh7yxam0pjmcq-packet_broker-module-wrapper
+/nix/store/ap8gfdykxdx7154asxyphhrqizjfbz47-packet-broker-configd-0.1
+/nix/store/3dkzczr98a2hd3xj18p1yv6vk2xkl38n-packet_broker-module-wrapper
 ```
 
 Next we're going to create a profile containing these two packages.
@@ -1652,7 +1653,6 @@ lrwxrwxrwx 1 gall gall 60 Apr 22 13:17 /nix/var/nix/profiles/packet-broker-1-lin
 
 This nicely collects the artifacts of the packages in a single location. It
 also provides easy rollback to previous versions.
-
 
 ### <a name="gc"></a>Profile Generations and Garbage Collection
 

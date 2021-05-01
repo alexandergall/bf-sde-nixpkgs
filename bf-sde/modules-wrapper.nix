@@ -6,7 +6,7 @@ assert lib.asserts.assertMsg (requiredKernelModule != null)
 (writeShellScriptBin "${execName}-module-wrapper" ''
   set -e
 
-  export PATH=${lib.strings.makeBinPath [ gawk gnugrep kmod ]}:${self}/mock-sudo
+  export PATH=${lib.strings.makeBinPath [ gawk gnugrep kmod ]}
 
   function mod_exists {
       lsmod | awk '{print $1}' | grep $1 >/dev/null
@@ -16,12 +16,12 @@ assert lib.asserts.assertMsg (requiredKernelModule != null)
       [ ''${mod} == ${requiredKernelModule} ] && continue
       if mod_exists ''${mod}; then
         echo "Unloading ''${mod}"
-        sudo ${modules}/bin/''${mod}_mod_unload
+        /usr/bin/sudo ${modules}/bin/''${mod}_mod_unload
       fi
   done
   if ! mod_exists ${requiredKernelModule}; then
       echo "Loading ${requiredKernelModule}"
-      sudo ${modules}/bin/${requiredKernelModule}_mod_load
+      /usr/bin/sudo ${modules}/bin/${requiredKernelModule}_mod_load
   fi
 
   exec ${self}/bin/${execName} "$@"

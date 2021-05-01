@@ -1,10 +1,11 @@
 { pname, version, src, patches, lib, stdenv, bf-drivers, makeWrapper,
-  bridge-utils, inetutils }:
+  bridge-utils, inetutils, gnugrep, coreutils, ethtool, iproute, procps }:
 
 let
   python = bf-drivers.pythonModule;
 in stdenv.mkDerivation rec {
-  inherit pname version src patches;
+  pname = "ptf-utils";
+  inherit version src patches;
 
   buildInputs = [ python python.pkgs.wrapPython makeWrapper ];
 
@@ -21,12 +22,16 @@ in stdenv.mkDerivation rec {
     utilsPath=$out/lib/${python.libPrefix}/site-packages/p4testutils/
     chmod a+x $utilsPath/run_ptf_tests.py $utilsPath/bf_switchd_dev_status.py
     for program in $out/bin/port_*; do
-      wrapProgram $program --prefix PATH : "${lib.strings.makeBinPath [ bridge-utils inetutils ]}"
+      wrapProgram $program \
+        --set PATH "${lib.strings.makeBinPath [ bridge-utils inetutils gnugrep ]}"
     done
 
-    ## The veth_{setup,teardown}.sh scripts are provided by
-    ## the tools package
-    rm -f $out/bin/veth*
+    substitute veth_setup.sh $out/bin/veth_setup.sh --replace /sbin/ethtool ethtool
+    wrapProgram $out/bin/veth_setup.sh \
+      --set PATH "${lib.strings.makeBinPath [ coreutils ethtool iproute gnugrep procps ]}"
+    cp veth_teardown.sh $out/bin
+    wrapProgram $out/bin/veth_teardown.sh \
+      --set PATH "${lib.strings.makeBinPath [ coreutils iproute ]}"
   '';
 
   pythonPath = with python.pkgs; [ six ];

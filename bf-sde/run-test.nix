@@ -13,28 +13,16 @@
 ## The file "passed" can be imported as a Nix expression
 
 { self, p4Name, src, testDir, lib, buildEnv, vmTools, runCommand,
-  procps, utillinux, getopt, fontconfig,
-  bf-sde, ptf-modules, ptf-utils, pythonModules ? [] }:
+  bf-sde, ptf-modules, pythonModules ? [] }:
 
 let
-  prefix = "bf-sde-${bf-sde.version}";
-
-  ## The test  environment is the  sde environment (as  constructed by
-  ## ./sde.nix) augmented  with the  package of  the P4  program being
-  ## tested.
-  testEnv = buildEnv {
-    name = "${prefix}-${p4Name}-test-environment";
-    paths = [ bf-sde self ];
-    ignoreCollisions = true;
-  };
-
   ## bf-drivers is also required, but it is already part of the
   ## environment of the ptf command (see comments in
   ## ptf-modules/default.nix)
   python = ptf-modules.python;
   ptfModules = map (mod: python.pkgs.${mod}) pythonModules;
 in vmTools.runInLinuxVM (
-  runCommand "${prefix}-test-case-${p4Name}" {
+  runCommand "bf-sde-${bf-sde.version}-test-case-${p4Name}" {
     memSize = 6*1024;
     postVM = ''
       mv xchg/*.log $out
@@ -50,17 +38,15 @@ in vmTools.runInLinuxVM (
       echo -en "\033[0m"
     '';
   } ''
-    mkdir /tmp/mock_sudo
-    echo 'exec "$@"' >/tmp/mock_sudo/sudo
-    chmod a+x /tmp/mock_sudo/sudo
+    ## /usr/bin/sudo is hardcoded in the run_* scripts (on purpose,
+    ## see sde/tools.nix). Create a fake sudo to satisfy this.
+    mkdir -p /usr/bin
+    echo 'exec "$@"' >/usr/bin/sudo
+    chmod a+x /usr/bin/sudo
     mkdir /mnt
 
-    export SDE=${testEnv}
-    export SDE_INSTALL=$SDE
-    export P4_INSTALL=$SDE
-    export PATH=/tmp/mock_sudo:${lib.strings.makeBinPath
-           [ testEnv procps utillinux getopt python fontconfig ]}:$PATH
-    export FONTCONFIG_FILE=${fontconfig.out}/etc/fonts/fonts.conf
+    export P4_INSTALL=${self}
+    export PATH=${lib.strings.makeBinPath [ bf-sde ]}:$PATH
 
     echo "============================================="
     echo "Running tests for P4 program ${p4Name}"

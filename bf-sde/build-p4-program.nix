@@ -1,5 +1,4 @@
-{ stdenv, callPackage, lib, bf-sde, runtimeEnv, getopt, which, coreutils,
-  gnugrep, gnused, procps, utillinux, findutils, bash, runtimeShell, python2 }:
+{ stdenv, callPackage, lib, bf-sde, runtimeEnv, runtimeShell }:
 
 { pname,
   version,
@@ -69,14 +68,12 @@ let
   };
 
   self = (stdenv.mkDerivation rec {
-    buildInputs = [ bf-sde getopt which procps python2 ];
+    buildInputs = [ bf-sde ];
 
     inherit pname version src p4Name patches buildFlags passthru;
 
     buildPhase = ''
       set -e
-      export SDE=${bf-sde}
-      export SDE_INSTALL=$SDE
       export P4_INSTALL=$out
       export SDE_BUILD=$TEMP
       export SDE_LOGS=$TEMP
@@ -98,46 +95,16 @@ let
 
       ## This script executes bf_switchd via the run_switchd.sh
       ## wrapper with our P4 program artifacts.
-      ##
-      ## The run_switchd.sh script uses sudo to perform some
-      ## privileged operations. This is ok and useful if it is
-      ## executed by a user in a SDE shell, for example.  sudo itself
-      ## is not part of nixpkgs, because setuid semantics are not
-      ## supported (NixOS uses a special wrapper mechanism to solve
-      ## this problem). OTOH, we don't want to introduce an impurity
-      ## in this derivation by using the system's sudo.
-      ##
-      ## What we do instead is to create a pseudo sudo script which
-      ## simply terminates with an error if not run as root and
-      ## executes the given command without sudo if run as root.
-      mkdir $out/mock-sudo
-      cat <<EOF > $out/mock-sudo/sudo
-      #!${runtimeShell}
-      if [ \$(${coreutils}/bin/id -u) -ne 0 ]; then
-        echo "Please run this command as root"
-        exit 1
-      fi
-      exec "\$@"
-      EOF
-      chmod a+x $out/mock-sudo/sudo
-
       command=$out/bin/$exec_name
       cat <<EOF > $command
       #!${runtimeShell}
       set -e
 
-      export SDE=${runtimeEnv}
-      export SDE_INSTALL=\$SDE
-      export P4_INSTALL=$out
-
-      export PATH=${lib.strings.makeBinPath [ coreutils gnugrep gnused utillinux procps findutils bash ]}:$out/mock-sudo
-
-      ## Force failure if not run as root
-      sudo true
-
       if [ -n "\$1" ]; then
         cd \$1
       fi
+
+      export P4_INSTALL=$out
       exec ${runtimeEnv}/bin/run_switchd.sh -p $exec_name
       EOF
       chmod a+x $command

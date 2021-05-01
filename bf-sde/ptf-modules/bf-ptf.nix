@@ -28,7 +28,6 @@ in python.pkgs.buildPythonApplication rec {
     [ bf-drivers bf-pktpy ]
     ++ (with python.pkgs; [ thrift scapy-helper]);
 
-  #catchConflicts = false;
   preConfigure = ''pushd bf-ptf'';
   postInstall = ''
     mv $out/bin/ptf $out/bin/bf-ptf

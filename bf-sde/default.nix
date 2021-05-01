@@ -62,16 +62,16 @@ let
         tofino-model = callPackage ./tofino-model (mkSrc "tofino-model");
         ptf-modules = callPackage ./ptf-modules (mkSrc "ptf-modules");
         ptf-utils = callPackage ./ptf-modules/utils.nix (mkSrc "ptf-modules");
-        tools = callPackage ./tools {
-          src = sde;
-        };
         kernel-modules = import ./kernels {
           bf-drivers-src = extractSource "bf-drivers";
           inherit pkgs callPackage;
         };
         ## A stripped-down version of the SDE environment which only
         ## contains the components needed at runtime
-        runtimeEnv = callPackage ./sde-runtime.nix {};
+        runtimeEnv = callPackage ./sde {
+          runtime = true;
+          src = sde;
+        };
       } // (lib.optionalAttrs (lib.strings.versionAtLeast sdeSpec.version "9.5.0") {
 
         ## Up to 9.4.0, the test facility used the PTF from p4.org
@@ -177,8 +177,7 @@ let
                                                  ++ inputs.cpModules);
           in mkShell {
             ## kmod provides insmod, procps provides sysctl
-            buildInputs = [ self (self.modulesForKernel kernelRelease)
-                            kmod procps utillinux which pythonEnv ]
+            buildInputs = [ self (self.modulesForKernel kernelRelease) pythonEnv ]
                             ++ inputs.pkgs;
             shellHook = ''
               export P4_INSTALL=~/.bf-sde/${self.version}
@@ -187,8 +186,6 @@ let
               export SDE_BUILD=$P4_INSTALL/build
               export SDE_LOGS=$P4_INSTALL/logs
               export PTF_PYTHONPATH=${python.pkgs.makePythonPath inputs.ptfModules}
-              ## Make sure we can find sudo.  The environment isn't pure anyway.
-              export PATH=$PATH:/usr/bin
               mkdir -p $P4_INSTALL $SDE_BUILD $SDE_LOGS
 
               cat <<EOF
@@ -227,8 +224,13 @@ let
           chmod a+x $out/bin/sde-env-${self.version}
         '';
       };
-      self = callPackage ./sde.nix {
+
+      ## This is the full SDE, equivalent to what p4studio
+      ## produces.
+      self = callPackage ./sde {
         inherit passthru;
+        src = sde;
+        runtime = false;
       };
     in self;
 
