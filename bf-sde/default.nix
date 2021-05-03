@@ -42,33 +42,34 @@ let
         patches = sdeSpec.patches.${component} or [];
       };
 
-      callPackage = lib.callPackageWith (pkgs // sdePkgs // sdeSpec);
+      SDE = lib.makeScope pkgs.newScope (self: sdePkgs // sdeSpec);
       sdePkgs = {
-        bf-syslibs = callPackage ./bf-syslibs (mkSrc "bf-syslibs");
-        bf-utils = callPackage ./bf-utils (mkSrc "bf-utils" // {
+        bf-syslibs = SDE.callPackage ./bf-syslibs (mkSrc "bf-syslibs");
+        bf-utils = SDE.callPackage ./bf-utils (mkSrc "bf-utils" // {
           bf-drivers-src = extractSource "bf-drivers";
         });
-        bf-drivers = callPackage ./bf-drivers (mkSrc "bf-drivers"// {
+        bf-drivers = SDE.callPackage ./bf-drivers (mkSrc "bf-drivers"// {
           python = sdeSpec.python_bf_drivers;
         });
         bf-drivers-runtime = sdePkgs.bf-drivers.override { runtime = true; };
         ## bf-diags is currently not used
-        bf-diags = callPackage ./bf-diags (mkSrc "bf-diags");
-        bf-platforms = callPackage ./bf-platforms {
+        bf-diags = SDE.callPackage ./bf-diags (mkSrc "bf-diags");
+        bf-platforms = SDE.callPackage ./bf-platforms {
           pname = "bf-platforms";
           src = bsp;
         };
-        p4c = callPackage ./p4c (mkSrc "p4-compilers");
-        tofino-model = callPackage ./tofino-model (mkSrc "tofino-model");
-        ptf-modules = callPackage ./ptf-modules (mkSrc "ptf-modules");
-        ptf-utils = callPackage ./ptf-modules/utils.nix (mkSrc "ptf-modules");
+        p4c = SDE.callPackage ./p4c (mkSrc "p4-compilers");
+        tofino-model = SDE.callPackage ./tofino-model (mkSrc "tofino-model");
+        ptf-modules = SDE.callPackage ./ptf-modules (mkSrc "ptf-modules");
+        ptf-utils = SDE.callPackage ./ptf-modules/utils.nix (mkSrc "ptf-modules");
         kernel-modules = import ./kernels {
           bf-drivers-src = extractSource "bf-drivers";
-          inherit pkgs callPackage;
+          inherit (SDE) callPackage;
+          inherit pkgs;
         };
         ## A stripped-down version of the SDE environment which only
         ## contains the components needed at runtime
-        runtimeEnv = callPackage ./sde {
+        runtimeEnv = SDE.callPackage ./sde {
           runtime = true;
           src = sde;
         };
@@ -86,8 +87,8 @@ let
         ## the PTF to a subdirectory "bf-ptf" in site-packages to make
         ## it possible to install the original p4.org PTF on top of
         ## it.  We don't replicate this behaviour.
-        ptf-modules = callPackage ./ptf-modules/bf-ptf.nix (mkSrc "ptf-modules");
-        bf-pktpy = callPackage ./ptf-modules/bf-pktpy.nix (mkSrc "ptf-modules");
+        ptf-modules = SDE.callPackage ./ptf-modules/bf-ptf.nix (mkSrc "ptf-modules");
+        bf-pktpy = SDE.callPackage ./ptf-modules/bf-pktpy.nix (mkSrc "ptf-modules");
       });
 
       passthru = {
@@ -109,14 +110,13 @@ let
         };
 
         modulesForKernel = kernelRelease:
-          (callPackage kernels/select-modules.nix {
+          (SDE.callPackage kernels/select-modules.nix {
              inherit (self.pkgs) kernel-modules;
            }) kernelRelease;
 
         ## A function that compiles a given P4 program in the context of
         ## the SDE.
-        buildP4Program = callPackage ./build-p4-program.nix {
-          inherit callPackage;
+        buildP4Program = SDE.callPackage ./build-p4-program.nix {
           bf-sde = self;
         };
 
@@ -227,7 +227,7 @@ let
 
       ## This is the full SDE, equivalent to what p4studio
       ## produces.
-      self = callPackage ./sde {
+      self = SDE.callPackage ./sde {
         inherit passthru;
         src = sde;
         runtime = false;
