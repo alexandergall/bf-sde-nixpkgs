@@ -3,11 +3,11 @@
 This project provides packaging of the Intel Tofino SDE for the Nix
 package manager.
 
-Disclaimer: The SDE for the Tofino series of programmable NPUs is
+Disclaimer: The SDE for the Tofino series of P4-programmable ASICs is
 currently only available under NDA from Intel.  The users of this
 repository are assumed to be authorized to download and use the SDE.
 
-The Nix packaging of the SDE provides two basic funtionalities: a
+The Nix packaging of the SDE provides two basic functionalities: a
 [shell](#sdeShell) in which P4 programs and control-plane programs can
 be developed interactively and a system to [create packages for
 complete P4-based applications](#packagingP4) ready for deployment.
@@ -15,13 +15,13 @@ complete P4-based applications](#packagingP4) ready for deployment.
 One of the goals of this work was to make the [shell](#sdeShell) easy
 enough to use without requiring any understanding of Nix at all.
 
-To use the system for packaging your own P4 programs cleary requires a
+To use the system for packaging your own P4 programs clearly requires a
 fairly good understanding of the package manager. Explaining how Nix
 works in detail is out of scope of this documentation.  Nevertheless,
 the text attempts to explain certain key concepts and provides links
 to more in-depth documentation on Nix to help the novice user.
 
-This documentation does not exaplain how to create a complete service
+This documentation does not explain how to create a complete service
 based on a P4 program ready for deployment by an end user, since this
 would involve program-specific items and mechanisms outside the scope
 of the Nix packages themselves, i.e.  the packages will only make up
@@ -35,6 +35,7 @@ Table of Contents
       * [Fetch and Verify Source Archives](#fetchAndVerify)
       * [Add archives to the Nix store](#addArchives)
       * [Clone into the Repository](#cloneRepo)
+   * [Baseboard and Platform Support](#baseboardPlatform)
    * [P4 Program Development with the SDE Shell](#sdeShell)
       * [Compile](#compile)
       * [Run on ASIC](#runOnASIC)
@@ -51,6 +52,7 @@ Table of Contents
       * [Writing the Build Recipe as a Nix Expression](#buildRecipeP4)
       * [Building the Package](#buildPackageP4)
       * [What's in the Package](#whatsInPackageP4)
+      * [Building for the Tofino Model](#buildForModel)
    * [Packaging a Control-Plane Program for BfRuntime](#packagingCP)
       * [Writing the Build Recipe as a Nix Expression](#buildRecipeCP)
       * [Building the Package](#buildPackageCP)
@@ -148,7 +150,7 @@ This leaves the final question "why is the documentation so darned
 long when this is supposed to be so simple and powerful"?  The answer
 is that as with most powerful systems, the learning curve is rather
 steep.  This is especially so in this case because Nix differs from
-other packaing systems the reader might be familiar with in a profound
+other packaging systems the reader might be familiar with in a profound
 manner.  The documentation assumes little to no familiarity with Nix,
 which requires a lot of space to explain various methods and concepts.
 A README directed at someone with a firm understanding of Nix would
@@ -173,9 +175,11 @@ installation (except for the presence of some basic commands like
 
 ### <a name="fetchAndVerify"></a>Fetch and Verify Source Archives
 
-Download the `bf-sde` and `bf-reference-bsp` archives for the desired
-version of the SDE from the Intel website (requires registration and
-NDA). Please verify that the `sha256` sums are as follows
+#### SDE
+
+Download the `bf-sde` archive for the desired version of the SDE from
+the Intel website (requires registration and NDA). Please verify that
+the `sha256` sums are as follows
 
 | File                       | sha256                                                             |
 | ------                     | --------                                                           |
@@ -185,23 +189,49 @@ NDA). Please verify that the `sha256` sums are as follows
 | bf-sde-9.3.1.tgz           | `71db320fa7d12757127c7da1c16ea98453f4c88ecca7853c73b2bd4dccd1d891` |
 | bf-sde-9.4.0.tgz           | `daec162c2a857ae0175e57ab670b59341d39f3ac2ecd5ba99ec36afa15566c4e` |
 | bf-sde-9.5.0.tgz           | `61d55a06fa6f80fc1f859a80ab8897eeca43f06831d793d7ec7f6f56e6529ed7` |
-| bf-reference-bsp-9.1.1.tar | `aebe8ba0ae956afd0452172747858aae20550651e920d3d56961f622c8d78fb8` |
-| bf-reference-bsp-9.2.0.tar | `d817f609a76b3b5e6805c25c578897f9ba2204e7d694e5f76593694ca74f67ac` |
-| bf-reference-bsp-9.3.0.tgz | `dd5e51aebd836bd63d0d7c37400e995fb6b1e3650ef08014a164124ba44e6a06` |
-| bf-reference-bsp-9.3.1.tgz | `b934601c77b08c3281f8dcb235450b80316a42e2683ff29e4c9f2485fffbb51f` |
-| bf-reference-bsp-9.4.0.tgz | `269eecaf3186d7c9a061f6b66ce3d1c85d8f2022ce3be81ee9e532d136552fa4` |
-| bf-reference-bsp-9.5.0.tgz | `b6a293c8e2694d7ea8d7b12c24b1d63c08b0eca3783eeb7d54e8ecffb4494c9f` |
+
+#### <a name="BSPArchives"></a> BSP
+
+A BSP (Baseboard Support Package) contains code specific to the
+hardware configuration of one or more baseboards, each of which
+provides support for one or more platforms.  The SDE uses a
+platform-agnostic API to implement functionality that depends on the
+baseboard.
+
+The BSP is usually provided by the vendor of the device and has to be
+obtained separately.  An exception to this is the reference BSP
+implementation provided by Intel, which supports the Tofino-based
+WEDGE series of devices manufactured by EdgeCore (which is a
+subsidiary of Accton).  This BSP is required to build the SDE while
+all other BSPs are optional.
+
+The reference BSP is available from Intel, subject to the same NDA as
+for the SDE. The BSPs for other platforms must be obtained from the
+respective vendors individually. The current release supports the
+following BSPs (also see the section on [Baseboard and Platform
+Support](#baseboardPlatform))
+
+| Baseboards        | Vendor       | File                                      | Supported SDE version | sha256                                                            |
+| -----             | -----        | -----                                     | -----                 | -----                                                             |
+| `accton` `model`  | Intel | `bf-reference-bsp-9.1.1.tar` | 9.1.1 | `aebe8ba0ae956afd0452172747858aae20550651e920d3d56961f622c8d78fb8` |
+| `accton` `model`  | Intel | `bf-reference-bsp-9.2.0.tar` | 9.2.0 | `d817f609a76b3b5e6805c25c578897f9ba2204e7d694e5f76593694ca74f67ac` |
+| `accton` `model`  | Intel | `bf-reference-bsp-9.3.0.tgz` | 9.3.0 | `dd5e51aebd836bd63d0d7c37400e995fb6b1e3650ef08014a164124ba44e6a06` |
+| `accton` `model`  | Intel | `bf-reference-bsp-9.3.1.tgz` | 9.3.1 | `b934601c77b08c3281f8dcb235450b80316a42e2683ff29e4c9f2485fffbb51f` |
+| `accton` `model`  | Intel | `bf-reference-bsp-9.4.0.tgz` | 9.4.0 | `269eecaf3186d7c9a061f6b66ce3d1c85d8f2022ce3be81ee9e532d136552fa4` |
+| `accton` `model`  | Intel | `bf-reference-bsp-9.5.0.tgz` | 9.5.0 | `b6a293c8e2694d7ea8d7b12c24b1d63c08b0eca3783eeb7d54e8ecffb4494c9f` |
+| `aps_bf2556` `aps_bf6064` | APS Networks | `9.5.0_AOT1.5.1_SAL1.3.2.zip` | 9.4.0 9.5.0 | `2e56f51233c0eef1289ee219582ea0ec6d7455c3f78cac900aeb2b8214df0544`|
+| `inventec`   | Inventec     | `bf-inventec-bsp93.tgz`                   | 9.3.0 9.3.1 9.4.0 9.5.0 | `fd1e4852d0b7543dd5d2b81ab8e0150644a0f24ca87d59f1369216f1a6e796ad`|
 
 ### <a name="addArchives"></a>Add archives to the Nix store
 
 Execute (as any user)
 
 ```
-$ nix-store --add-fixed sha256 <bf-sde-archive> <bf-reference-bsp-archive>
+$ nix-store --add-fixed sha256 <bf-sde-archive> <bf-reference-bsp-archive> <bsp-archive> ...
 ```
 
 Note that the suffixes of the files differ between releases.  The
-names in the table above are exactly as they appear on the download
+names in the tables above are exactly as they appear on the download
 site.
 
 If this step is omitted, the build will fail with a message like the
@@ -241,6 +271,73 @@ $ cd bf-sde-nixpkgs
 
 Replace `<tag>` with the desired release tag.
 
+## <a name="baseboardPlatform"></a> Baseboard and Platform Support
+
+Multiple vendors provide devices based on the Tofino ASIC. The
+differences in hardware configuration are isolated by a
+platform-independent API in the SDE.  All platform dependent
+components are collected in a _Baseboard Support Package_ (BSP).
+
+The BSP is provided by the vendor that builds the device. Support for
+these BSPs must be added explicitly to the SDE package.
+
+The SDE package uses the terms _BSP_, _baseboard_ and _platform_ in a
+very specific manner to precisely define which components are required
+to be installed on a given device:
+
+   * **BSP**. [The software archive provided by a
+     vendor](#BSPArchives). Each BSP provides support for one ore more
+     baseboards.
+   * **baseboard**. A package created from a BSP, providing support
+     for one or more platforms.
+   * **platform**. A unique identifier for a particular device
+
+The list of BSPs and related baseboards is shown in the [table
+above](#BSPArchives). The `model` baseboard is a pseudo-baseboard
+which is a variant of the reference BSP that supports the Tofino
+software emulation and is not bound to any specific hardware.
+
+This hierarchy provides a unique mapping from platform to baseboard to
+BSP (but not the other way round).  Each baseboard can provide support
+for multiple platforms.  In this context, a platform denotes one
+particular device identified by a unique name. For practical reasons,
+the name space used for this is copied from the [Open Network Install
+Environment project
+(ONIE)](https://github.com/opencomputeproject/onie). The assumption is
+that all vendors use ONIE for their devices and thus register a unique
+name in that name space.
+
+To be precise, the platform identifier used in the SDE package
+corresponds to the `onie_machine` identifier from the
+`/etc/machine.conf` file that can be found on the ONIE installer
+partition of the device. The same names are used in the
+vendor-specific directories of `onie/machine` in the ONIE Git
+repository.
+
+The following table shows the list of supported platforms and their
+mappings to a specific baseboard (this mapping is provided by
+https://github.com/alexandergall/bf-sde-nixpkgs/tree/master/bf-sde/bf-platforms/baseboards.nix)
+
+<a name="platformIdentifiers"></a>
+
+| Platform                 | Vendor       | Baseboard    |
+| -----                    | -----        | -----        |
+| `accton_wedge100bf-32x`  | EdegCore     | `accton`     |
+| `accton_wedge100bf-32qs` | EdegCore     | `accton`     |
+| `accton_wedge100bf-65x`  | EdegCore     | `accton`     |
+| `stordis_bf2556x_1t`     | APS Netwokrs | `aps_bf2556` |
+| `stordis_bf6064x_t`      | APS Netwokrs | `aps_bf6064` |
+| `inventec_d5264q28b`     | Inventec     | `inventec`   |
+| `model`                  |              | `model`      |
+
+The `model` platform is a pseudo-platform that exists in order to
+support the Tofino ASIC emulator in a consistent manner. The `model`
+baseboard uses the same BSP as `reference` configured to provide stubs
+for the platform-independent API of the SDE.
+
+References to platforms and baseboards throughout this document refer
+to the table above.
+
 ## <a name="sdeShell"></a>P4 Program Development with the SDE Shell
 
 The quickest way to get started with compiling and running your P4
@@ -258,8 +355,9 @@ the repository
 
 ```
 $ make env
+Can't determine platform from /etc/machine.conf, using Tofino model
 
-Barefoot SDE 9.4.0
+Barefoot SDE 9.5.0 on platform "model"
 
 Load/unload kernel modules: $ sudo $(type -p bf_{kdrv,kpkt,knet}_mod_{load,unload})
 
@@ -273,15 +371,37 @@ Run Tofino model:
 Run PTF tests: run the Tofino model, then
          $ run_p4_tests.sh -p <p4name> -t <path-to-dir-with-test-scripts>
 
-Build artefacts and logs are stored in /home/gall/.bf-sde/9.4.0
+Build artefacts and logs are stored in /home/gall/.bf-sde/9.5.0
 
 Use "exit" or CTRL-D to exit this shell.
 
 
-[nix-shell(SDE-9.4.0):~/bf-sde-nixpkgs]$
+[nix-shell(SDE-9.5.0):~/bf-sde-nixpkgs]$
 ```
 
-Within this shell, all commands shown in this introductory text are
+The first line of output informs the user that the hardware platform
+could not be identified and the SDE is configured to support only the
+Tofino software emulation.  The Makefile uses the following method to
+determine the platform:
+
+   * Use the value of the `PLATFORM` Make variable
+   * If `PLATFORM` is not set, extract the `onie_machine` identifier
+     from `/etc/machine.conf`
+   * If `etc/machine.conf` does not exist, use the `model` platform as
+     a fallback
+
+To select a platform manually, use
+
+```
+$ make env PLATFORM=<platform>
+```
+
+where `<platform>` can be any of the supported [platform
+identifiers](#platformIdentifiers). Note that the existence of
+`/etc/machine.conf` depends on the details of the ONIE installation
+process.
+
+Within this shell, all commands shown in the introductory text are
 available in the search path and all SDE-specific environment
 variables are set to make compiling and running P4 programs straight
 forward.
@@ -291,7 +411,8 @@ irrelevant for any of the given commands. An obvious choice is to
 enter the directory where the P4 source code is located but even that
 is not a requirement.
 
-By default the shell uses the most recent SDE available. To select a different version, use
+By default the shell uses the most recent SDE available. To select a
+different version, use
 
 ```
 $ make env VERSION=<version>
@@ -302,7 +423,7 @@ env-list-versions`, for example
 
 ```
 $ make env-list-versions
-[ "latest" "v9_1_1" "v9_2_0" "v9_3_0" "v9_3_1" "v9_4_0" ]
+[ "latest" "v9_1_1" "v9_2_0" "v9_3_0" "v9_3_1" "v9_4_0" "v9_5_0" ]
 ```
 
 ### <a name="compile"></a>Compile
@@ -321,7 +442,10 @@ available options.
 
 ### <a name="runOnASIC"></a>Run on ASIC
 
-To run the compiled program on the Tofino ASIC, use
+To run the compiled program on the Tofino ASIC, make sure that the SDE
+environment has been started with the proper platform support enabled
+as described in the [introduction](#sdeShell). To run the P4 program
+execute
 
 ```
 $ run_switchd.sh -p <program_name>
@@ -371,7 +495,7 @@ similar fashion as the load commands.
 
 The kernel modules need to be compiled for the exact same kernel which
 is running on the current system.  [Kernels must be supported
-explicitely](#kernelSupport) by the SDE package.  If the running
+explicitly](#kernelSupport) by the SDE package.  If the running
 kernel is not supported, the `*_mod_load` commands terminate with the
 message
 
@@ -408,9 +532,24 @@ To run the Tofino model, execute
 $ run_tofino_model.sh -p <program_name>
 ```
 
-The model then waits for a connection from a `bf_switchd` process. It
-is started exactly as in the case when running on the ASIC but with an
-additional parameter `-- --model` as the last argument
+The model then waits for a connection from a `bf_switchd`
+process. There are two ways in which the process can be invoked to
+connect to the model.  If the shell was started in `model` mode,
+e.g. with
+
+```
+$ make env PLATFORM=model
+```
+
+then the invocation is exactly the same as for the ASIC:
+
+```
+$ run_switchd.sh -p <program_name>
+```
+
+If the shell has been started with hardware support enabled for a
+particular platform (as described in the [introduction](#sdeShell)},
+an additional parameter `-- --model` is required:
 
 ```
 $ run_switchd.sh -p <program_name> -- --model
@@ -420,7 +559,7 @@ The `--` tells `run_switchd.sh` to pass the following option
 (`--model`) on to the `bf_switchd` process.  Note that the `--model`
 option is a feature of the SDE Nix package and is not available on
 systems using the traditional build method of the SDE provided by
-Intel (those systems use the presence or absence of a particualr
+Intel (those systems use the presence or absence of a particular
 shared object as an indicator whether the system is running on the
 ASIC or the model).  The patch that implements this feature is
 currently not complete and causes `bf_switchd` to terminate with a
@@ -437,7 +576,7 @@ development shell. The command
 $ run_p4_tests.sh -p <program_name> -t <test_directory>
 ```
 
-excercises the tests by executing all python scripts found in the
+exercises the tests by executing all python scripts found in the
 directory `<test_directory>`. This requires that the P4 program being
 tested is run on the Tofino model.
 
@@ -454,7 +593,7 @@ provided by that package.  This environment contains only the standard
 Python modules as well as all the modules provided by `bf-drivers`.
 This interpreter is the preferred match of `python` in the default
 search path. All control-plane scripts should be executed with that
-interpreter explicitely.
+interpreter explicitly.
 
 The PTF test scripts run through `run_p4_tests.sh` use a separate
 Python environment (but the same interpreter), which is provided by
@@ -471,7 +610,7 @@ $ make env INPUT_FN="<nix-expression>"
 The `<nix-expression>` must be a Nix expression which evaluates to a
 function of the form
 
-```
+```Nix
 { pkgs, pythonPkgs}: {
   pkgs = [ ... ];
   cpModules = [ ... ];
@@ -543,15 +682,18 @@ version='5.32.0';
 The SDE Nix package provides two types of services. The first is an
 environment to build and test a P4 program as explained in the
 previous chapter.  This environment includes the P4 compiler, Tofino
-ASIC emulator and the Packet Test Framework.
+ASIC emulator, the Packet Test Framework and, optionally, support for
+a specific hardware platform.
 
 The second service is a runtime environment for pre-compiled P4
 programs.  This environment only contains the build artifact of a P4
 program and the components necessary to execute them on the Tofino
-ASIC.  The use case for this service is the deployment of P4 programs
-on hardware appliances.  The binary packages required for this
-deployment can be distributed to users who do not have signed an NDA
-or software lincense agreement with Intel.
+ASIC on a particular platform (including the pseudo-platform `model`,
+which executes the program on the ASIC software model).  The use case
+for this service is the deployment of P4 programs on hardware
+appliances.  The binary packages required for this deployment can be
+distributed to users who do not have signed an NDA or software
+license agreement with Intel.
 
 How these services are instantiated is described later in this
 document.  This section describes how they are composed of smaller
@@ -583,7 +725,7 @@ alias of the most recent version.
 
 The output of the command is a path in the Nix store (`/nix/store`),
 which is a directory containing the same objects as a build with P4
-Studion, for example
+Studio, for example
 
 ```
 $ nix-build -A bf-sde.latest
@@ -619,7 +761,7 @@ packages described in the next section:
    * `bf-syslibs`
    * `bf-drivers`
    * `bf-utils`
-   * `bf-platforms`
+   * `bf-platforms.model`
    * `p4c`
    * `tofino-model`
    * `ptf-modules`
@@ -641,10 +783,16 @@ lrwxrwxrwx 1 root root 70 Jan  1  1970 /nix/store/8wh2yi3v1vajw6g9gjylankmxafp3g
 It also contains the following tools used to interact with the SDE
 
    * `run_switchd.sh`
+   * `bfshell`
    * `run_bfshell.sh`
    * `run_tofino_model.sh`
    * `run_p4_test.sh`
    * `p4_build.sh`
+
+It is configured to support the pseudo-platform `model`, i.e. a P4
+program started with `run_switchd.sh` would be executed on the Tofino
+ASIC emulator.  One way to use the SDE environment on a particular
+hardware platform is by using the [SDE Shell](#sdeShell) feature.
 
 In the SDE built in the traditional way by P4 Studio, one needs to set
 `SDE` and `SDE_INSTALL` for these tools to work.  In the Nix package,
@@ -680,10 +828,10 @@ The output of `nix-build` is the closest thing to a binary package of
 a traditional package manager. Nix uses a two-stage process when
 building packages.  The first stage is called a _derivation_. It is
 the direct result of evaluating a Nix expression that contains the
-build recipe of a software component. Like everythig Nix produces, it
+build recipe of a software component. Like everything Nix produces, it
 is a file stored in `/nix/store` but with the suffix `.drv` to
 distinguish them from actual packages. It is not the package itself
-but an ecoding of the procedure that needs to be executed to perform
+but an encoding of the procedure that needs to be executed to perform
 the build (i.e. it the build script to execute, `make` and `configure`
 flags etc). The process of generating the `.drv` file is also called
 _instantiation_ of the derivation.
@@ -695,7 +843,7 @@ derivation).  The result of that step is another path in `/nix/store`
 package itself.
 
 The Nix community usually uses the terms derivation and package
-somewhat loosely as synoyms, because the distinction rarely matters in
+somewhat loosely as synonyms, because the distinction rarely matters in
 practice.  We adopt this convention in the rest of this document.
 
 The Nix packaging of the SDE contains many derivations and the command
@@ -714,7 +862,7 @@ of the SDE.  Each version has an attribute (we will see later what
 exactly this means) called `pkgs` containing a separate derivation for
 each of these components.  They are built automatically when the
 default derivation is built (or any other derivation which depends on
-them), but they can also be built explicitely if desired (though this
+them), but they can also be built explicitly if desired (though this
 should not be necessary for normal use).  In that case, they can
 either be built all at once with
 
@@ -731,7 +879,7 @@ $ nix-build -A bf-sde.<version>.pkgs.bf-drivers
 In the latter case, all derivations on which the given derivation
 depends will be built implicitly.
 
-The following derivations are avaialbe
+The following derivations are available
 
    * `bf-syslibs`
    * `bf-utils`
@@ -745,9 +893,8 @@ The following derivations are avaialbe
    * `ptf-utils`
    * `bf-pktpy` (SDE 9.5.0 and later)
    * `kernel-modules`
-   * `runtimeEnv`
 
-All but the last three have a direct correspondence to the components
+All but the last have a direct correspondence to the components
 built by P4 Studio (with the exception of the `ptf-modules` component,
 which is split into separate packages for technical reasons).
 
@@ -755,29 +902,8 @@ which is split into separate packages for technical reasons).
 derivations, each of which provides the modules for one of the
 supported kernels.
 
-The `runtimeEnv` is a user environment just like the default
-derivation obtained with `nix-build -A bf-sde.<version>` as described
-in the previoius section.  The difference is that `runtimeEnv`
-contains just the subset of packages needed to run a compiled P4
-program:
-
-   * `bf-syslibs`
-   * `bf-drivers-runtime`
-   * `bf-utils`
-   * `bf-platforms`
-   * `ptf-utils`
-
-It also contains a reduced set of scripts
-
-   * `run_switchd.sh`
-   * `run_bfshell.sh`
-
-(Note that the `ptf-utils` package is required by `run_bfshell.sh`)
-
-In order to deploy a compiled P4 program on a system, it is sufficient
-to install the `runtimeEnv` derivation together with the derivation
-containing the build artifacts of the program (more about this later
-in this document).
+`bf-platforms` is also an attribute set of derivations with one
+attribute per [supported BSP](#baseboardPlatform).
 
 ### <a name="supportFunctions"></a>SDE Support Functions
 
@@ -797,32 +923,35 @@ traditional package managers, because it includes the build procedure
 for the P4 program itself (which could also vary between different SDE
 versions).
 
-The following is a list of these additonal attributes.  They can all
+The following is a list of these additional attributes.  They can all
 be accessed with the "attribute path" `bf-sde.<version>.<attribute>`.
 
    * `version`, type: string
    * `pkgs`, type: attribute set of derivations (see previous section)
    * `buildP4Program`, type: function
-   * `buildP4DummyProgram`, type: derivation
    * `modulesForKernel`, type: function
+   * `runtimeEnv`, type: function
+   * `runtimeEnv'`, type: function
+   * `runtimeEnvNoBsp`, type: derivation
+   * `baseboardForPlatform`, type: function
    * `mkShell`, type: function
    * `test`, type: attribute set of derivations
 
-All of these attributes can be built with `nix-build -A <...>`, except
-for `version` and `mkShell`, neither of which returns a derivation.
+All of the attributes of type "derivation" can be built with
+`nix-build -A <...>`.
 
 For the curious: non-derivation objects can be built by evaluating a
 Nix expression as follows (executed from the top-level directory of
 the repository)
 
 ```
-$ nix-instantiate --eval -E 'with import ./. {}; bf-sde.latest.version'
-"9.4.0"
+$ nix eval '(with import ./. {}; bf-sde.latest.version)'
+"9.5.0"
 ```
 
 The `mkShell` function is a special object that can only be used by
 the `nix-shell` command, for example as used by the `env` Makefile
-target to create the development shell.
+target to create the [development shell](#sdeShell).
 
 `version` is self-explanatory and `pkgs` has been described in the
 previous section. The other attributes are explained in detail below.
@@ -830,9 +959,9 @@ previous section. The other attributes are explained in detail below.
 #### <a name="buildP4Program"></a>`buildP4Program`
 
 This function is at the heart of the mechanism used to build
-individual packages for the artifacts of arbitrary P4 porgrams.  The
+individual packages for the artifacts of arbitrary P4 programs.  The
 definition of this function can be found in
-`bf-sde/build-p4-program.nix`. It takes the following arguments
+`bf-sde/build-p4/default.nix`. It takes the following arguments
 
    * `pname`: The name of the package to generate. It doesn't have to
      be unique and appears only in the name of the final path of the
@@ -843,7 +972,7 @@ definition of this function can be found in
      to become part of the name of the package in `/nix/store`
 
    * `p4Name`: The name of the top-level P4 program file to compile,
-     without the `.p4` extension and without any direcories prepended
+     without the `.p4` extension and without any directories prepended
      (see `path`)
 
    * `path`: An optional path to the program file relative to the root
@@ -863,6 +992,13 @@ definition of this function can be found in
      the `p4_build.sh` build script, for example a list of
      preprocessor symbols `[ "-Dfoo" "-Dbar" ]`
 
+   * `platform`: optional name of the platform for which to build the
+     P4 program. It must be one of the supported [platform
+     identifiers](#platformIdentifiers). The default is `model`. The
+     effect of this option is to include the `bf-platforms`
+     sub-package into the runtime environment that corresponds to the
+     baseboard that supports the given platform.
+
    * `requiredKernelModule`: The `bf_switchd` program (provided by the
      `bf-drivers-runtime` package) requires a kernel module to be
      present (if the P4 program is run on the ASIC rather than the
@@ -881,12 +1017,6 @@ definition of this function can be found in
    * `patches`: An optional list of patches to be applied to the
      source tree before building the package
 
-   * `overrides`: An optional attribute set containing overrides to be
-     applied to the derivation with `overrideAttrs`.  This is a
-     subtlety required to make overrides visible to the derivations
-     created by the `moduleWrapper` attribute function which is part
-     of the derivation returned by this function (you're not expected
-     to understand this... ;)
 
 The function essentially performs
 
@@ -918,11 +1048,30 @@ either `<p4Name>` if no `execName` was given or `execName`
    * `share/tofinopd/<name>/pipe/context.json`
    * `share/tofinopd/<name>/pipe/tofino.bin`
 
-The package will have the `runtimeEnv` [sub-package](#subPackages) as
-run-time dependency.  That package contains just enough components of
-the full SDE to start the `bf_switchd` process with the artifacts of
-the compiled program. The `bin/<name>` executable is just a shell
-script which invokes `run_switchd.sh` from the `runtimeEnv` package.
+The package will have a derivation produced by the [`runtimeEnv`
+support function](#runtimeEnv) as run-time dependency.  That package
+contains just enough components of the full SDE to start the
+`bf_switchd` process with the artifacts of the compiled program on the
+given platform. The `bin/<name>` executable is just a shell script
+which invokes `run_switchd.sh`.
+
+If `platform` is `model`, the runtime environment includes the Tofino
+model binary and the `run_tofino_model.sh` utility script. The
+`bin/<name>` executable, in addition to calling `run_switchd.sh`, also
+starts `run_tofino_model.sh` in the background and calls
+`veth_setup.sh` to create the `veth` virtual interfaces that connect
+to the emulated ports of the model. By default, the output of the
+`tofino-model` and `bf_switchd` programs are both sent to `stdout` and
+`stderr`.  If the script is called with open file descriptors 3 and/or
+4, the model will write its `stdout` and `stderr` to descriptors 3 and
+4, respectively.  For example, calling the script with
+
+```
+$ /nix/store/.../bin/<name> >switch.log 2>&1 3>model.log 3>&4
+```
+
+will collect all output of `bf_switchd` in `switch.log` and all output
+of `tofino-model` in `model.log`.
 
 <a name="p4SupportFunctions"></a>The resulting package has additional
 attributes just like the `bf-sde.<version>` packages:
@@ -941,18 +1090,12 @@ been specified with `requiredKernelModule` and then calls `bin/<name>`
 from the original package. See [modulesForKernel](#modulesForKernel)
 for details.
 
-The function `moduleWrapper'` is like `moduleWrapper`, but it takes
-a specific kernel module package as argument (i.e. on of the
-attributes of the `pkgs.kernel-modules` sub-package).
+The function `moduleWrapper'` is like `moduleWrapper`, but it takes a
+specific kernel module package as argument (i.e. one of the attributes
+of the `pkgs.kernel-modules` sub-package).
 
 The `runTest` function runs the PTF tests from test scripts in the
 source tree (more documentation on this TBD).
-
-#### `buildP4DummyProgram`
-
-This is a package which runs `bf_switchd` with no P4 program loaded.
-It is useful to start a blank data-plane onto which P4 programs can be
-loaded dynamically via gRPC.
 
 #### <a name="modulesForKernel"></a>`modulesForKernel`
 
@@ -979,11 +1122,61 @@ three possible results:
       by setting the `SDE_KERNEL_ID` environment variable to the
       desired kernel ID.
 
+#### <a name="runtimeEnv"></a>`runtimeEnv`
+
+This function takes a [baseboard identifier](#baseboardPlatform) as
+input and returns a derivation just like what is produced with
+`nix-build -A bf-sde.<version>` but with a reduced set of packages in
+the environment. Instead of the full-fledged SDE, the runtime
+environment only provides what's necessary to run a compiled P4
+program on the given platform:
+
+   * `bf-syslibs`
+   * `bf-drivers-runtime`
+   * `bf-utils`
+   * `ptf-utils`
+   * `bf-platforms.<baseboard>`
+
+It also contains a reduced set of scripts
+
+   * `run_switchd.sh`
+   * `run_bfshell.sh`
+
+(Note that the `ptf-utils` package is required by
+`run_bfshell.sh`). If `baseboard` is `model`, the runtime Environment
+also contains the `tofino-model` package (to provide the model binary)
+and the script `run_tofino_model.sh`.
+
+In order to deploy a compiled P4 program on a system, it is sufficient
+to install the `runtimeEnv` derivation together with the derivation
+containing the build artifacts of the program.
+
+#### <a name="runtimeEnvAux"></a>`runtimeEnv'`
+
+This is like `runtimeEnv` but instead of the baseboard identifier, the
+function takes a [platform identifier](#baseboardPlatform) as input.
+It is a convenience function that uses the
+[`baseboardForPlatform`](#baseboardForPlatform) support function and
+then calls `runtimeEnv`.
+
+#### <a name="runtimeEnvNoBsp"></a>`runtimeEnvNoBsp'`
+
+This is like `runtimeEnv` but does not install any of the
+`bf-platforms` packages in the environment. Hence, it cannot be used
+to run P4 programs.  It can be used, for example, to execute one of
+the utility scripts like `run_bfshell.sh`.
+
+#### <a name="baseboardForPlatform"></a>`baseboardForPlatform`
+
+This is a function which, given a [platform
+identifier](#baseboardPlatform), returns the identifier of the
+baseboard that provides support for it.
+
 #### <a name="mkShell"></a>`mkShell`
 
 This function is at the heart of the SDE package when used as a
 development environment.  When evaluated it creates a new shell in
-which the selected SDE is avaialble and can be used to compile and run
+which the selected SDE is available and can be used to compile and run
 P4 programs on-the-fly.  It does not return a proper derivation and
 therefore cannot be called with `nix-build`. Instead it must be
 evaluated through the `nix-shell` command in a rather cryptic
@@ -1000,7 +1193,7 @@ argument to the `mkShell` function call).
 The SDE comes with a set of example P4 programs. The Nix package
 supports the P4<sub>16</sub> example programs to provide a means to
 verify the proper working of the SDE and the PTF system.  The example
-programs can be excercised as follows.
+programs can be exercises as follows.
 
 The `test` attribute is itself a set with the following attributes
 
@@ -1018,7 +1211,7 @@ The `test` attribute is itself a set with the following attributes
      failed.
 
 The names of the programs are those of the P4 source files located in
-the `p4_16_programs` subdirectory of the `p4-examples` SDE components.
+the `p4_16_programs` sub directory of the `p4-examples` SDE components.
 The list of supported example programs can be displayed by evaluating
 a simple Nix expression, for example for the most recent SDE version
 
@@ -1060,7 +1253,7 @@ on the host on which they will be loaded.
 In general, compiling a kernel module requires the presence of the
 directory `/lib/modules/$(uname -r)/build`, where `uname -r` provides
 the release identifier of the running kernel.  The `build` directory
-is an artefact of the build procedure of the kernel itself. It
+is an artifact of the build procedure of the kernel itself. It
 contains everything needed to compile a module that will work with
 that specific kernel.
 
@@ -1124,7 +1317,7 @@ attribute is constructed for each kernel.  The current version of
    * Plain Debian
    * [Mion](https://docs.mion.io/latest/)
 
-The Nix expression in `bf-sde/kernels/default.nix` includes utiliy
+The Nix expression in `bf-sde/kernels/default.nix` includes utility
 functions for each type of system to construct the `buildTree`
 attribute.
 
@@ -1148,10 +1341,10 @@ itself.
 
 #### Plain Debian
 
-Plain Debian splits the contents of the build directory accross three
+Plain Debian splits the contents of the build directory across three
 separate `deb` files (`linux-headers`, `linux-headers-common` and
 `linux-kbuild`) and also adds some non-generic processing, which have
-to be converted back to the behaviour of a generic kernel build
+to be converted back to the behavior of a generic kernel build
 directory. The `deb` files are all available from the standard Debian
 mirrors.
 
@@ -1171,7 +1364,8 @@ the mion image.
 
 Problem statement: given the source code of a P4 program, compile it
 for a specific version of the SDE and create a package that runs it on
-a Tofino ASIC by executing a single command.
+a Tofino ASIC on a specific platform or the Tofino model by executing
+a single command.
 
 The good news is that all of the real work to accomplish this is
 already part of the SDE package. The [`buildP4Program` support
@@ -1197,7 +1391,7 @@ Broker](https://github.com/alexandergall/packet-broker-nixpkgs).
 ### <a name="buildRecipeP4"></a>Writing the Build Recipe as a Nix Expression
 
 The packet broker consists of a P4 program called `packet_broker.p4`,
-located in the top-level direcotory of the Git repository.
+located in the top-level directory of the Git repository.
 
 To create a package for it, we first create a file `packet-broker.nix`
 in the top-level directory of the `bf-sde-nixpkgs` working tree with
@@ -1211,6 +1405,7 @@ let
   packet-broker = pkgs.bf-sde.latest.buildP4Program {
     pname = "packet-broker";
     version = "0.1";
+    platform = "accton_wedge100bf_32x";
     src = pkgs.fetchFromGitHub {
       owner = "alexandergall";
       repo = "packet-broker";
@@ -1256,17 +1451,21 @@ result is a derivation (which, as a Nix expression, is also an
 attribute set), which is assigned to the variable `packet-broker`.
 This particular invocation uses a subset of the [arguments expected by
 the `buildP4Program` function](#buildP4Program). The most important
-input is the `packet-borker` Git repository, which is downloaded at
+input is the `packet-broker` Git repository, which is downloaded at
 build-time using the
 [`fetchFromGithub`](https://nixos.org/manual/nixpkgs/stable/#chap-pkgs-fetchers)
 utility function.
+
+The `platform` argument selects the platform for which to build the
+program (`accton_wedge100bf_32x` in this case). This determines which
+BSP has to be included in the runtime environment.
 
 The `requiredKernelModule` argument indicates to the function that
 this P4 program requires the `bf_kpkt` kernel module to be present
 when the program is started.  However, the resulting package does not
 contain that module. As explained earlier, this is because the module
 must be compiled for the system on which the program will be run
-rather than ther kernel on which the package is built.
+rather than the kernel on which the package is built.
 
 In typical Nix-style, the package created by `buildP4Program` has the
 capability to create a new package containing the required kernel
@@ -1287,7 +1486,7 @@ automatically.
 To perform the actual build, simply pass our Nix expression to `nix-build`
 
 ```
-$ nix-build test.nix
+$ nix-build packet-broker.nix
 error: cannot auto-call a function that has an argument without a default value ('kernelRelease')
 ```
 
@@ -1300,7 +1499,7 @@ using the `--arg` option):
 ```
 $ nix-build packet-broker.nix --argstr kernelRelease $(uname -r)
 [ ... ]
-/nix/store/3dkzczr98a2hd3xj18p1yv6vk2xkl38n-packet_broker-module-wrapper
+/nix/store/n3mvk07nl25allcjm5vrm7yfnsma5zsz-packet_broker-module-wrapper
 ```
 
 ### <a name="whatsInPackageP4"></a>What's in the Package
@@ -1312,12 +1511,12 @@ reader.
 Let's see what's inside the package we just created
 
 ```
-$ ls -lR /nix/store/3dkzczr98a2hd3xj18p1yv6vk2xkl38n-packet_broker-module-wrapper
-/nix/store/3dkzczr98a2hd3xj18p1yv6vk2xkl38n-packet_broker-module-wrapper:
+$ ls -lR /nix/store/n3mvk07nl25allcjm5vrm7yfnsma5zsz-packet_broker-module-wrapper
+/nix/store/n3mvk07nl25allcjm5vrm7yfnsma5zsz-packet_broker-module-wrapper:
 total 4
 dr-xr-xr-x 2 root root 4096 Jan  1  1970 bin
 
-/nix/store/3dkzczr98a2hd3xj18p1yv6vk2xkl38n-packet_broker-module-wrapper/bin:
+/nix/store/n3mvk07nl25allcjm5vrm7yfnsma5zsz-packet_broker-module-wrapper/bin:
 total 4
 -r-xr-xr-x 1 root root 898 Jan  1  1970 packet_broker-module-wrapper
 ```
@@ -1328,19 +1527,19 @@ executing this script is enough to launch the P4 program on the Tofino
 ASIC. The last line
 
 ```
-exec /nix/store/2hb8j26ajk7wkan2xf7r9hzhsxj9ca1z-packet-broker-0.1/bin/packet_broker "$@"
+exec /nix/store/2aj27ji70991ij6g3pbvizczfcrazdw3-packet-broker-0.1/bin/packet_broker "$@"
 ```
 
-references the package `packet-broker`, which occured as an
+references the package `packet-broker`, which occurred as an
 intermediary step during the evaluation of `packet-broker.nix`. It has
 now become a run-time dependency of the `packet_broker-module-wrapper`
 package.  We can see all the immediate run-time dependencies with
 
 ```
-$ nix-store -q --references /nix/store/3dkzczr98a2hd3xj18p1yv6vk2xkl38n-packet_broker-module-wrapper
+$ nix-store -q --references /nix/store/n3mvk07nl25allcjm5vrm7yfnsma5zsz-packet_broker-module-wrapper
 /nix/store/0kcx6s8gxysnygd8kxa502xfdfm1n28y-gnugrep-3.4
 /nix/store/a3fc4zqaiak11jks9zd579mz5v0li8bg-bash-4.4-p23
-/nix/store/2hb8j26ajk7wkan2xf7r9hzhsxj9ca1z-packet-broker-0.1
+/nix/store/2aj27ji70991ij6g3pbvizczfcrazdw3-packet-broker-0.1
 /nix/store/n599lhxiidv6fpiz43y2mld2nwnscc5s-kmod-27
 /nix/store/d8jfwymqiiylcf3dl2pvj8ldx4c1jcnk-bf-sde-9.5.0-kernel-modules-4.19.0-16-amd64
 /nix/store/g9qsf6rcy467dxa6gxdh4sw8wm5p6alg-gawk-5.1.0
@@ -1363,20 +1562,23 @@ Let's dig a bit deeper into the dependency tree.  The immediate
 dependencies of the `packet-broker` package are
 
 ```
-$ nix-store -q --references /nix/store/2hb8j26ajk7wkan2xf7r9hzhsxj9ca1z-packet-broker-0.1
-/nix/store/2fq251snc0qzxyiqh8hfiszqw8ibrsib-bf-sde-runtime-9.5.0
+$ nix-store -q --references /nix/store/2aj27ji70991ij6g3pbvizczfcrazdw3-packet-broker-0.1
 /nix/store/a3fc4zqaiak11jks9zd579mz5v0li8bg-bash-4.4-p23
-/nix/store/2hb8j26ajk7wkan2xf7r9hzhsxj9ca1z-packet-broker-0.1
+/nix/store/w1m9bhgz32mwrfwx813krf85icknn3i7-packet_broker-artifacts-0.1
+/nix/store/z2sngj8cl351chvsxxwd3pi6kp2nbg9g-bf-sde-accton-runtime-9.5.0
 ```
 
 We have finally found the actual run-time environment provided by the
-SDE package.  We have seen this before: it is the [`runtimeEnv`
-attribute of the SDE](#subPackages). It's dependencies are
+SDE package.  This derivation is the result of calling the
+[`runtimeEnv'` support function](#runtimeEnvAux) with the argument
+`accton_wedge100bf_32x`, which maps the platform identifier to the
+baseboard identifier `accton` (provided by the reference BSP).  It's
+dependencies are
 
 ```
-$ nix-store -q --references /nix/store/2fq251snc0qzxyiqh8hfiszqw8ibrsib-bf-sde-runtime-9.5.0
-/nix/store/f5chhvb8h033i2ipgijvrna0km70csd2-bf-sde-runtime-env-9.5.0
-/nix/store/s81shydji7gdm9jx82vzixfgv9h6w477-bf-tools-runtime-9.5.0
+$ nix-store -q --references /nix/store/z2sngj8cl351chvsxxwd3pi6kp2nbg9g-bf-sde-accton-runtime-9.5.0
+/nix/store/hcrd7nv1ggayp4mw663aba0qb77s9mil-bf-sde-accton-runtime-env-9.5.0
+/nix/store/4wgc1596a5i43wc1gny1djk3ndxsia9q-bf-tools-runtime-9.5.0
 ```
 
 This is an example of a [_user environment_ introduced
@@ -1384,34 +1586,36 @@ earlier](#userEnvironment), a kind of meta-package. This means that it
 provides no contents of its own. It merely collects the `bin`, `lib`
 etc. directories from the packages on which it depends in a single
 hierarchy with symbolic links. In this case, the environment contains
-two packages: `bf-sde-runtime-env-9.5.0` is itself an environment and
-`bf-tools-runtime-9.5.0` provides the runtime utility scripts
+two packages: `bf-sde-referemce-runtime-env-9.5.0` is itself an
+environment and `bf-tools-runtime-9.5.0` provides the runtime utility
+scripts
 
 ```
-$ ls -l /nix/store/s81shydji7gdm9jx82vzixfgv9h6w477-bf-tools-runtime-9.5.0/bin/
+$ ls -l /nix/store/4wgc1596a5i43wc1gny1djk3ndxsia9q-bf-tools-runtime-9.5.0/bin/
 total 8
--r-xr-xr-x 1 root root 505 Jan  1  1970 run_bfshell.sh
--r-xr-xr-x 1 root root 811 Jan  1  1970 run_switchd.sh
+-r-xr-xr-x 1 root root 519 Jan  1  1970 run_bfshell.sh
+-r-xr-xr-x 1 root root 825 Jan  1  1970 run_switchd.sh
 ```
 
 These scripts are wrapped inside shell scripts that set up the
 enviornment, e.g.
 
 ```
-$ grep SDE /nix/store/s81shydji7gdm9jx82vzixfgv9h6w477-bf-tools-runtime-9.5.0/bin/run_switchd.sh
-export SDE='/nix/store/f5chhvb8h033i2ipgijvrna0km70csd2-bf-sde-runtime-env-9.5.0'
-export SDE_INSTALL='/nix/store/f5chhvb8h033i2ipgijvrna0km70csd2-bf-sde-runtime-env-9.5.0'
+$ grep SDE /nix/store/4wgc1596a5i43wc1gny1djk3ndxsia9q-bf-tools-runtime-9.5.0/bin/run_switchd.sh 
+export SDE='/nix/store/hcrd7nv1ggayp4mw663aba0qb77s9mil-bf-sde-accton-runtime-env-9.5.0'
+export SDE_INSTALL='/nix/store/hcrd7nv1ggayp4mw663aba0qb77s9mil-bf-sde-accton-runtime-env-9.5.0'
 ```
 
-The `bf-sde-runtime-env-9.5.0` package contains the runtime version of
-the SDE itself, which, in turn, is composed of the set of packages
+The `bf-sde-accton-runtime-env-9.5.0` package contains the runtime
+version of the SDE itself, which, in turn, is composed of the set of
+packages
 
 ```
-$ nix-store -q --references /nix/store/f5chhvb8h033i2ipgijvrna0km70csd2-bf-sde-runtime-env-9.5.0
+$ nix-store -q --references /nix/store/hcrd7nv1ggayp4mw663aba0qb77s9mil-bf-sde-accton-runtime-env-9.5.0
 /nix/store/4qnl1kirw5jh5jh3ndxhwyvvzx9bwawx-bf-sde-misc-components-9.5.0
 /nix/store/jl2pqcxp8qq8j3ljkkjrbd842ncc1vxq-bf-syslibs-9.5.0
 /nix/store/hjfrx08hd4az8wn1zc0zvgixxza30y05-bf-utils-9.5.0
-/nix/store/76fm5r0ws19svd6v99zmcq9r9ib5wych-bf-platforms-9.5.0
+/nix/store/p8iky1fwj6q5gbk519ccvba9vlsb6636-bf-platforms-accton-9.5.0
 /nix/store/xz3v5fqdgpil50faa1963agjmb9swj1k-ptf-utils-9.5.0
 /nix/store/y70c74xfh5gnxaaask1hf4pzlcgjlbkk-bf-drivers-runtime-9.5.0
 ```
@@ -1420,6 +1624,48 @@ This is how everything comes together in the end. It can't be stressed
 enough that all of this is done automatically when `nix-build
 packet-broker.nix` is executed. Missing dependencies, for example,
 cannot happen with Nix.
+
+### <a name="buildForModel"></a> Building for the Tofino Model
+
+For illustration purposes, let's see how we can modify the build
+recipe to create a version that runs on the Tofino ASIC emulation
+instead of actual hardware.  We need to make only a few modifications
+
+   * Select `model` as the target platform
+   * Remove `requiredKernelModule`
+   * Don't build a wrapper
+
+The following expression does this:
+
+```Nix
+let
+  pkgs = import ./. {};
+  packet-broker = pkgs.bf-sde.latest.buildP4Program {
+    pname = "packet-broker";
+    version = "0.1";
+    platform = "model";
+    src = pkgs.fetchFromGitHub {
+      owner = "alexandergall";
+      repo = "packet-broker";
+      rev = "366999";
+      sha256 = "1rfm286mxkws8ra92xy4jwplmqq825xf3fhwary3lgvbb59zayr9";
+    };
+    p4Name = "packet_broker";
+  };
+in packet-broker
+```
+
+After building
+
+```
+$ nix-build packet-broker.nix
+[...]
+/nix/store/x61bsdzhz21axlpxgrf2q2kn6yrkr59f-packet-broker-0.1
+```
+
+it can be started just like before.  The script creates `veth`
+interfaces to provide access to the virtual ports, starts the Tofino
+model in the background and finally launches `bf_switchd`.
 
 ## <a name="packagingCP"></a>Packaging a Control-Plane Program for BfRuntime
 
@@ -1516,7 +1762,7 @@ how we satisfy the constraint that our control-plane code uses the
 correct Python version if it imports the `bfrt_grpc` module.
 
 The rest of the expression is really just the application of the
-standrad [Nix tooling for
+standard [Nix tooling for
 Python](https://nixos.org/manual/nixpkgs/stable/#python) and cannot be
 covered here in detail.  In a nutshell, it uses `setuptools` with the
 `bdist_wheel` method to create the scripts and modules specified by
@@ -1530,10 +1776,10 @@ program) based on another package (a specific Python interpreter).
 
 One thing to note is how run-time dependencies of the package are
 declared with the `propagatedBuildInputs` attribute.  Normally,
-run-time dependencies are not specified explicitely for derivations in
+run-time dependencies are not specified explicitly for derivations in
 Nix (they are determined automatically when the package is built).
 However, this doesn't work with Python modules. What happens here,
-essentially, is that Nix creates a Python environment containin the
+essentially, is that Nix creates a Python environment containing the
 modules specified by `porpagatedBuildInputs` and arranges for the
 application (the `configd.py` script in this case) to be executed in
 that environment.  For more information on this, refer to the section
@@ -1560,7 +1806,7 @@ instance, the packet-broker P4 program can be started simply by
 executing
 
 ```
-$ /nix/store/3dkzczr98a2hd3xj18p1yv6vk2xkl38n-packet_broker-module-wrapper/bin/packet_broker-module-wrapper
+$ /nix/store/mkcbykv8rd0giwkc9q58q27hijn09rjn-packet_broker-module-wrapper/bin/packet_broker-module-wrapper
 ```
 
 This is true for any Nix package: they can all be used directly from
@@ -1594,6 +1840,7 @@ let
   version = "0.1";
   packet-broker = bf-sde.buildP4Program {
     pname = "packet-broker";
+    platform = "accton_wedge100bf_32x";
     inherit version src;
     p4Name = "packet_broker";
     requiredKernelModule = "bf_kpkt";
@@ -1628,7 +1875,8 @@ invocation of `nix-build`
 ```
 $ nix-build pb.nix --argstr kernelRelease $(uname -r)
 /nix/store/ap8gfdykxdx7154asxyphhrqizjfbz47-packet-broker-configd-0.1
-/nix/store/3dkzczr98a2hd3xj18p1yv6vk2xkl38n-packet_broker-module-wrapper
+/nix/store/9j1bpjif9qcnzzy4jrh9bdk17vwp9r4c-packet_broker-module-wrapper
+
 ```
 
 Next we're going to create a profile containing these two packages.
@@ -1642,13 +1890,13 @@ created 6 symlinks in user environment
 ```
 
 A profile can be located anywhere but unless it's somewhere underneath
-`/nix/var/nix/profiles`, it wont't become a [garbage collection
+`/nix/var/nix/profiles`, it won't become a [garbage collection
 root](#gc). So, what have we got now?
 
 ```
 $ ls -l /nix/var/nix/profiles/packet-broker*
-lrwxrwxrwx 1 gall gall 20 Apr 22 13:17 /nix/var/nix/profiles/packet-broker -> packet-broker-1-link
-lrwxrwxrwx 1 gall gall 60 Apr 22 13:17 /nix/var/nix/profiles/packet-broker-1-link -> /nix/store/d29aiqfr74rcdghvp2p3f3aqxj2lccmd-user-environment
+lrwxrwxrwx 1 root root 20 Jun 11 16:24 /nix/var/nix/profiles/packet-broker -> packet-broker-1-link
+lrwxrwxrwx 1 root root 60 Jun 11 16:24 /nix/var/nix/profiles/packet-broker-1-link -> /nix/store/9ij1vlfn43dvch3ddwzn7j40djrbnwkm-user-environment
 ```
 
 This nicely collects the artifacts of the packages in a single location. It
@@ -1674,14 +1922,13 @@ alive or is a dependency of another package.  Those are actually the
 only ways to remove anything from the Nix store.
 
 One way to create a garbage collection root is with `nix-build`.  In
-our example, when we excuted, for example, `nix-build
+our example, when we executed, for example, `nix-build
 packet-broker.nix`, you might have noticed that there appears a
 symbolic link called `result` in the current directory pointing to the
 package
 
 ```
 $ nix-build packet-broker.nix --argstr kernelRelease $(uname -r)
-warning: Nix search path entry '/nix/var/nix/profiles/per-user/root/channels' does not exist, ignoring
 /nix/store/xyv33rlrk46yw9ix1kfdjr4i09s6j2bj-packet_broker-module-wrapper
 gall@spare-PB1:~/bf-sde-nixpkgs$ ls -l result
 lrwxrwxrwx 1 gall gall 72 Apr 27 14:51 result -> /nix/store/xyv33rlrk46yw9ix1kfdjr4i09s6j2bj-packet_broker-module-wrapper
@@ -1698,7 +1945,7 @@ error: cannot delete path '/nix/store/xyv33rlrk46yw9ix1kfdjr4i09s6j2bj-packet_br
 ```
 
 The second way to create a garbage collection root is through
-profiles.  Every generation of a profile is automatically registerd as
+profiles.  Every generation of a profile is automatically registered as
 a root.  In our case
 
 ```
@@ -1768,9 +2015,9 @@ in import nixpkgs ( attrs // {
 ```
 
 In this case, it uses commit `fee7f3` on the `20.09` release branch.
-As a consequence, most of the packages can be subsituted from the
+As a consequence, most of the packages can be substituted from the
 standard binary cache.  However, all SDE-specific packages as well as
-those whose build recipes are overriden by `bf-sde-nixpkgs` (e.g. to
+those whose build recipes are overridden by `bf-sde-nixpkgs` (e.g. to
 change build options or up- or down grade versions) are not available
 from the cache and need to be built from source.  This limitation can
 be mitigated by building a separate binary cache for these packages.
@@ -1832,8 +2079,8 @@ execute
 # nix-store --import <closure
 ```
 
-Note that this has to be done by root unless the closure is digitally
-sigend (which is not covered here).
+Note that this has to be done by the `root` user unless the closure is
+digitally signed (which is not covered here).
 
 Due to the manner in which the SDE packages have been constructed,
 this closure does not contain any components which would fall under
@@ -1863,7 +2110,7 @@ cache and populated it with the closure discussed previously.  It is
 important that the Nix store on that cache does **not** contain any of
 the SDE components covered by the NDA.
 
-Once that cache is set up, the administrator creates a keypair used to
+Once that cache is set up, the administrator creates a key-pair used to
 sign the packages being downloaded from the cache.  The public key is
 published together with the URL where the cache can be reached, for
 example https://cache.exmple.net. To use the cache, add the following

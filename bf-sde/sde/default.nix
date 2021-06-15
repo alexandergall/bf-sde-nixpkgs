@@ -9,17 +9,21 @@
 ## rules concerning the distribution of SDE components to third
 ## parties imposed by Intel.
 
-{ runtime, version, src, passthru ? {}, lib, stdenv, buildEnv, callPackage,
-  bf-syslibs, bf-drivers, bf-drivers-runtime,  bf-utils,
-  bf-platforms, p4c, tofino-model, ptf-modules, ptf-utils }:
+{ runtime ? false, baseboard, version, src, passthru ? {}, lib,
+  stdenv, buildEnv, callPackage, bf-syslibs, bf-drivers,
+  bf-drivers-runtime, bf-utils, bf-platforms, p4c, tofino-model,
+  ptf-modules, ptf-utils }:
 
 let
-  paths = if runtime then
-            ## ptf-utils is required by run_bfshell.sh
-            [ bf-syslibs bf-drivers-runtime bf-utils bf-platforms ptf-utils ]
-          else
-            [ bf-syslibs bf-drivers bf-drivers.dev bf-utils bf-utils.dev
-              bf-platforms p4c tofino-model ptf-modules ptf-utils ];
+  paths =
+    (if runtime then
+      ## ptf-utils is required by run_bfshell.sh
+      [ bf-syslibs bf-drivers-runtime bf-utils ptf-utils ]
+      ++ lib.optional (baseboard == "model") tofino-model
+     else
+       [ bf-syslibs bf-drivers bf-drivers.dev bf-utils bf-utils.dev
+         p4c tofino-model ptf-modules ptf-utils ])
+    ++ lib.optional (baseboard != null) bf-platforms.${baseboard};
 
   ## Additional things from the SDE source that need to go into
   ## sdeEnv.
@@ -43,16 +47,19 @@ let
     '';
   };
   maybeRuntime = lib.optionalString runtime "-runtime";
+  maybeBaseboard = lib.optionalString (baseboard != null) "-${baseboard}";
   sdeEnv = buildEnv {
-    name = "bf-sde" + maybeRuntime + "-env-${version}";
+    name = "bf-sde" + maybeBaseboard + maybeRuntime + "-env-${version}";
     paths = paths ++ [ addToEnv ];
 
     ## bfrt Python modules overlap in bfUtils and bfDrivers
     ignoreCollisions = lib.versionAtLeast version "9.3.0";
   };
-  tools = callPackage ./tools.nix { inherit src version sdeEnv runtime; };
+  tools = callPackage ./tools.nix {
+    inherit src version sdeEnv runtime baseboard;
+  };
 in buildEnv {
-  name = "bf-sde" + maybeRuntime + "-${version}";
+  name = "bf-sde" + maybeBaseboard + maybeRuntime + "-${version}";
   inherit passthru;
   paths = [ sdeEnv tools ];
 }

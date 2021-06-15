@@ -3,26 +3,9 @@
 with pkgs;
 
 let
-  fixedDerivation = { name, outputHash }:
-    builtins.derivation {
-      inherit name outputHash system;
-      builder = runCommand "SDE-archive-error" {} ''
-        echo
-        echo "Missing SDE component ${name}"
-        echo "Please add it to the Nix store with"
-        echo
-        echo "  nix-store --add-fixed sha256 ${name}"
-        echo
-        exit 1
-      '';
-      outputHashMode = "flat";
-      outputHashAlgo = "sha256";
-    };
-
   mkSDE = sdeSpec:
     let
-      sde = fixedDerivation sdeSpec.sde;
-      bsp = fixedDerivation sdeSpec.bsp;
+      sdeSrc = sdeSpec.sde.src;
 
       extractSource = component:
         ## Assumes that all archives are .tgz and there is only
@@ -32,14 +15,14 @@ let
         ''
           mkdir tmp
           cd tmp
-          tar -xf ${sde} --wildcards '*/packages/${component}*' --strip-components 2
+          tar -xf ${sdeSrc} --wildcards '*/packages/${component}*' --strip-components 2
           mv * $out
         '';
 
       mkSrc = component: {
         pname = component;
         src = extractSource component;
-        patches = sdeSpec.patches.${component} or [];
+        patches = sdeSpec.sde.patches.${component} or [];
       };
 
       SDE = lib.makeScope pkgs.newScope (self: sdePkgs // sdeSpec);
@@ -54,9 +37,10 @@ let
         bf-drivers-runtime = sdePkgs.bf-drivers.override { runtime = true; };
         ## bf-diags is currently not used
         bf-diags = SDE.callPackage ./bf-diags (mkSrc "bf-diags");
-        bf-platforms = SDE.callPackage ./bf-platforms {
-          pname = "bf-platforms";
-          src = bsp;
+        bf-platforms = import ./bf-platforms {
+          inherit lib;
+          inherit (sdeSpec) bsps;
+          inherit (SDE) callPackage;
         };
         p4c = SDE.callPackage ./p4c (mkSrc "p4-compilers");
         tofino-model = SDE.callPackage ./tofino-model (mkSrc "tofino-model");
@@ -66,12 +50,6 @@ let
           bf-drivers-src = extractSource "bf-drivers";
           inherit (SDE) callPackage;
           inherit pkgs;
-        };
-        ## A stripped-down version of the SDE environment which only
-        ## contains the components needed at runtime
-        runtimeEnv = SDE.callPackage ./sde {
-          runtime = true;
-          src = sde;
         };
       } // (lib.optionalAttrs (lib.strings.versionAtLeast sdeSpec.version "9.5.0") {
 
@@ -116,53 +94,38 @@ let
 
         ## A function that compiles a given P4 program in the context of
         ## the SDE.
-        buildP4Program = SDE.callPackage ./build-p4-program.nix {
+        buildP4Program = SDE.callPackage ./build-p4 {
           bf-sde = self;
         };
 
-        ## A function that creates a command to run bf_switchd
-        ## without a P4 program.
-        buildP4DummyProgram =
-          let
-            p4Name = "bf-switchd-no_p4";
-            examples = stdenv.mkDerivation {
-              pname = "p4-examples";
-              version = "${self.version}";
-              inherit (mkSrc "p4-examples") src;
-            };
-            skipP4Conf = runCommand "tofino-skip_p4.conf" {} ''
-              cp ${examples}/share/p4/targets/tofino/skip_p4.conf $out
-            '';
-          in self.buildP4Program {
-            pname = "bf-switchd-dummy";
-            version = "1.0";
-            src = null;
-            requiredKernelModule = "bf_kpkt";
-            inherit p4Name;
-            overrides = {
-              unpackPhase = "true";
-              buildPhase = ''
-                mkdir $out
-                exec_name=${p4Name}
-              '';
-              postInstall = ''
-                nlines=$(cat $command | wc -l)
-                head -$((nlines - 1)) $command >$command.new
-                cat <<EOF >> $command.new
-                exec ${self.pkgs.runtimeEnv}/bin/run_switchd.sh --skip-p4 -c ${skipP4Conf}
-                EOF
-                mv $command.new $command
-                chmod a+x $command
-              '';
-            };
+        baseboardForPlatform = platform:
+          builtins.getAttr platform (import bf-platforms/baseboards.nix);
+
+        runtimeEnv = baseboard:
+          self.override {
+            inherit baseboard;
+            runtime = true;
+            passthru = {};
           };
+
+        runtimeEnv' = platform:
+          self.runtimeEnv (self.baseboardForPlatform platform);
+
+        ## A version of the runtime environment that does not contain
+        ## a BSP. This is useful when only components are needed that
+        ## do not require a BSP, for example the run_bfshell.sh
+        ## utility.
+        runtimeEnvNoBsp = self.runtimeEnv null;
 
         ## A function that can be used with nix-shell to create an
         ## environment for developing data-plane and control-plane
         ## programs in the context of the SDE (see ./sde-env.sh).
-        mkShell = { inputFn ? { pkgs, pythonPkgs }: {}, kernelRelease }:
+        mkShell = { inputFn ? { pkgs, pythonPkgs }: {}, kernelRelease, platform ? "model" }:
           let
-            bf-drivers = self.pkgs.bf-drivers;
+            sde = self.override {
+              baseboard = self.baseboardForPlatform platform;
+            };
+            bf-drivers = sde.pkgs.bf-drivers;
             python = bf-drivers.pythonModule;
             defaultInputs = {
               pkgs = [];
@@ -177,12 +140,12 @@ let
                                                  ++ inputs.cpModules);
           in mkShell {
             ## kmod provides insmod, procps provides sysctl
-            buildInputs = [ self (self.modulesForKernel kernelRelease) pythonEnv ]
+            buildInputs = [ sde (sde.modulesForKernel kernelRelease) pythonEnv ]
                             ++ inputs.pkgs;
             shellHook = ''
-              export P4_INSTALL=~/.bf-sde/${self.version}
-              export SDE=${self}
-              export SDE_INSTALL=${self}
+              export P4_INSTALL=~/.bf-sde/${sde.version}
+              export SDE=${sde}
+              export SDE_INSTALL=${sde}
               export SDE_BUILD=$P4_INSTALL/build
               export SDE_LOGS=$P4_INSTALL/logs
               export PTF_PYTHONPATH=${python.pkgs.makePythonPath inputs.ptfModules}
@@ -190,7 +153,7 @@ let
 
               cat <<EOF
 
-              Barefoot SDE ${self.version}
+              Barefoot SDE ${sde.version} on platform "${platform}"
 
               Load/unload kernel modules: $ sudo \$(type -p bf_{kdrv,kpkt,knet}_mod_{load,unload})
 
@@ -204,15 +167,14 @@ let
               Run PTF tests: run the Tofino model, then
                        $ run_p4_tests.sh -p <p4name> -t <path-to-dir-with-test-scripts>
 
-              Build artefacts and logs are stored in $P4_INSTALL
+              Build artifacts and logs are stored in $P4_INSTALL
 
               Use "exit" or CTRL-D to exit this shell.
 
               EOF
-              PS1="\n\[\033[1;32m\][nix-shell(\033[31mSDE-${self.version}\033[1;32m):\w]\$\[\033[0m\] "
+              PS1="\n\[\033[1;32m\][nix-shell(\033[31mSDE-${sde.version}\033[1;32m):\w]\$\[\033[0m\] "
             '';
           };
-
 
         ## A derivation containing a script that starts a nix-shell in
         ## which P4 programs can be compiled and run in the context of
@@ -226,115 +188,187 @@ let
       };
 
       ## This is the full SDE, equivalent to what p4studio
-      ## produces.
+      ## produces. It contains the reference BSP configured for the
+      ## Tofino software model. The runtimeEnv* functions in passthru
+      ## create runtime versions of this for particular BSPs.
       self = SDE.callPackage ./sde {
         inherit passthru;
-        src = sde;
+        src = sdeSrc;
         runtime = false;
+        baseboard = "model";
       };
     in self;
 
-  ## Download the SDE and BSP packages from the Intel repository
-  ## and add them manually to the Nix store
-  ##   nix-store --add-fixed sha256 <...>
-  ## The hashes below are the "sha256sum" of these files.
+  ## The SDE and BSP inputs are expected to be present in the store as
+  ## fixed output derivations (added manually with "nix-store
+  ## --add-fixed sha256 <...>"). The "outputHash" values below are the
+  ## sha256 sums over those files.
+  fetchFromStore = { name, outputHash, patches ? {} }:
+    {
+      src = builtins.derivation {
+        inherit name outputHash system;
+        builder = runCommand "SDE-archive-error" {} ''
+          echo
+          echo "Missing SDE component ${name}"
+          echo "Please add it to the Nix store with"
+          echo
+          echo "  nix-store --add-fixed sha256 ${name}"
+          echo
+          exit 1
+        '';
+        outputHashMode = "flat";
+        outputHashAlgo = "sha256";
+      };
+      inherit patches;
+    };
+
   common = {
     curl = curl_7_52;
     ## The Python version to use when building bf-drivers. Every
     ## derivation using bf-drivers as input must use the same version
     ## by referencing bf-drivers.pythonModule
     python_bf_drivers = python2;
-    patches = {
-      p4-examples = [ ./p4-16-examples/ptf.patch ];
+    sde = {
+      patches = {
+        p4-examples = [ ./p4-16-examples/ptf.patch ];
+      };
     };
   };
-  bf-sde = lib.mapAttrs (_: sdeSpec: mkSDE (lib.recursiveUpdate common sdeSpec)) {
+  bf-sde = with pkgs; with lib; mapAttrs (_: sdeSpec: mkSDE (recursiveUpdate common sdeSpec)) {
     v9_1_1 = rec {
       version = "9.1.1";
-      sde = {
+      sde = fetchFromStore {
         name = "bf-sde-${version}.tar";
         outputHash = "be166d6322cb7d4f8eff590f6b0704add8de80e2f2cf16eb318e43b70526be11";
       };
-      bsp = {
-        name = "bf-reference-bsp-${version}.tar";
-        outputHash = "aebe8ba0ae956afd0452172747858aae20550651e920d3d56961f622c8d78fb8";
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tar";
+          outputHash = "aebe8ba0ae956afd0452172747858aae20550651e920d3d56961f622c8d78fb8";
+        };
       };
       stdenv = gcc7Stdenv;
       thrift = thrift_0_12;
     };
     v9_2_0 = rec {
       version = "9.2.0";
-      sde = {
+      sde = fetchFromStore {
         name = "bf-sde-${version}.tar";
         outputHash = "94cf6acf8a69928aaca4043e9ba2c665cc37d72b904dcadb797d5d520fb0dd26";
       };
-      bsp = {
-        name = "bf-reference-bsp-${version}.tar";
-        outputHash = "d817f609a76b3b5e6805c25c578897f9ba2204e7d694e5f76593694ca74f67ac";
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tar";
+          outputHash = "d817f609a76b3b5e6805c25c578897f9ba2204e7d694e5f76593694ca74f67ac";
+        };
       };
       stdenv = gcc7Stdenv;
       thrift = thrift_0_12;
     };
     v9_3_0 = rec {
       version = "9.3.0";
-      sde = {
+      sde = fetchFromStore {
         name = "bf-sde-${version}.tgz";
         outputHash = "566994d074ba93908307890761f8d14b4e22fb8759085da3d71c7a2f820fe2ec";
+        patches = {
+          bf-drivers = [ ./bf-drivers/9.3.0-bfrtTable.py.patch ];
+        };
       };
-      bsp = {
-        name = "bf-reference-bsp-${version}.tgz";
-        outputHash = "dd5e51aebd836bd63d0d7c37400e995fb6b1e3650ef08014a164124ba44e6a06";
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "dd5e51aebd836bd63d0d7c37400e995fb6b1e3650ef08014a164124ba44e6a06";
+        };
+        inventec = fetchFromStore {
+          name = "bf-inventec-bsp93.tgz";
+          outputHash = "fd1e4852d0b7543dd5d2b81ab8e0150644a0f24ca87d59f1369216f1a6e796ad";
+          patches = {
+            default = [ bf-platforms/bf-inventec-bsp93.patch ];
+          };
+        };
       };
       stdenv = gcc8Stdenv;
       thrift = thrift_0_13;
-      patches = {
-        bf-drivers = [ ./bf-drivers/9.3.0-bfrtTable.py.patch ];
-      };
     };
     v9_3_1 = rec {
       version = "9.3.1";
-      sde = {
+      sde = fetchFromStore {
         name = "bf-sde-${version}.tgz";
         outputHash = "71db320fa7d12757127c7da1c16ea98453f4c88ecca7853c73b2bd4dccd1d891";
       };
-      bsp = {
-        name = "bf-reference-bsp-${version}.tgz";
-        outputHash = "b934601c77b08c3281f8dcb235450b80316a42e2683ff29e4c9f2485fffbb51f";
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "b934601c77b08c3281f8dcb235450b80316a42e2683ff29e4c9f2485fffbb51f";
+        };
+        inventec = fetchFromStore {
+          name = "bf-inventec-bsp93.tgz";
+          outputHash = "fd1e4852d0b7543dd5d2b81ab8e0150644a0f24ca87d59f1369216f1a6e796ad";
+          patches = {
+            default = [ bf-platforms/bf-inventec-bsp93.patch ];
+          };
+        };
       };
       stdenv = gcc8Stdenv;
       thrift = thrift_0_13;
     };
     v9_4_0 = rec {
       version = "9.4.0";
-      sde = {
+      sde = fetchFromStore {
         name = "bf-sde-${version}.tgz";
         outputHash = "daec162c2a857ae0175e57ab670b59341d39f3ac2ecd5ba99ec36afa15566c4e";
+        patches = {
+          p4-examples = [ ./p4-16-examples/9.4.0-ptf.patch ];
+        };
       };
-      bsp = {
-        name = "bf-reference-bsp-${version}.tgz";
-        outputHash = "269eecaf3186d7c9a061f6b66ce3d1c85d8f2022ce3be81ee9e532d136552fa4";
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "269eecaf3186d7c9a061f6b66ce3d1c85d8f2022ce3be81ee9e532d136552fa4";
+        };
+        aps = fetchFromStore {
+          name = "9.5.0_AOT1.5.1_SAL1.3.2.zip";
+          outputHash = "2e56f51233c0eef1289ee219582ea0ec6d7455c3f78cac900aeb2b8214df0544";
+        };
+        inventec = fetchFromStore {
+          name = "bf-inventec-bsp93.tgz";
+          outputHash = "fd1e4852d0b7543dd5d2b81ab8e0150644a0f24ca87d59f1369216f1a6e796ad";
+          patches = {
+            default = [ bf-platforms/bf-inventec-bsp93.patch ];
+          };
+        };
       };
       stdenv = gcc8Stdenv;
       thrift = thrift_0_13;
-      patches = {
-        p4-examples = [ ./p4-16-examples/9.4.0-ptf.patch ];
-      };
     };
     v9_5_0 = rec {
       version = "9.5.0";
-      sde = {
+      sde = fetchFromStore {
         name = "bf-sde-${version}.tgz";
         outputHash = "61d55a06fa6f80fc1f859a80ab8897eeca43f06831d793d7ec7f6f56e6529ed7";
+        patches = {
+          p4-examples = [];
+        };
       };
-      bsp = {
-        name = "bf-reference-bsp-${version}.tgz";
-        outputHash = "b6a293c8e2694d7ea8d7b12c24b1d63c08b0eca3783eeb7d54e8ecffb4494c9f";
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "b6a293c8e2694d7ea8d7b12c24b1d63c08b0eca3783eeb7d54e8ecffb4494c9f";
+        };
+        aps = fetchFromStore {
+          name = "9.5.0_AOT1.5.1_SAL1.3.2.zip";
+          outputHash = "2e56f51233c0eef1289ee219582ea0ec6d7455c3f78cac900aeb2b8214df0544";
+        };
+        inventec = fetchFromStore {
+          name = "bf-inventec-bsp93.tgz";
+          outputHash = "fd1e4852d0b7543dd5d2b81ab8e0150644a0f24ca87d59f1369216f1a6e796ad";
+          patches = {
+            default = [ bf-platforms/bf-inventec-bsp93.patch ];
+          };
+        };
       };
       stdenv = gcc8Stdenv;
       thrift = thrift_0_13;
-      patches = {
-        p4-examples = [];
-      };
     };
   };
 

@@ -45,21 +45,16 @@ in vmTools.runInLinuxVM (
     chmod a+x /usr/bin/sudo
     mkdir /mnt
 
-    export P4_INSTALL=${self}
     export PATH=${lib.strings.makeBinPath [ bf-sde ]}:$PATH
 
     echo "============================================="
     echo "Running tests for P4 program ${p4Name}"
     echo "============================================="
+    echo "Starting model and bf_switchd"
+    ${self}/bin/${p4Name} 1>/tmp/xchg/switch.log 2>&1 3>/tmp/xchg/model.log 4>&3 &
 
-    echo "Creating veth interfaces..."
-    bash -e veth_setup.sh
-
-    echo "Starting Tofino model..."
-    run_tofino_model.sh -p ${p4Name} >/tmp/xchg/model.log 2>&1 &
-
-    echo "Starting bf_switchd..."
-    run_switchd.sh -p ${p4Name} -- --model >/tmp/xchg/switch.log 2>&1 &
+    ## Avoid a race with the test script"
+    sleep 5
 
     echo "Starting tests"
     set +e

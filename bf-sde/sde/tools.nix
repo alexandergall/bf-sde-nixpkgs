@@ -1,6 +1,6 @@
-{ src, version, sdeEnv, runtime, stdenv, lib, makeWrapper, python,
-  coreutils, ethtool, iproute, utillinux, gnugrep, gnused, gawk,
-  findutils, gcc, gnumake, which, procps, bash }:
+{ src, version, sdeEnv, runtime, baseboard, stdenv, lib, makeWrapper,
+  python, coreutils, ethtool, iproute, utillinux, gnugrep, gnused,
+  gawk, findutils, gcc, gnumake, which, procps, bash }:
 
 stdenv.mkDerivation {
   inherit version src;
@@ -35,11 +35,13 @@ stdenv.mkDerivation {
     copy run_bfshell.sh run_bfshell.sh \
       "${lib.strings.makeBinPath [ coreutils utillinux ]}"
 
-    '' + lib.optionalString (! runtime) ''
+    '' + lib.optionalString (! runtime || baseboard == "model") ''
 
     substitute run_tofino_model.sh $out/bin/run_tofino_model.sh --replace sudo /usr/bin/sudo
     wrap $out/bin/run_tofino_model.sh \
       "${lib.strings.makeBinPath [ coreutils utillinux findutils ]}:/usr/bin"
+
+    '' + lib.optionalString (! runtime) ''
 
     ## A test script could need additional Python modules at runtime.
     ## The bare ptf command has an option --pypath for this purpose,

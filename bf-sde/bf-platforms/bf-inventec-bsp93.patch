@@ -1,0 +1,21 @@
+diff -Naur bf-inventec-bsp/bf-platforms.orig/drivers/src/bf_port_mgmt/bf_pm_porting.c bf-inventec-bsp/bf-platforms/drivers/src/bf_port_mgmt/bf_pm_porting.c
+--- bf-inventec-bsp/bf-platforms.orig/drivers/src/bf_port_mgmt/bf_pm_porting.c	2021-03-09 20:07:40.000000000 +0100
++++ bf-inventec-bsp/bf-platforms/drivers/src/bf_port_mgmt/bf_pm_porting.c	2021-05-21 16:54:56.094031339 +0200
+@@ -76,6 +76,7 @@
+         return BF_SUCCESS;
+       }
+       break;
++    case BF_SPEED_40G_R2:
+     case BF_SPEED_40G_NON_BREAKABLE:
+     case BF_SPEED_40G:
+     case BF_SPEED_25G:
+@@ -85,6 +86,9 @@
+       return BF_SUCCESS;
+     case BF_SPEED_NONE:
+       return BF_SUCCESS;
++    default:
++      // Invalid speed
++      break;
+   }
+   return BF_INVALID_ARG;
+ }

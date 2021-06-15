@@ -1,4 +1,4 @@
-{ stdenv, callPackage, lib, bf-sde, runtimeEnv, runtimeShell }:
+{ stdenv, callPackage, procps, kmod, lib, bf-sde }:
 
 { pname,
   version,
@@ -11,6 +11,10 @@
 # I.e. the program to be compiled si expected to be
 #   <path>/<p4Name>.p4
   path ? ".",
+# The platform for which to build. This selects which
+# baseboard-dependent platform manager library gets installed into the
+# runtime environment.
+  platform ? "model",
 # The kernel module required by bf_switchd for this program, one
 # of bf_kdrv, bf_kpkt, bf_knet. Used by the makeModuleWrapper
 # support function to load the module before executing bf_switchd.
@@ -19,20 +23,18 @@
   buildFlags ? [],
   src,
 # Optional patches
-  patches ? [],
-# Optional derivation overrides. They need to be applied here in
-# order to make the overridden derivation visibile to the
-# makeModuleWrapper passthru function
-  overrides ? {}
+  patches ? []
 }:
 
-assert requiredKernelModule != null -> lib.any (e: requiredKernelModule == e)
-                                               [ "bf_kdrv" "bf_kpkt" "bf_knet" ];
+assert requiredKernelModule != null -> lib.assertOneOf "kernel module"
+  requiredKernelModule [ "bf_kdrv" "bf_kpkt" "bf_knet" ];
+
+assert lib.assertOneOf "platform" platform (builtins.attrNames (import
+  ../bf-platforms/baseboards.nix));
 
 let
+  runtimeEnv = bf-sde.runtimeEnv' platform;
   passthru = {
-    ## Preserve the name of the program. Used by the test.cases
-    ## attribute of the sde package.
     inherit p4Name;
 
     ## Build a shell script to load the required kernel module for a given
@@ -47,8 +49,7 @@ let
 
     runTest = args:
       let
-        ## Re-create the patched source tree to execercise
-        ## the PTF tests
+        ## Re-create the patched source tree to exercise the PTF tests
         src' = stdenv.mkDerivation {
           name = "${pname}-${version}-source";
           inherit src patches;
@@ -67,10 +68,12 @@ let
       } // args);
   };
 
-  self = (stdenv.mkDerivation rec {
+  ## Create a separate derivation for the P4 artifacts that does not
+  ## depend on the runtime environment (i.e. on the platform).
+  build = stdenv.mkDerivation {
     buildInputs = [ bf-sde ];
-
-    inherit pname version src p4Name patches buildFlags passthru;
+    pname = "${execName}-artifacts";
+    inherit version src p4Name patches buildFlags;
 
     buildPhase = ''
       set -e
@@ -89,26 +92,34 @@ let
       $cmd
     '';
 
-    installPhase = ''
+    installPhase = ''true'';
+  };
 
-      mkdir $out/bin
+  self = stdenv.mkDerivation {
+    inherit pname version passthru;
+    phases = [ "installPhase" "fixupPhase" ];
+    installPhase = ''
+      mkdir -p $out/bin
+
+      EXEC_NAME=${p4Name}
+      [ "${p4Name}" != "${execName}" ] && EXEC_NAME=${execName}
+      BUILD=${build}
+      RUNTIME_ENV=${runtimeEnv}
 
       ## This script executes bf_switchd via the run_switchd.sh
       ## wrapper with our P4 program artifacts.
-      command=$out/bin/$exec_name
-      cat <<EOF > $command
-      #!${runtimeShell}
-      set -e
-
-      if [ -n "\$1" ]; then
-        cd \$1
+      if [ ${platform} = model ]; then
+        script=${./run-model.sh}
+      else
+        script=${./run.sh}
       fi
-
-      export P4_INSTALL=$out
-      exec ${runtimeEnv}/bin/run_switchd.sh -p $exec_name
-      EOF
-      chmod a+x $command
-      runHook postInstall
+      substitute $script $out/bin/$EXEC_NAME \
+        --subst-var BUILD \
+        --subst-var RUNTIME_ENV \
+        --subst-var EXEC_NAME \
+        --subst-var-by pkill ${procps}/bin/pkill \
+        --subst-var-by rmmod ${kmod}/bin/rmmod
+      chmod a+x $out/bin/$EXEC_NAME
     '';
-  }).overrideAttrs (_: overrides );
+  };
 in self
