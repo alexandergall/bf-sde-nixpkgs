@@ -282,9 +282,6 @@ let
         inventec = fetchFromStore {
           name = "bf-inventec-bsp93.tgz";
           outputHash = "fd1e4852d0b7543dd5d2b81ab8e0150644a0f24ca87d59f1369216f1a6e796ad";
-          patches = {
-            default = [ bf-platforms/bf-inventec-bsp93.patch ];
-          };
         };
       };
       stdenv = gcc8Stdenv;
@@ -304,9 +301,6 @@ let
         inventec = fetchFromStore {
           name = "bf-inventec-bsp93.tgz";
           outputHash = "fd1e4852d0b7543dd5d2b81ab8e0150644a0f24ca87d59f1369216f1a6e796ad";
-          patches = {
-            default = [ bf-platforms/bf-inventec-bsp93.patch ];
-          };
         };
       };
       stdenv = gcc8Stdenv;
