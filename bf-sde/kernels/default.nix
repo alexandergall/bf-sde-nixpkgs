@@ -161,6 +161,27 @@ let
         patchelfInputs = [ openssl_1_1.out elfutils ];
       };
     };
+    Debian10_10 = {
+      kernelRelease = "4.19.0-17-amd64";
+      buildTree = mkDebian {
+        spec = {
+          snapshotTimestamp = "20210622T083255Z";
+          arch = {
+            name = "linux-headers-4.19.0-17-amd64_4.19.194-1_amd64.deb";
+            sha256 = "0z4nc5sinmhyy1zz91zvbjjj5jarb889sxidmihayvn0m8k3pskw";
+          };
+          common = {
+            name = "linux-headers-4.19.0-17-common_4.19.194-1_all.deb";
+            sha256 = "1hzjb4dw5f9n47c311yihldi9s6scly6pd6m8i285d25nj1mrw1v";
+          };
+          kbuild = {
+            name = "linux-kbuild-4.19_4.19.194-1_amd64.deb";
+            sha256 = "0vf44ks0naqbnbkm8ydlh591nr934k83dkq53jm53nk8acdbbdji";
+          };
+        };
+        patchelfInputs = [ openssl_1_1.out elfutils ];
+      };
+    };
     Debian11 = {
       ## Moving target as long as Debian 11 (bullseye) is testing
       kernelRelease = "5.10.0-6-amd64";
