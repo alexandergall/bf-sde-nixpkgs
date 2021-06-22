@@ -123,6 +123,7 @@ let
       kernelRelease = "4.19.0-14-amd64";
       buildTree = mkDebian {
         spec = {
+          snapshotTimestamp = "20210601T022916Z";
           arch = {
             name = "linux-headers-4.19.0-14-amd64_4.19.171-2_amd64.deb";
             sha256 = "0f0m80ml35wc26z03rmlv159pdq5k0c3c8596827945347h0k1f4";
@@ -143,6 +144,7 @@ let
       kernelRelease = "4.19.0-16-amd64";
       buildTree = mkDebian {
         spec = {
+          snapshotTimestamp = "20210601T022916Z";
           arch = {
             name = "linux-headers-4.19.0-16-amd64_4.19.181-1_amd64.deb";
             sha256 = "05as3x898missk9277bb51drzg4zgk0mdd4ij8sninpnws73fg75";
@@ -164,8 +166,9 @@ let
       kernelRelease = "5.10.0-6-amd64";
       buildTree = mkDebian {
         spec = {
+          snapshotTimestamp = "20210601T022916Z";
           arch = {
-	    name = "linux-headers-5.10.0-6-amd64_5.10.28-1_amd64.deb";
+            name = "linux-headers-5.10.0-6-amd64_5.10.28-1_amd64.deb";
             sha256 = "0lnijmsb8hrdss76hcl33zf9w4hn5z0iciqjwj9ff8fxpqm3l1dq";
           };
           common = {
@@ -181,7 +184,7 @@ let
       };
       patches =
         let
-	  patch = [ ./bf-drivers-kernel-5.8.patch ];
+          patch = [ ./bf-drivers-kernel-5.8.patch ];
         in {
           "9.1.1" = patch ++ [ ./bf-drivers-9.1.1.patch ];
           "9.2.0" = patch;

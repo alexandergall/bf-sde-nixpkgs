@@ -1,9 +1,9 @@
-{ arch, common, kbuild, mkKbuild, fetchurl }:
+{ snapshotTimestamp, arch, common, kbuild, mkKbuild, fetchurl }:
 
 let
   fetch_deb = { name, sha256 }:
     fetchurl {
-      url = "http://ftp.ch.debian.org/debian/pool/main/l/linux/${name}";
+      url = "http://snapshot.debian.org/archive/debian/${snapshotTimestamp}/pool/main/l/linux/${name}";
       inherit sha256;
     };
 in mkKbuild.overrideAttrs (_: {
