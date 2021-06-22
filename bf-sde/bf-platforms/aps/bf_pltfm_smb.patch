@@ -1,0 +1,40 @@
+diff -Naur bf-platforms-9.5.0.aps.orig/platforms/apsn/src/bf_pltfm_smb/bf_pltfm_smb.c bf-platforms-9.5.0.aps/platforms/apsn/src/bf_pltfm_smb/bf_pltfm_smb.c
+--- bf-platforms-9.5.0.aps.orig/platforms/apsn/src/bf_pltfm_smb/bf_pltfm_smb.c	2021-08-13 10:55:26.000000000 +0200
++++ bf-platforms-9.5.0.aps/platforms/apsn/src/bf_pltfm_smb/bf_pltfm_smb.c	2021-09-16 15:30:28.322276021 +0200
+@@ -17,25 +17,21 @@
+ 
+ char *getSMBusDev() {
+     char resp[256] = {0};
+-    exe_system_cmd("sudo modprobe i2c-i801", resp);
+-    resp[strcspn(resp, "\n")] = 0;
+     if (access("/sys/bus/i2c/devices/", F_OK) != -1) {
+         exe_system_cmd("ls /sys/bus/i2c/devices/", resp);
+         char delim[] = "\n";
+         char *ptr = strtok(resp, delim);
+         while (ptr != NULL) {
+-            char temp[] = "/sys/bus/i2c/devices/";
++            char temp[256] = "/sys/bus/i2c/devices/";
+             char *i2c_smb_name_file = strcat(strcat(temp, ptr), "/name");
+             if (access(i2c_smb_name_file, F_OK) != -1) {
+-                char temp2[] = "cat ";
++                char temp2[256] = "cat ";
+                 char resp2[256] = {0};
+                 exe_system_cmd(strcat(temp2, i2c_smb_name_file), resp2);
+                 resp2[strcspn(resp2, "\n")] = 0;
+                 if (strstr(resp2, "SMBus")) {
+-                    char temp3[] = "/dev/";
++                    char temp3[256] = "/dev/";
+                     return strcat(temp3, ptr);
+-                } else {
+-                    LOG_ERROR("Could not find SMBus.");
+                 }
+ 
+             } else {
+@@ -43,6 +39,7 @@
+             }
+             ptr = strtok(NULL, delim);
+         }
++	LOG_ERROR("Could not find SMBus.");
+     } else {
+         LOG_ERROR("Could not find any i2c device.");
+     }

@@ -87,6 +87,29 @@ let
         grpcio = python-super.grpcio.overrideAttrs (oldAttrs:
           grpc_1_17_0_attrs super "grpcio" true "06jpr27l71wz0fbifizdsalxvpraix7s5dg30pgd2wvd77ky5p3h");
 
+        ## Used to compile the protobuf python bindings for the aps_bf2556 baseboard.
+        grpcio-tools = python-super.grpcio-tools.overrideAttrs (oldAttrs: rec {
+          version = "1.17.0";
+          inherit (oldAttrs) pname;
+          name = "${pname}-${version}";
+
+          ## setuptools is needed by the grpc_tools scripts
+          propagatedBuildInputs = oldAttrs.propagatedBuildInputs ++ (with python2.pkgs; [ setuptools ]);
+          src = python-self.fetchPypi {
+            inherit version pname;
+            sha256 = "0qfjxvgk78w3m4wwk10qqkv027qhirrnc7c1dx41l1i1hwhws5wl";
+          };
+          ## The tools are intended to be run as scripts. Make them executable so
+          ## wrapPythonPrograms can find them.
+          postInstall = ''
+            chmod a+x $out/lib/${python2.libPrefix}/site-packages/grpc_tools/*.py
+          '';
+          ## By default, only scripts in $out are wrapped.
+          postFixup = ''
+            wrapPythonProgramsIn $out/lib/${python2.libPrefix}/site-packages/grpc_tools "$out $pythonPath"
+          '';
+        });
+
         ## tenjin.py is included in the bf-drivers packages and
         ## installed in
         ## SDE_INSTALL/lib/python2.7/site-packages/tofino_pd_api/.

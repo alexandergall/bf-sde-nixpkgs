@@ -1,0 +1,54 @@
+#!/bin/bash
+
+### Terrible hack to read the EEPROM on the APS platform.  It uses the
+### onie-syseeprom tool from the ONIE installation partition. That
+### uses a hard-coded I2C bus identifier, but the I2C bus enumeration
+### depends on the kernel configuration.  We use a heuristic to find
+### the correct bus then binary-patch the ONIE busybox executable.
+###
+### This should become obsolete once the APS BSP uses the I2C API to
+### access the EEPROM from the BSP platform library.
+
+set -e
+
+PATH=@PATH@
+
+i2c_dev=$(i2cdetect -l | awk '$2 == "smbus" { print $1 }')
+if [ -z "$i2c_dev" ]; then
+    echo "SMBus not found" >&2
+    exit 1
+fi
+
+onie_device=$(blkid -L ONIE-BOOT)
+if [ -z "$onie_device" ]; then
+    echo "ONIE boot device not found" >&2
+    exit 1
+fi
+
+mnt=$(mktemp -d)
+mount $onie_device $mnt
+initrd=$mnt/onie/initrd.img*
+if ! [ -f $initrd ]; then
+    echo "ONIE initrd image not found"
+    exit 1
+fi
+
+chroot=$(mktemp -d)
+xz -dc $initrd | cpio -imd -D $chroot
+umount $mnt
+rmdir $mnt
+mount -t proc proc $chroot/proc
+mount -t sysfs sysfs $chroot/sys
+mount -t efivarfs efivarfs $chroot/sys/firmware/efi/efivars
+mount -t devtmpfs devtmpfs $chroot/dev
+mount -t devpts devpts $chroot/dev/pts
+sed -e "s,/dev/i2c-2,/dev/$i2c_dev," $chroot/bin/busybox >$chroot/busybox
+chmod a+x $chroot/busybox
+ln -sr $chroot/busybox $chroot/onie-syseeprom
+chroot $chroot /onie-syseeprom || true
+umount $chroot/dev/pts
+umount $chroot/dev
+umount $chroot/sys/firmware/efi/efivars
+umount $chroot/sys
+umount $chroot/proc
+rm -rf $chroot

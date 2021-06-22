@@ -346,8 +346,11 @@ let
           outputHash = "b6a293c8e2694d7ea8d7b12c24b1d63c08b0eca3783eeb7d54e8ecffb4494c9f";
         };
         aps = fetchFromStore {
-          name = "9.5.0_AOT1.5.1_SAL1.3.2.zip";
-          outputHash = "2e56f51233c0eef1289ee219582ea0ec6d7455c3f78cac900aeb2b8214df0544";
+          name = "9.5.0_AOT1.5.4_SAL1.3.4.zip";
+          outputHash = "510e5e18a91203fe6c4c0aabd807eb69ad53224500f7cb755f7c5b09c8e4525d";
+          patches = {
+            default = [ bf-platforms/aps/bf_pltfm_smb.patch ];
+          };
         };
         inventec = fetchFromStore {
           name = "bf-inventec-bsp93.tgz";
