@@ -322,9 +322,9 @@ https://github.com/alexandergall/bf-sde-nixpkgs/tree/master/bf-sde/bf-platforms/
 
 | Platform                 | Vendor       | Baseboard    |
 | -----                    | -----        | -----        |
-| `accton_wedge100bf-32x`  | EdegCore     | `accton`     |
-| `accton_wedge100bf-32qs` | EdegCore     | `accton`     |
-| `accton_wedge100bf-65x`  | EdegCore     | `accton`     |
+| `accton_wedge100bf_32x`  | EdegCore     | `accton`     |
+| `accton_wedge100bf_32qs` | EdegCore     | `accton`     |
+| `accton_wedge100bf_65x`  | EdegCore     | `accton`     |
 | `stordis_bf2556x_1t`     | APS Netwokrs | `aps_bf2556` |
 | `stordis_bf6064x_t`      | APS Netwokrs | `aps_bf6064` |
 | `inventec_d5264q28b`     | Inventec     | `inventec`   |
