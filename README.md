@@ -1586,7 +1586,7 @@ earlier](#userEnvironment), a kind of meta-package. This means that it
 provides no contents of its own. It merely collects the `bin`, `lib`
 etc. directories from the packages on which it depends in a single
 hierarchy with symbolic links. In this case, the environment contains
-two packages: `bf-sde-referemce-runtime-env-9.5.0` is itself an
+two packages: `bf-sde-accton-runtime-env-9.5.0` is itself an
 environment and `bf-tools-runtime-9.5.0` provides the runtime utility
 scripts
 
