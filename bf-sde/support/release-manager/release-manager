@@ -1,0 +1,449 @@
+#!/bin/bash
+set -e
+set -o pipefail
+shopt -s extglob
+
+PROFILE=@PROFILE@
+LIB=@SELF@/lib
+REPO_URL=@REPO_URL@
+API_URL=@API_URL@
+
+PATH=/nix/var/nix/profiles/default/bin:@PATH@
+NIX_PATH=
+
+self=$(basename $0)
+
+usage () {
+    echo "usage: $self OPTIONS
+       Available options:
+         --list-installed
+         --list-available
+         --switch-to-generation GENERATION
+         --install-release RELEASE
+         --install-git COMMIT
+         --update-release RELEASE
+         --uninstall-generation GENERATION
+         --activate-current
+         --deactivate-current
+         --cleanup
+         --help"
+    exit 0
+}
+
+opts=$(getopt -l list-installed \
+              -l list-available \
+              -l switch-to-generation: \
+              -l install-release: \
+              -l install-git: \
+              -l update-release: \
+              -l uninstall-generation: \
+              -l activate-current \
+              -l deactivate-current \
+              -l cleanup \
+              -l help \
+              -o "" \
+              -n $self \
+              -- "$@")
+[ $? -eq 0 ] || usage
+[ $# -eq 0 ] && usage
+eval set -- $opts
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --list-available)
+            list_available=1
+            shift
+            ;;
+        --list-installed)
+            list_installed=1
+            shift
+            ;;
+        --switch-to-generation)
+            switch_to_generation=$2
+            shift 2
+            ;;
+        --uninstall-generation)
+            uninstall_generation=$2
+            shift 2
+            ;;
+        --install-release)
+            install_release=$2
+            shift 2
+            ;;
+        --install-git)
+            install_git=$2
+            shift 2
+            ;;
+        --update-release)
+            update_release=$2
+            shift 2
+            ;;
+        --activate-current)
+            activate=1
+            shift
+            ;;
+        --deactivate-current)
+            deactivate=1
+            shift
+            ;;
+        --cleanup)
+            cleanup=1
+            shift
+            ;;
+        --help)
+            usage
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+[ $# -gt 1 ] && usage
+
+paths_to_rm=()
+_cleanup () {
+    for path in ${paths_to_rm[@]}; do
+        rm -rf $path
+    done
+}
+
+trap _cleanup EXIT TERM INT
+
+if [ -t 0 -a $(tput colors) -gt 1 ]; then
+    red=$(tput setaf 1)
+    green=$(tput setaf 2)
+    normal=$(tput sgr0)
+fi
+
+INFO () {
+    echo "${green}INFO: $@${normal}" >&2
+}
+
+ERROR () {
+    echo "${red}ERROR: $@${normal}" >&2
+    exit 1
+}
+
+branch_from_tag () {
+    local tag
+    tag=$1
+    echo $tag | cut -d- -f2
+}
+
+## Global hashes
+##  gens
+##    Key: generation
+##    Value: id
+##  gens_by_id
+##    Key: id
+##    Value: generation
+##  gens_by_gitTag
+##    Key: Git tag
+##    Value: generation
+##  install_dates
+##    Key: generation
+##    Value: verbose installation date
+##  installed_releases
+##    Key: release version
+##    Value: space-separated list of Git tags for the release version
+##  available_releases
+##    Key: release version
+##    Value: Git tag
+##
+## Release version: application-specific version number
+## id: <version>:<gitTag>:<kernelID>:<kernelRelease>:<platform>
+## gitTag: identifier produced by git-describe
+declare -A gens gens_by_id gens_by_gitTag install_dates installed_releases available_releases
+
+gen_from_path () {
+    echo $1 | sed -e 's/.*-\([0-9]*\)-link$/\1/'
+}
+
+for path in $PROFILE-*-link; do
+    [ -h $path ] || continue
+    slice=$(cat $path/slice)
+    id=$(cat $path/version):$slice
+    gen=$(gen_from_path $path)
+    if [ -n "${gens_by_id[$id]}" ]; then
+        INFO "Generation $gen is a duplicate of ${gens_by_id[$id]}, ignoring"
+    else
+        gens[$gen]=$id
+        gens_by_id[$id]=$gen
+        install_dates[$gen]=$(stat -c "%z" $path)
+
+        read version gitTag rest < <(echo $id | tr ':' ' ')
+        installed_releases[$version]="${installed_releases[$version]} $gitTag"
+        gens_by_gitTag[$gitTag]=$gen
+    fi
+done
+current_gen=$(gen_from_path $(readlink $PROFILE))
+kernel_release=${KERNEL_RELEASE:-$(uname -r)}
+. /etc/machine.conf
+platform=$onie_machine
+[ -z "$platform" ] && ERROR "Can't determine platform (check onie_machine in /etc/machine.conf)"
+
+check_root () {
+    [ $(id -u) == 0 ] && return
+    ERROR "Please run this command as root"
+    exit 1
+}
+
+ischroot () {
+    check_root
+    [ "$(stat -c %d:%i /)" != "$(stat -c %d:%i /proc/1/root/.)" ]
+}
+
+. $LIB/activation.sh
+. $LIB/api.sh
+
+## Input: none
+## Output: none
+list_installed () {
+    local gen version gitTag kernelID kernelRelease platform is_current
+    echo "Generation Current Release Git Tag                    KernelID       Kernel Release            Platform                   Install date"
+    echo "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
+    for gen in $(printf '%s\n' "${!gens[@]}" | sort -n); do
+        read version gitTag kernelID kernelRelease platform < <(echo ${gens[$gen]} | tr ':' ' ')
+        is_current=' '
+        [ $gen -eq $current_gen ] && is_current='*'
+        printf "%10d $is_current       %-7s %-26s %-14s %-25s %-26s %s\n" $gen $version $gitTag $kernelID $kernelRelease $platform "${install_dates[$gen]}"
+    done
+}
+
+## Input: partial URL to append to $API_URL
+## Output: Result of API call in JSON
+## RC: 0 on success, 1 on API failure
+_api_call () {
+    local http_code request
+    request=$1
+    exec 17>&1
+    set -e
+    http_code=$(curl -s --write-out '\n%{http_code}\n' $API_URL$request | tee /dev/fd/17 | tail -n 1)
+    set +e
+    exec 17>&-
+    if [ $http_code -ge 400 ] && [ $http_code -lt 600 ]; then
+	echo -e "\nHTTP $http_code" >&2
+	return 1
+    fi
+}
+
+## Input: partial URL to append to $API_URL
+## Output: Result of API call in JSON
+## Terminates on API error
+api_call () {
+    local request result rc
+    request=$1
+    set +e
+    result=$(_api_call $request | sed '$d')
+    rc=$?
+    set -e
+    if [ $rc == 0 ]; then
+	echo $result
+    else
+	ERROR "Github API call $1 failed: $result"
+    fi
+}
+
+## Input: none
+## Output: none
+## Populates the global available_releases
+get_available_releases () {
+    local tag version
+    INFO "Checking for release tags of $REPO_URL"
+    for tag in $(get_tags); do
+        [[ $tag =~ ^release-.*$ ]] || continue
+        version=$(echo $tag | cut -d- -f2)
+        available_releases[$version]=$tag
+    done
+}
+
+## Input: none
+## Output: none
+list_available () {
+    local version up_to_date tag commit commit_head commit_tag
+    get_available_releases
+    echo
+    echo "Version  Status"
+    echo "-------------------------------------------------------------------"
+    for version in $(printf '%s\n' "${!available_releases[@]}" | sort); do
+        printf "%8s " $version
+        if [ -n "${installed_releases[$version]}" ]; then
+            printf 'Installed'
+	    read commit_head commit_tag <<<$(get_branch_commits ${available_releases[$version]})
+            if [ $commit_tag != $commit_head ]; then
+                up_to_date=
+                for tag in ${installed_releases[$version]}; do
+                    commit=${tag#release-+([^-])-+([0-9])-g}
+                    [[ $commit_head =~ ^$commit ]] && up_to_date=$tag
+                done
+                if [ -n "$up_to_date" ]; then
+                    echo ", up-to-date version installed in generation ${gens_by_gitTag[$up_to_date]}"
+                else
+                    echo ", updates available, use \"release-manager --update-release $version\" to install"
+                fi
+            else
+                echo ", no updates available"
+            fi
+        else
+            echo "Not installed"
+        fi
+    done
+}
+
+## Input: generation to switch to
+## Output: none
+## Terminates if generation does not exist or already is the current one
+switch_to_generation () {
+    local gen
+    gen=$1
+    check_root
+    if [ -z "${gens[$switch_to_generation]}" ]; then
+        ERROR "Generation $switch_to_generation does not exist"
+    fi
+    if [ $gen -eq $current_gen ]; then
+        ERROR "Generation $gen is already the current version"
+    fi
+    INFO "Deactivating current instance"
+    deactivate
+    nix-env -p $PROFILE --switch-generation $gen
+    ## The new release may have a different activation procedure.  Use
+    ## its native release-manager to perform the activation.
+    INFO "Activating new instance"
+    $PROFILE/bin/release-manager --activate
+}
+
+## Input: gitTag
+## Output: none
+## Terminates if gitTag is already installed
+_check_installed () {
+    local gitTag id gen
+    gitTag=$1
+    id=$(nix eval --raw \
+	     '(let
+                 fn = import ./.;
+                 args = { gitTag = "'$gitTag'"; kernelRelease = "'$kernel_release'"; platform = "'$platform'"; };
+               in
+                 with builtins;
+                 with fn (intersectAttrs (functionArgs fn) args);
+                 with install;
+                 replaceStrings ["\n"] [""] (readFile (versionFile + "/version") + ":" +
+                                             readFile (sliceFile + "/slice")))')
+    gen=${gens_by_id[$id]}
+    if [ -n "$gen" ]; then
+        ERROR "Release $version (Id: $id) is already installed as generation $gen"
+    fi
+}
+
+## Input: gitTag
+## Output: none
+_install () {
+    local gitTag new_gen
+    gitTag=$1
+    nix-env -f . -p $PROFILE -r -i -A install --argstr gitTag $gitTag --argstr kernelRelease $kernel_release --argstr platform $platform
+    new_gen=$(gen_from_path $(readlink $PROFILE))
+    ## nix-env has automatically switched to the new
+    ## generation, revert back
+    nix-env -p $PROFILE --switch-generation $current_gen 2>/dev/null
+
+    INFO "Use \"release-manager --switch-to-generation $new_gen\" to switch to the new release"
+}
+
+## Input: git commit hash
+## Output: none
+install_git () {
+    local hash tmp gitTag
+    check_root
+    hash=$1
+    tmp=$(mktemp -d)
+    paths_to_rm+=$tmp
+    pushd $tmp >/dev/null
+    INFO "Fetching $hash"
+    git init -b master
+    git remote add origin $REPO_URL
+    git fetch origin
+    git reset --hard $hash
+
+    gitTag=$(git describe --always)
+    if ! [[ "$gitTag" =~ ^release-.*$ ]]; then
+        ERROR "Commits preceeding release-1 are not supported"
+    fi
+    _check_installed $gitTag
+    _install $gitTag
+
+    popd >/dev/null
+}
+
+## Input: release version
+## Output: gitTag of principal release
+## Terminates if release does not exist
+_check_release () {
+    local release gitTag
+    release=$1
+    get_available_releases
+    gitTag=${available_releases[$release]}
+    if [ -z "$gitTag" ]; then
+        ERROR "Release $release does not exist"
+    fi
+    echo $gitTag
+}
+
+## Input: release version
+## Output: none
+## Terminates if release does not exist
+install_release () {
+    local tmp release gitTag
+    release=$1
+    gitTag=$(_check_release $release)
+    check_root
+    INFO "Fetching package release tarball"
+    tmp=$(mktemp -d)
+    paths_to_rm+=$tmp
+    pushd $tmp >/dev/null
+    fetch_and_unpack_tarball $gitTag
+    _check_installed $gitTag
+    _install $gitTag
+    popd >/dev/null
+}
+
+## Input: release version
+## Output: none
+## Terminates if release does not exist
+update_release () {
+    local release
+    release=$1
+    check_root
+    gitTag=$(_check_release $release)
+    install_git $(commit_hash_from_tag $gitTag)
+}
+
+## Input: generation
+## Output: none
+## Terminates if generation does not exist or is active
+uninstall_generation () {
+    local gen
+    gen=$1
+    check_root
+    if [ -z "${gens[$uninstall_generation]}" ]; then
+        ERROR "Generation $uninstall_generation does not exist"
+    fi
+    if [ $gen -eq $current_gen ]; then
+        ERROR "Can't uninstall current generation"
+    fi
+    nix-env -p $PROFILE --delete-generations $gen
+}
+
+cleanup () {
+    nix-collect-garbage
+}
+
+[ -n "$list_installed" ] && list_installed
+[ -n "$list_available" ] && list_available
+[ -n "$switch_to_generation" ] && switch_to_generation $switch_to_generation
+[ -n "$install_release" ] && install_release $install_release
+[ -n "$install_git" ] && install_git $install_git
+[ -n "$update_release" ] && update_release $update_release
+[ -n "$uninstall_generation" ] && uninstall_generation $uninstall_generation
+[ -n "$activate" ] && activate
+[ -n "$deactivate" ] && deactivate
+[ -n "$cleanup" ] && cleanup
+exit 0

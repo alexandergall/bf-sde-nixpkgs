@@ -316,7 +316,7 @@ repository.
 
 The following table shows the list of supported platforms and their
 mappings to a specific baseboard (this mapping is provided by
-https://github.com/alexandergall/bf-sde-nixpkgs/tree/master/bf-sde/bf-platforms/baseboards.nix)
+https://github.com/alexandergall/bf-sde-nixpkgs/tree/master/bf-sde/bf-platforms/properties.nix)
 
 <a name="platformIdentifiers"></a>
 
@@ -934,6 +934,7 @@ be accessed with the "attribute path" `bf-sde.<version>.<attribute>`.
    * `runtimeEnv'`, type: function
    * `runtimeEnvNoBsp`, type: derivation
    * `baseboardForPlatform`, type: function
+   * `support`, type: attribute set of functions
    * `mkShell`, type: function
    * `test`, type: attribute set of derivations
 
@@ -1171,6 +1172,13 @@ the utility scripts like `run_bfshell.sh`.
 This is a function which, given a [platform
 identifier](#baseboardPlatform), returns the identifier of the
 baseboard that provides support for it.
+
+#### <a name="support"></a>`support`
+
+This is an attribute set of functions that provide support for
+creating releases and installers for SDE-based appliances. See
+[`bf-sde/support/README.md`](bf-sde/support/README.md) for further
+information.
 
 #### <a name="mkShell"></a>`mkShell`
 

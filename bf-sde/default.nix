@@ -99,7 +99,7 @@ let
         };
 
         baseboardForPlatform = platform:
-          builtins.getAttr platform (import bf-platforms/baseboards.nix);
+          (import bf-platforms/properties.nix).${platform}.baseboard;
 
         runtimeEnv = baseboard:
           self.override {
@@ -175,6 +175,7 @@ let
               PS1="\n\[\033[1;32m\][nix-shell(\033[31mSDE-${sde.version}\033[1;32m):\w]\$\[\033[0m\] "
             '';
           };
+        support = import ./support;
       };
 
       ## This is the full SDE, equivalent to what p4studio

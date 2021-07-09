@@ -30,7 +30,7 @@ assert requiredKernelModule != null -> lib.assertOneOf "kernel module"
   requiredKernelModule [ "bf_kdrv" "bf_kpkt" "bf_knet" ];
 
 assert lib.assertOneOf "platform" platform (builtins.attrNames (import
-  ../bf-platforms/baseboards.nix));
+  ../bf-platforms/properties.nix));
 
 let
   runtimeEnv = bf-sde.runtimeEnv' platform;
