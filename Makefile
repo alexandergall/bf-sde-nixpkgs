@@ -11,11 +11,6 @@ VERSION=latest
 INPUT_FN=
 PLATFORM=
 
-install-sde: clean
-	profile=$${SDE_PROFILE:-/nix/var/nix/profiles/per-user/$$USER/bf-sde}; \
-	nixpkgs=$$(nix-store --add $$(realpath .)); \
-	nix-env -p $$profile -r -i $$nixpkgs $$(nix-build --no-out-link build-support.nix --argstr version "$(VERSION)")
-
 NIX_PURE =
 env:
 	@platform_override=$(PLATFORM); \

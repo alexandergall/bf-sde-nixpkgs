@@ -175,16 +175,6 @@ let
               PS1="\n\[\033[1;32m\][nix-shell(\033[31mSDE-${sde.version}\033[1;32m):\w]\$\[\033[0m\] "
             '';
           };
-
-        ## A derivation containing a script that starts a nix-shell in
-        ## which P4 programs can be compiled and run in the context of
-        ## the SDE
-        support = runCommand "bf-sde-${self.version}-support" {} ''
-          mkdir -p $out/bin
-          substitute ${./sde-env.sh} $out/bin/sde-env-${self.version} \
-            --subst-var-by VERSION ${builtins.replaceStrings [ "." ] [ "_" ] self.version}
-          chmod a+x $out/bin/sde-env-${self.version}
-        '';
       };
 
       ## This is the full SDE, equivalent to what p4studio
