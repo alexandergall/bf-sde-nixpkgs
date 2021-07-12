@@ -2,7 +2,7 @@
   gnutar, gzip, git, kmod, ncurses }:
 
 { version, nixProfile, repoUrl, apiUrl, apiType,
-  activationCode, installCmds ? [] }:
+  activationCode, installCmds ? "" }:
 
 assert lib.asserts.assertOneOf "API Type" apiType [ "github" "bitbucket" ];
 
@@ -31,5 +31,5 @@ in stdenv.mkDerivation {
     mkdir -p $out/lib
     cp ${gitApi} $out/lib/api.sh
     cp ${activationCode} $out/lib/activation.sh
-  '' + builtins.concatStringsSep "\n" installCmds;
+  '' + installCmds;
 }

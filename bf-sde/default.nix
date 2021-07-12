@@ -175,7 +175,7 @@ let
               PS1="\n\[\033[1;32m\][nix-shell(\033[31mSDE-${sde.version}\033[1;32m):\w]\$\[\033[0m\] "
             '';
           };
-        support = import ./support;
+        support = import ./support pkgs;
       };
 
       ## This is the full SDE, equivalent to what p4studio
