@@ -1,7 +1,7 @@
 { pkgs }:
 
-{ version, nixProfile, slice, platforms, component, NOS,
-  bootstrapProfile, fileTree }:
+{ nixProfile, partialSlice, platforms, version, component, NOS,
+  bootstrapProfile, fileTree, binaryCaches }:
 
 with builtins;
 let
@@ -14,7 +14,7 @@ let
     platform:
       {
         profile = nixProfile + "-${platform}" + "/" + baseNameOf nixProfile;
-        paths = attrValues (slice platform);
+        paths = attrValues (partialSlice platform);
       }
   ) platforms;
   rootPaths = (pkgs.lib.foldAttrs (final: paths: final ++ paths) [] platformSpecs).paths;
@@ -56,12 +56,7 @@ let
       '';
     };
   grubDefault = builtins.foldl' (final: next: final // mkGrubDefault next) {} platforms;
-in mkOnieInstaller {
-  memSize = 5*1024;
+in pkgs.lib.makeOverridable mkOnieInstaller {
   inherit version rootPaths postRootFsCreateCmd postRootFsInstallCmd
-    component NOS grubDefault bootstrapProfile fileTree;
-  binaryCaches = [ {
-    url = "http://p4.cache.nix.net.switch.ch";
-    key = "p4.cache.nix.net.switch.ch:cR3VMGz/gdZIdBIaUuh42clnVi5OS1McaiJwFTn5X5g=";
-  } ];
+    component NOS grubDefault bootstrapProfile fileTree binaryCaches;
 }
