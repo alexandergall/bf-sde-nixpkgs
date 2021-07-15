@@ -18,7 +18,7 @@ let
     ## as used by the bf-platforms SDE sub-package.  We don't override
     ## the standard package to avoid massive amounts of re-building of
     ## packages that depend on it.
-    curl_7_52 = super.curl.overrideAttrs(oldAttrs: rec {
+    curl_7_52 = super.curl.overrideAttrs (oldAttrs: rec {
       name = "curl-7.52.0";
       ## fetchurlBoot is needed to break a dependency cycle with zlib
       src = self.stdenv.fetchurlBoot {
@@ -31,7 +31,7 @@ let
       patches = [];
     });
 
-    thrift_0_12 = super.thrift.overrideAttrs(oldAttrs: rec {
+    thrift_0_12 = super.thrift.overrideAttrs (oldAttrs: rec {
       version = "0.12.0";
       name = "thrift-${version}";
 
@@ -42,7 +42,7 @@ let
 
     });
 
-    thrift_0_13 = super.thrift.overrideAttrs(oldAttrs: rec {
+    thrift_0_13 = super.thrift.overrideAttrs (oldAttrs: rec {
       version = "0.13.0";
       name = "thrift-${version}";
 
@@ -53,11 +53,23 @@ let
 
     });
 
+    ## Used to patch the tofino-model binary
+    libcli1_10 = super.libcli.overrideAttrs (oldAttrs: rec {
+      version = "1.10.0";
+      src = self.fetchFromGitHub {
+        sha256 = "0rhad7jk439nvj7rnf72bsa0kxbp449xy4ixhgz5y9j6s350jq64";
+        rev = "v${version}";
+        repo = "libcli";
+        owner = "dparrish";
+      };
+      patches = [];
+    });
+
     ## Override protobuf globally because grpc and grpcio depend on it and
     ## they are both dependencies of bf-drivers.
     protobuf = self.protobuf3_6;
 
-    grpc = super.grpc.overrideAttrs(oldAttrs:
+    grpc = super.grpc.overrideAttrs (oldAttrs:
       (grpc_1_17_0_attrs super "grpc" false "17y8lhkx22qahjk89fa0bh76q76mk9vwza59wbwcpzmy0yhl2k23") // {
       # grpc has a CMakefile and a standard (non-autoconf) Makefile. We
       # use cmake to build the package but that method does not support
@@ -72,7 +84,7 @@ let
 
     python2 = super.python2.override {
       packageOverrides = python-self: python-super: {
-        grpcio = python-super.grpcio.overrideAttrs(oldAttrs:
+        grpcio = python-super.grpcio.overrideAttrs (oldAttrs:
           grpc_1_17_0_attrs super "grpcio" true "06jpr27l71wz0fbifizdsalxvpraix7s5dg30pgd2wvd77ky5p3h");
 
         ## tenjin.py is included in the bf-drivers packages and

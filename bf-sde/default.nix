@@ -355,6 +355,33 @@ let
       stdenv = gcc8Stdenv;
       thrift = thrift_0_13;
     };
+    v9_6_0 = rec {
+      version = "9.6.0";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "0e73fd8e7fe22c62cafe7dc4415649f0e66c04607c0056bd08adc1c7710fd193";
+        patches = {
+          p4-examples = [];
+          ptf-modules = [ ptf-modules/bf-ptf-9.6.0.patch ];
+        };
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "88cb4b0978f23c28499faff75098f939374d9071859593353a18c2235e0be461";
+        };
+        inventec = fetchFromStore {
+          name = "bf-inventec-bsp93.tgz";
+          outputHash = "fd1e4852d0b7543dd5d2b81ab8e0150644a0f24ca87d59f1369216f1a6e796ad";
+          patches = {
+            default = [ bf-platforms/bf-inventec-bsp93.patch ];
+          };
+        };
+      };
+      stdenv = gcc8Stdenv;
+      thrift = thrift_0_13;
+      libcli = libcli1_10;
+    };
   };
 
-in bf-sde // { latest = bf-sde.v9_5_0; }
+in bf-sde // { latest = bf-sde.v9_6_0; }

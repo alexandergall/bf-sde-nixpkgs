@@ -62,13 +62,13 @@ let
       let
         arch = if stdenv.isx86_64
           then
-            "x86_64"
+            lib.optionalString (lib.versionOlder version "9.6.0") ".x86_64"
           else
-            "i686";
+            ".i686";
       in ''
         mkdir -p $out/lib
-        cp libavago.${arch}.a $out/lib/libavago.a
-        cp libavago.${arch}.so $out/lib/libavago.so
+        cp libavago${arch}.a $out/lib/libavago.a
+        cp libavago${arch}.so $out/lib/libavago.so
         ln -sr $out/lib/libavago.so $out/lib/libavago.so.0
         ln -sr $out/lib/libavago.so $out/lib/libavago.so.0.0.0
         NIX_LDFLAGS="$NIX_LDFLAGS -L$out/lib"

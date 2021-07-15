@@ -1,0 +1,13 @@
+diff -Naur bf-sde-9.6.0.orig/run_bfshell.sh bf-sde-9.6.0/run_bfshell.sh
+--- bf-sde-9.6.0.orig/run_bfshell.sh	2021-07-14 06:45:25.000000000 +0200
++++ bf-sde-9.6.0/run_bfshell.sh	2021-07-15 14:07:07.556742474 +0200
+@@ -77,8 +77,7 @@
+ fi
+ if [ "$TARGET" != "bmv2" ]; then
+   if [ $SKIP_STATUS_SRV = false ]; then
+-    PYTHON_VER=$(python --version 2>&1 | awk {'print $2'} | awk -F"." {'print $1"."$2'})
+-    python $SDE_INSTALL/lib/python$PYTHON_VER/site-packages/p4testutils/bf_switchd_dev_status.py \
++    $SDE_INSTALL/lib/python$PYTHON_VER/site-packages/p4testutils/bf_switchd_dev_status.py \
+       $STS_HOST_STR $STS_PORT_STR $STS_DEV_STR
+   fi
+ fi

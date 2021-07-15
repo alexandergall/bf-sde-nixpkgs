@@ -7,11 +7,18 @@ stdenv.mkDerivation {
   pname = "bf-tools" + lib.optionalString runtime "-runtime";
 
   buildInputs = [ makeWrapper ];
-  patches = [ ./run_switchd.patch ./run_bfshell.patch ] ++
-    (if (lib.strings.versionOlder version "9.5.0") then
-       [./run_p4_tests.patch ]
-     else
-       [./run_p4_tests-9.5.0.patch ]);
+  patches = [ ./run_switchd.patch ] ++
+            (if (lib.strings.versionOlder version "9.6.0") then
+              [ ./run_bfshell.patch ]
+             else
+               [ ./run_bfshell-9.6.0.patch ]) ++
+            (if (lib.strings.versionOlder version "9.5.0") then
+              [./run_p4_tests.patch ]
+             else
+               (if (lib.strings.versionOlder version "9.6.0") then
+                 [./run_p4_tests-9.5.0.patch ]
+                else
+                  [./run_p4_tests-9.6.0.patch ]));
 
   installPhase = ''
     mkdir -p $out/bin

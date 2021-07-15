@@ -1,0 +1,29 @@
+diff -Naur bf-sde-9.6.0.orig/run_p4_tests.sh bf-sde-9.6.0/run_p4_tests.sh
+--- bf-sde-9.6.0.orig/run_p4_tests.sh	2021-07-14 06:45:25.000000000 +0200
++++ bf-sde-9.6.0/run_p4_tests.sh	2021-07-15 14:14:08.828738166 +0200
+@@ -181,7 +181,6 @@
+ echo "Arch is $ARCH"
+ echo "Target is $TARGET"
+ PYTHON_LIB_DIR=$(python -c "from distutils import sysconfig; print(sysconfig.get_python_lib(prefix='', standard_lib=True, plat_specific=True))")
+-export PYTHONPATH=$SDE_INSTALL/$PYTHON_LIB_DIR/site-packages/p4testutils:$SDE_INSTALL/$PYTHON_LIB_DIR/site-packages/${ARCH}pd/:$SDE_INSTALL/$PYTHON_LIB_DIR/site-packages/tofino:$SDE_INSTALL/$PYTHON_LIB_DIR/site-packages/:$PYTHONPATH
+ 
+ # Use P4.org PTF with scapy if PTF binary is installed and PKTPY is not True otherwise use BF_PTF with bf_pktpy
+ if [ ! -f $SDE_INSTALL/bin/ptf ] || [ "$PKTPY" == "True" ]; then
+@@ -216,7 +215,7 @@
+   STS_HOST_STR="--host $STS_HOST"
+ fi
+ if [ $SKIP_STATUS_SRV = false ]; then
+-  python $SDE_INSTALL/$PYTHON_LIB_DIR/site-packages/p4testutils/bf_switchd_dev_status.py \
++  $SDE_INSTALL/$PYTHON_LIB_DIR/site-packages/p4testutils/bf_switchd_dev_status.py \
+     $STS_HOST_STR $STS_PORT_STR
+ fi
+ 
+@@ -245,7 +244,7 @@
+ fi
+ 
+ #Run PTF tests
+-sudo env "PATH=$PATH" "PYTHONPATH=$PYTHONPATH" "GEN_XML_OUTPUT=$GEN_XML_OUTPUT" "PKTPY=$PKTPY" python \
++sudo env "PATH=$PATH" "PYTHONPATH=$PYTHONPATH" "GEN_XML_OUTPUT=$GEN_XML_OUTPUT" "PKTPY=$PKTPY" \
+     $SDE_INSTALL/$PYTHON_LIB_DIR/site-packages/p4testutils/run_ptf_tests.py \
+     --arch $ARCH \
+     --target $TARGET \
