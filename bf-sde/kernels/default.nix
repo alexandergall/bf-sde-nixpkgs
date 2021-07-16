@@ -86,6 +86,7 @@ let
       };
       patches = {
         "9.1.1" = [ ./bf-drivers-9.1.1.patch ];
+        "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
       };
     };
 
@@ -103,6 +104,9 @@ let
         };
         patchelfInputs = [ elfutils ];
       };
+      patches = {
+        "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+      };
     };
     ONL10 = {
       ## ONL with Debian10, based on commit 1537d8
@@ -112,6 +116,9 @@ let
           deb = ./onl-kernel-4.19-lts-x86-64-all_1.0.0_amd64.deb;
         };
         patchelfInputs = [ openssl_1_1.out elfutils ];
+      };
+      patches = {
+        "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
       };
     };
 
@@ -139,6 +146,9 @@ let
         };
         patchelfInputs = [ openssl_1_1.out elfutils ];
       };
+      patches = {
+        "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+      };
     };
     Debian10_9 = {
       kernelRelease = "4.19.0-16-amd64";
@@ -160,6 +170,9 @@ let
         };
         patchelfInputs = [ openssl_1_1.out elfutils ];
       };
+      patches = {
+        "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+      };
     };
     Debian10_10 = {
       kernelRelease = "4.19.0-17-amd64";
@@ -180,6 +193,9 @@ let
           };
         };
         patchelfInputs = [ openssl_1_1.out elfutils ];
+      };
+      patches = {
+        "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
       };
     };
     Debian11 = {
@@ -211,6 +227,7 @@ let
           "9.2.0" = patch;
           "9.3.0" = patch;
           "9.3.1" = patch;
+          "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
         };
     };
   };

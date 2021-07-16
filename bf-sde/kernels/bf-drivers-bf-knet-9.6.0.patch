@@ -1,0 +1,16 @@
+diff -Naur bf-drivers-9.6.0.orig/kdrv/bf_knet/Makefile bf-drivers-9.6.0/kdrv/bf_knet/Makefile
+--- bf-drivers-9.6.0.orig/kdrv/bf_knet/Makefile	2021-07-14 06:32:39.000000000 +0200
++++ bf-drivers-9.6.0/kdrv/bf_knet/Makefile	2021-07-15 17:44:13.028609289 +0200
+@@ -21,10 +21,10 @@
+ all: default
+ 
+ default:
+-		$(MAKE) modules
++	$(MAKE) -C $(KDIR) M=$$BUILD_DIR src=$$PWD inc=$$INCLUDE modules
+ 
+ clean:
+-		$(MAKE) clean
++	$(MAKE) -C $(KDIR) M=$$BUILD_DIR src=$$PWD inc=$$INCLUDE clean
+ 
+ .PHONY : clean
+ endif
