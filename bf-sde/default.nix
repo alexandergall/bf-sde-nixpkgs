@@ -46,6 +46,7 @@ let
         tofino-model = SDE.callPackage ./tofino-model (mkSrc "tofino-model");
         ptf-modules = SDE.callPackage ./ptf-modules (mkSrc "ptf-modules");
         ptf-utils = SDE.callPackage ./ptf-modules/utils.nix (mkSrc "ptf-modules");
+        ptf-utils-runtime = sdePkgs.ptf-utils.override { runtime = true; };
         kernel-modules = import ./kernels {
           bf-drivers-src = extractSource "bf-drivers";
           inherit (SDE) callPackage;

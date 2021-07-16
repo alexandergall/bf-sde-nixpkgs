@@ -893,6 +893,7 @@ The following derivations are available
    * `tofino-model`
    * `ptf-modules`
    * `ptf-utils`
+   * `ptf-utils-runtime`
    * `bf-pktpy` (SDE 9.5.0 and later)
    * `kernel-modules`
 
@@ -1137,7 +1138,7 @@ program on the given platform:
    * `bf-syslibs`
    * `bf-drivers-runtime`
    * `bf-utils`
-   * `ptf-utils`
+   * `ptf-utils-runtime`
    * `bf-platforms.<baseboard>`
 
 It also contains a reduced set of scripts
@@ -1145,7 +1146,7 @@ It also contains a reduced set of scripts
    * `run_switchd.sh`
    * `run_bfshell.sh`
 
-(Note that the `ptf-utils` package is required by
+(Note that the `ptf-utils-runtime` package is required by
 `run_bfshell.sh`). If `baseboard` is `model`, the runtime Environment
 also contains the `tofino-model` package (to provide the model binary)
 and the script `run_tofino_model.sh`.

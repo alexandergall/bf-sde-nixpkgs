@@ -12,13 +12,13 @@
 { runtime ? false, baseboard, version, src, passthru ? {}, lib,
   stdenv, buildEnv, callPackage, bf-syslibs, bf-drivers,
   bf-drivers-runtime, bf-utils, bf-platforms, p4c, tofino-model,
-  ptf-modules, ptf-utils }:
+  ptf-modules, ptf-utils, ptf-utils-runtime }:
 
 let
   paths =
     (if runtime then
-      ## ptf-utils is required by run_bfshell.sh
-      [ bf-syslibs bf-drivers-runtime bf-utils ptf-utils ]
+      ## ptf-utils-runtime is required by run_bfshell.sh
+      [ bf-syslibs bf-drivers-runtime bf-utils ptf-utils-runtime ]
       ++ lib.optional (baseboard == "model") tofino-model
      else
        [ bf-syslibs bf-drivers bf-drivers.dev bf-utils bf-utils.dev
