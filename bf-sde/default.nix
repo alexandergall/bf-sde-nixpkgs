@@ -385,4 +385,4 @@ let
     };
   };
 
-in bf-sde // { latest = bf-sde.v9_6_0; }
+in bf-sde // { latest = bf-sde.v9_5_0; }
