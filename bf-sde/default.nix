@@ -25,7 +25,11 @@ let
         patches = sdeSpec.sde.patches.${component} or [];
       };
 
-      SDE = lib.makeScope pkgs.newScope (self: sdePkgs // sdeSpec);
+      SDE = lib.makeScope pkgs.newScope (self: sdePkgs // sdeSpec // {
+        buildSystem = callPackage ./build-system {
+          inherit sdeSpec;
+        };
+      });
       sdePkgs = {
         bf-syslibs = SDE.callPackage ./bf-syslibs (mkSrc "bf-syslibs");
         bf-utils = SDE.callPackage ./bf-utils (mkSrc "bf-utils" // {
@@ -362,8 +366,9 @@ let
         name = "bf-sde-${version}.tgz";
         outputHash = "0e73fd8e7fe22c62cafe7dc4415649f0e66c04607c0056bd08adc1c7710fd193";
         patches = {
+          bf-syslibs = [ bf-syslibs/bf-sal-CMakeLists.txt.patch ];
+          bf-drivers = [ bf-drivers/libpython-dependency.patch ];
           p4-examples = [];
-          ptf-modules = [ ptf-modules/bf-ptf-9.6.0.patch ];
         };
       };
       bsps = {
@@ -385,4 +390,4 @@ let
     };
   };
 
-in bf-sde // { latest = bf-sde.v9_5_0; }
+in bf-sde // { latest = bf-sde.v9_6_0; }

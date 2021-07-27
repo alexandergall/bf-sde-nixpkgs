@@ -1,0 +1,10 @@
+diff -Naur bf-syslibs-9.6.0.orig/src/bf_sal/CMakeLists.txt bf-syslibs-9.6.0/src/bf_sal/CMakeLists.txt
+--- bf-syslibs-9.6.0.orig/src/bf_sal/CMakeLists.txt	2021-07-14 06:37:47.000000000 +0200
++++ bf-syslibs-9.6.0/src/bf_sal/CMakeLists.txt	2021-07-21 13:36:22.679460730 +0200
+@@ -1,5 +1,6 @@
+ project(libbf_sal VERSION 0.1 LANGUAGES C)
+ 
++include_directories(${CMAKE_CURRENT_BINARY_DIR}/../../third-party/gperftools/src)
+ add_library(bf_sal_o OBJECT
+ bf_sys_ver.c
+ linux_usr/bf_sys_str.c

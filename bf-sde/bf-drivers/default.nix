@@ -1,5 +1,6 @@
-{ pname, version, src, patches, stdenv, python, thrift, openssl, boost,
-  pkg-config, grpc, protobuf, zlib, bf-syslibs, bf-utils, lib, autoreconfHook,
+{ pname, version, src, patches, buildSystem, stdenv, python, thrift,
+  openssl, boost, pkg-config, grpc, protobuf, zlib, bf-syslibs,
+  bf-utils, lib, autoreconfHook, cmake, libedit,
 
 ## The runtime version of the package doesn't include the gencli and
 ## generate_tofino_pd components.  They are not used at runtime but,
@@ -26,20 +27,21 @@ let
         requiredPythonModules = python.pkgs.requiredPythonModules drv.propagatedBuildInputs;
       };
     });
-  bf-drivers = stdenv.mkDerivation {
+  bf-drivers = stdenv.mkDerivation ({
     pname = pname + lib.optionalString runtime "-runtime";
     inherit version src;
 
     propagatedBuildInputs = with python.pkgs; [ grpcio ];
     buildInputs = [ thrift openssl boost pkg-config grpc protobuf zlib
                     bf-syslibs.dev bf-utils bf-utils.dev python.pkgs.wrapPython ]
-                    ++ lib.optional runtime autoreconfHook;
+                  ++ lib.optional (runtime && ! buildSystem.isCmake) autoreconfHook
+                  ++ lib.optional buildSystem.isCmake [ cmake libedit ];
     outputs = [ "out" ] ++ lib.optional (! runtime) "dev";
     enableParallelBuilding = true;
 
     patches = patches ++ [ ./bf_switchd_model.patch ];
 
-    configureFlags = [
+    configureFlags = lib.optional (! buildSystem.isCmake) [
       "enable_thrift=yes"
       "enable_grpc=yes"
       "enable_bfrt=yes"
@@ -48,16 +50,58 @@ let
       "--without-kdrv"
     ];
 
-    buildFlags = [
+    buildFlags = lib.optional (! buildSystem.isCmake) [
       "CFLAGS+=-I${bf-utils.dev}/include/python3.4m"
     ];
 
-    preConfigure = lib.optionalString runtime ''
-      substituteInPlace Makefile.am --replace "SUBDIRS = third-party include src pd_api_gen doc" "SUBDIRS = third-party include src doc"
-    '';
+    preConfigure = buildSystem.preConfigure {
+      package = "bf-drivers";
+      cmakeRules = ''
+        find_package(Thrift REQUIRED)
+        include_directories(''${BF_PKG_DIR}/bf-drivers)
+        include_directories(''${BF_PKG_DIR}/bf-drivers/include)
+        add_subdirectory(''${BF_PKG_DIR}/bf-drivers)
+      '';
+      postCmds = ''
+        ## Include the path for Python.h and add explicit linking to
+        ## libedit.  libedit is included as third-party component in
+        ## bf-utils. The standard monolithic build of the SDE links
+        ## bf-drivers to libedit of the source tree inside bf-utils.
+        ## Our modular build can't do that (and libedit is not in the
+        ## output path of bf-utils), so we add the standard libedit to
+        ## the dependencies.
+        NIX_CFLAGS_COMPILE="-I${bf-utils.dev}/include/python3.4m -ledit $NIX_CFLAGS_COMPILE"
 
-    ## Install the precompiled avago library and make it available to
-    ## the builder.  Also disable building of bfrt examples.
+        ## Install path for bfrt
+        cmakeFlags="-DPYTHON_SITE=$out/lib/${python.libPrefix}/site-packages $cmakeFlags"
+
+        ## Disable installation of bf_rt_python files, see the comment
+        ## in ../bf-utils/default.nix for details
+        sed -i -e 's/^.*bf_rt_python.*$//' src/bf_rt/CMakeLists.txt
+
+        ## Disable bfrt_examples
+        sed -i -e 's/^.*bfrt_examples.*//' bf_switchd/CMakeLists.txt
+
+        ## Don't install module load/unload scripts, they are part of the kernel
+        ## module packages
+        sed -i -e 's/^.*mod_.*load.*$//' CMakeLists.txt
+      '';
+    } + (lib.optionalString runtime
+      ## Intel prohibits the inclusion of pd_api_gen in the runtime
+      ## environment.
+      (if buildSystem.isCmake then
+          ''
+            sed -i -e 's/^.*pd_api_gen.*$//' CMakeLists.txt
+          ''
+         else
+          ''
+            substituteInPlace Makefile.am --replace "SUBDIRS = third-party include src pd_api_gen doc" "SUBDIRS = third-party include src doc"
+          '')
+    );
+
+    ## Non-cmake builds: install the precompiled avago library and
+    ## make it available to the builder.  Also disable building of
+    ## bfrt examples.
     preBuild =
       let
         arch = if stdenv.isx86_64
@@ -65,7 +109,7 @@ let
             lib.optionalString (lib.versionOlder version "9.6.0") ".x86_64"
           else
             ".i686";
-      in ''
+      in lib.optionalString (! buildSystem.isCmake) ''
         mkdir -p $out/lib
         cp libavago${arch}.a $out/lib/libavago.a
         cp libavago${arch}.so $out/lib/libavago.so
@@ -85,6 +129,10 @@ let
       sitePath=$out/lib/${python.libPrefix}/site-packages
     '' + lib.optionalString (! runtime) ''
       rm $sitePath/tofino_pd_api/tenjin.*
+    '' +
+
+    lib.optionalString buildSystem.isCmake ''
+      python -m compileall $sitePath
     '' +
 
     ## Link the directories in site-packages/tofino and
@@ -119,7 +167,17 @@ let
     postFixup = ''
       wrapPythonPrograms
     '';
-  };
+  } // lib.optionalAttrs buildSystem.isCmake {
+    cmakeFlags = [
+      "-DTHRIFT-DRIVER=ON"
+      "-DGRPC=ON"
+      "-DBFRT=ON"
+      "-DPI=OFF"
+      "-DP4RT=OFF"
+      ## Indirectly disable build of kdrv
+      "-DASIC=OFF"
+    ];
+  });
 
 ## This turns the derivation into a Python Module,
 ## i.e. $out/lib/python*/site-packages will be included in all of the
