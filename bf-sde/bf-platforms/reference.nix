@@ -26,9 +26,6 @@ let
               find_package(Thrift REQUIRED)
               add_subdirectory(''${BF_PKG_DIR}/bf-platforms)
             '';
-            preCmds = ''
-              tar -xf packages/bf-platforms* --strip-components 1
-            '';
             alternativeCmds = ''
               mkdir bf-platforms
               tar -C bf-platforms -xf packages/bf-platforms* --strip-components 1
@@ -51,6 +48,9 @@ let
             python -m compileall $out/lib/${bf-drivers.pythonModule.libPrefix}/site-packages
           '';
         } // lib.optionalAttrs buildSystem.isCmake {
+          prePatch = ''
+            tar -xf packages/bf-platforms* --strip-components 1
+          '';
           cmakeFlags =
             (if model then
               [ "-DASIC=OFF" ]

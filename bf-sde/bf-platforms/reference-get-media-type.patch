@@ -1,0 +1,23 @@
+diff -Naur bf-platforms-9.6.0.orig/drivers/src/bf_port_mgmt/bf_pm_intf.c bf-platforms-9.6.0/drivers/src/bf_port_mgmt/bf_pm_intf.c
+--- bf-platforms-9.6.0.orig/drivers/src/bf_port_mgmt/bf_pm_intf.c	2021-07-14 06:46:15.000000000 +0200
++++ bf-platforms-9.6.0/drivers/src/bf_port_mgmt/bf_pm_intf.c	2021-07-28 10:08:40.845404108 +0200
+@@ -644,15 +644,15 @@
+ 
+ bf_status_t bf_pltfm_pm_media_type_get(bf_pltfm_port_info_t *port_info,
+                                        bf_media_type_t *media_type) {
+-  if ((int)port_info->conn_id > num_ports) {
+-    *media_type = BF_MEDIA_TYPE_UNKNOWN;
+-    return BF_PLTFM_INVALID_ARG;
+-  }
+   if (bf_bd_is_this_port_internal(port_info->conn_id, port_info->chnl_id)) {
+     // Indicates that it is an internal port and hence media type is unknown
+     *media_type = BF_MEDIA_TYPE_UNKNOWN;
+     return BF_PLTFM_SUCCESS;
+   }
++  if ((int)port_info->conn_id > num_ports) {
++    *media_type = BF_MEDIA_TYPE_UNKNOWN;
++    return BF_PLTFM_INVALID_ARG;
++  }
+   if (!pm_qsfp_info_arr[port_info->conn_id].is_present) {
+     /*Indicates that no QSFP is inserted in the port. Hence the media type is
+       unknown*/

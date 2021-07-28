@@ -375,6 +375,9 @@ let
         reference = fetchFromStore {
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "88cb4b0978f23c28499faff75098f939374d9071859593353a18c2235e0be461";
+          patches = {
+            default = [ bf-platforms/reference-get-media-type.patch ];
+          };
         };
         inventec = fetchFromStore {
           name = "bf-inventec-bsp93.tgz";
