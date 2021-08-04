@@ -490,7 +490,9 @@ The result is a derivation that contains a command
 (represented by a Git repository) for which it was built to supply a
 simple form of release management.
 
-It supports the following options
+## <a name="releaseManager"/>Release Manager
+
+The `release-manager` command supports the following options
 
    * `--list-installed`
    * `--list-available`
