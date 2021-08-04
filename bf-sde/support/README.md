@@ -494,9 +494,9 @@ It supports the following options
 
    * `--list-installed`
    * `--list-available`
-   * `--install-release <version>`
-   * `--install-git <git-commit>`
-   * `--update-release <version>`
+   * `--install-release <version> [ --auto-switch ]`
+   * `--install-git <git-commit> [ --auto-switch ]`
+   * `--update-release <version> [ --auto-switch ]`
    * `--uninstall-generation <gen>`
    * `--activate-current`
    * `--deactivate-current`
@@ -575,7 +575,7 @@ Version  Status
 requests per hour per source address. Therefore, it is possible that
 the command fails temporarily if the rate-limit has been exceeded.
 
-#### `--install-release <version>`
+#### `--install-release <version> [ --auto-switch ]`
 
 This option requires network access to the Git repository, `nixos.org`
 and the binary cache that serves pre-built packages for the
@@ -593,12 +593,16 @@ This operation is completely safe, reversible and does not affect the
 running service.  It only installs the packages and makes them
 available for activation with the `--switch-to-generation` option.
 
+If the option `--auto-switch` is specified as well, the command will
+also switch to the new generation of the profile automatically.
+
 Due to the nature of Nix, packages are never overwritten or changed in
 any way after installation.  This is what makes concurrent versions
 without any danger of conflicts possible.
 
-The command will fail if the release is not available or already
-present on the system.
+The command will fail if the release is not available. The command
+succeeds if the release is already present on the system but it will
+print an informational message.
 
 By default, the slice corresponding to the running kernel (as reported
 by `uname -r`) and the local platform (as determined from
@@ -607,7 +611,7 @@ different kernel, set the `KERNEL_RELEASE` environment variable
 accordingly. The kernel must be one of the list of the kernels
 supported by the SDE package used in the current release.
 
-#### `--install-git <git-commit>`
+#### `--install-git <git-commit> [ --auto-switch ]`
 
 This option requires the same network access as `--install-release`.
 While `--install-release` is restricted to installing principal
@@ -622,9 +626,12 @@ terminology).  For example, to install the current tip of the branch
 $ release-manager --install-git origin/1
 ```
 
+If the option `--auto-switch` is specified as well, the command will
+also switch to the new generation of the profile automatically.
+
 This is equivalent to using the option `--update-release 1`.
 
-#### `--update-release <version>`
+#### `--update-release <version> [ --auto-switch ]`
 
 This option is a shortcut for
 
@@ -637,6 +644,9 @@ branch. This will installed an additional generation with the updates
 included. It will not change the existing installation of the
 principal release (or that of an update that is not the newest
 available).
+
+If the option `--auto-switch` is specified as well, the command will
+also switch to the new generation of the profile automatically.
 
 #### `--uninstall-generation <gen>`
 

@@ -19,9 +19,9 @@ usage () {
          --list-installed
          --list-available
          --switch-to-generation GENERATION
-         --install-release RELEASE
-         --install-git COMMIT
-         --update-release RELEASE
+         --install-release RELEASE [ --auto-switch ]
+         --install-git COMMIT [ --auto-switch ]
+         --update-release RELEASE [ --auto-switch ]
          --uninstall-generation GENERATION
          --activate-current
          --deactivate-current
@@ -36,6 +36,7 @@ opts=$(getopt -l list-installed \
               -l install-release: \
               -l install-git: \
               -l update-release: \
+	      -l auto-switch \
               -l uninstall-generation: \
               -l activate-current \
               -l deactivate-current \
@@ -77,6 +78,10 @@ while [ $# -gt 0 ]; do
         --update-release)
             update_release=$2
             shift 2
+            ;;
+        --auto-switch)
+            auto_switch=1
+	    shift
             ;;
         --activate-current)
             activate=1
@@ -159,8 +164,9 @@ gen_from_path () {
     echo $1 | sed -e 's/.*-\([0-9]*\)-link$/\1/'
 }
 
-for path in $PROFILE-*-link; do
-    [ -h $path ] || continue
+add_path () {
+    local path slice id gen version gitTag rest
+    path=$1
     slice=$(cat $path/slice)
     id=$(cat $path/version):$slice
     gen=$(gen_from_path $path)
@@ -175,6 +181,11 @@ for path in $PROFILE-*-link; do
         installed_releases[$version]="${installed_releases[$version]} $gitTag"
         gens_by_gitTag[$gitTag]=$gen
     fi
+}
+
+for path in $PROFILE-*-link; do
+    [ -h $path ] || continue
+    add_path $path
 done
 current_gen=$(gen_from_path $(readlink $PROFILE))
 kernel_release=${KERNEL_RELEASE:-$(uname -r)}
@@ -297,11 +308,12 @@ switch_to_generation () {
     local gen
     gen=$1
     check_root
-    if [ -z "${gens[$switch_to_generation]}" ]; then
+    if [ -z "${gens[$gen]}" ]; then
         ERROR "Generation $switch_to_generation does not exist"
     fi
     if [ $gen -eq $current_gen ]; then
-        ERROR "Generation $gen is already the current version"
+        INFO "Generation $gen is already the current version"
+	exit 0
     fi
     INFO "Deactivating current instance"
     deactivate
@@ -313,8 +325,8 @@ switch_to_generation () {
 }
 
 ## Input: gitTag
-## Output: none
-## Terminates if gitTag is already installed
+## Output: 0 if gitTag is not installed, profile generation if gitTag is
+##         already installed
 _check_installed () {
     local gitTag id gen
     gitTag=$1
@@ -330,30 +342,52 @@ _check_installed () {
                                              readFile (sliceFile + "/slice")))')
     gen=${gens_by_id[$id]}
     if [ -n "$gen" ]; then
-        ERROR "Release $version (Id: $id) is already installed as generation $gen"
+        INFO "Release $version (Id: $id) is already installed as generation $gen"
+	echo $gen
+    else
+	echo 0
     fi
 }
 
 ## Input: gitTag
-## Output: none
+## Output: new generation of profile
 _install () {
-    local gitTag new_gen
+    local gitTag switch new_gen
     gitTag=$1
+    switch=$2
     nix-env -f . -p $PROFILE -r -i -A install --argstr gitTag $gitTag --argstr kernelRelease $kernel_release --argstr platform $platform
     new_gen=$(gen_from_path $(readlink $PROFILE))
     ## nix-env has automatically switched to the new
     ## generation, revert back
     nix-env -p $PROFILE --switch-generation $current_gen 2>/dev/null
 
-    INFO "Use \"release-manager --switch-to-generation $new_gen\" to switch to the new release"
+    if [ -z "$switch" ]; then
+	INFO "Use \"release-manager --switch-to-generation $new_gen\" to switch to the new release"
+    fi
+    echo $new_gen
+}
+
+_auto_install () {
+    local gitTag switch gen
+    gitTag=$1
+    switch=$2
+    gen=$(_check_installed $gitTag)
+    if [ $gen -eq 0 ]; then
+	gen=$(_install $gitTag $switch)
+	add_path $PROFILE-${gen}-link
+    fi
+    if [ -n "$switch" ]; then
+	switch_to_generation $gen
+    fi
 }
 
 ## Input: git commit hash
 ## Output: none
 install_git () {
-    local hash tmp gitTag
+    local hash switch tmp gitTag gen
     check_root
     hash=$1
+    switch=$2
     tmp=$(mktemp -d)
     paths_to_rm+=$tmp
     pushd $tmp >/dev/null
@@ -367,8 +401,8 @@ install_git () {
     if ! [[ "$gitTag" =~ ^release-.*$ ]]; then
         ERROR "Commits preceeding release-1 are not supported"
     fi
-    _check_installed $gitTag
-    _install $gitTag
+
+    _auto_install $gitTag $switch
 
     popd >/dev/null
 }
@@ -391,8 +425,9 @@ _check_release () {
 ## Output: none
 ## Terminates if release does not exist
 install_release () {
-    local tmp release gitTag
+    local tmp release switch gitTag gen
     release=$1
+    switch=$2
     gitTag=$(_check_release $release)
     check_root
     INFO "Fetching package release tarball"
@@ -400,8 +435,9 @@ install_release () {
     paths_to_rm+=$tmp
     pushd $tmp >/dev/null
     fetch_and_unpack_tarball $gitTag
-    _check_installed $gitTag
-    _install $gitTag
+
+    _auto_install $gitTag $switch
+
     popd >/dev/null
 }
 
@@ -409,11 +445,12 @@ install_release () {
 ## Output: none
 ## Terminates if release does not exist
 update_release () {
-    local release
+    local release switch
     release=$1
+    switch=$2
     check_root
     gitTag=$(_check_release $release)
-    install_git $(commit_hash_from_tag $gitTag)
+    install_git $(commit_hash_from_tag $gitTag) $switch
 }
 
 ## Input: generation
@@ -439,9 +476,9 @@ cleanup () {
 [ -n "$list_installed" ] && list_installed
 [ -n "$list_available" ] && list_available
 [ -n "$switch_to_generation" ] && switch_to_generation $switch_to_generation
-[ -n "$install_release" ] && install_release $install_release
-[ -n "$install_git" ] && install_git $install_git
-[ -n "$update_release" ] && update_release $update_release
+[ -n "$install_release" ] && install_release $install_release $auto_switch
+[ -n "$install_git" ] && install_git $install_git $auto_switch
+[ -n "$update_release" ] && update_release $update_release $auto_switch
 [ -n "$uninstall_generation" ] && uninstall_generation $uninstall_generation
 [ -n "$activate" ] && activate
 [ -n "$deactivate" ] && deactivate

@@ -16,8 +16,8 @@ get_branch_commits () {
 fetch_and_unpack_tarball () {
     local gitTag tarball
     gitTag=$1
-    tarball=$REPO_GIT/archive/$gitTag.tar.gz
-    curl -L -O $tarball 2>/dev/null
+    tarball=$REPO_URL/archive/$gitTag.tar.gz
+    curl -L -O $tarball
     tar xf release-* --strip-component 1
 }
 
