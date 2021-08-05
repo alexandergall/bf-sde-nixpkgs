@@ -357,7 +357,8 @@ takes the following arguments
    * `NOS`
    * `bootstrapProfile`
    * `fileTree`
-   * `binaryCache`
+   * `binaryCaches`
+   * `users`
 
 The `nixProfile` argument is the name of the Nix profile (usually a
 path in `/nix/var/nix/profiles`) where the release will be installed

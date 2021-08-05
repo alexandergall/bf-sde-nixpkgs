@@ -1,14 +1,14 @@
 { pkgs }:
 
 { nixProfile, partialSlice, platforms, version, component, NOS,
-  bootstrapProfile, fileTree, binaryCaches }:
+  bootstrapProfile, fileTree, binaryCaches, users ? {} }:
 
 with builtins;
 let
   mkOnieInstaller = pkgs.callPackage (pkgs.fetchgit {
     url = "https://github.com/alexandergall/onie-debian-nix-installer";
-    rev = "7edce3";
-    sha256 = "168ymx85vi3yk52cl56vw83rsbdw4gy3gyh7h7sdqyrmg9jyzr23";
+    rev = "aeea12a";
+    sha256 = "1cghnylm9d6nz5zii4kg94z2j117zsgk09n3qhmqq5g82my6rqss";
   }) {};
   platformSpecs = map (
     platform:
@@ -57,6 +57,6 @@ let
     };
   grubDefault = builtins.foldl' (final: next: final // mkGrubDefault next) {} platforms;
 in pkgs.lib.makeOverridable mkOnieInstaller {
-  inherit version rootPaths postRootFsCreateCmd postRootFsInstallCmd
+  inherit version rootPaths users postRootFsCreateCmd postRootFsInstallCmd
     component NOS grubDefault bootstrapProfile fileTree binaryCaches;
 }
