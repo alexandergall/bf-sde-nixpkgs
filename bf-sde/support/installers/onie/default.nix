@@ -7,8 +7,8 @@ with builtins;
 let
   mkOnieInstaller = pkgs.callPackage (pkgs.fetchgit {
     url = "https://github.com/alexandergall/onie-debian-nix-installer";
-    rev = "aeea12a";
-    sha256 = "1cghnylm9d6nz5zii4kg94z2j117zsgk09n3qhmqq5g82my6rqss";
+    rev = "6811df";
+    sha256 = "0bv1lwkiyg872kfwr282h3jnrga8ahd8kki7yi5gw9n8f1dxjdpz";
   }) {};
   platformSpecs = map (
     platform:
