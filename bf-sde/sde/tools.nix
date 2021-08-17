@@ -35,7 +35,9 @@ stdenv.mkDerivation {
       [ -n "$3" ] && wrap $out/bin/$2 $3
     }
 
-    substitute run_switchd.sh $out/bin/run_switchd.sh --replace sudo /usr/bin/sudo
+    substitute run_switchd.sh $out/bin/run_switchd.sh \
+      --replace sudo /usr/bin/sudo \
+      --replace /usr/local/lib: ""
     wrap $out/bin/run_switchd.sh \
       "${lib.strings.makeBinPath [ coreutils utillinux findutils gnugrep gnused procps bash ]}"
 
@@ -44,7 +46,9 @@ stdenv.mkDerivation {
 
     '' + lib.optionalString (! runtime || baseboard == "model") ''
 
-    substitute run_tofino_model.sh $out/bin/run_tofino_model.sh --replace sudo /usr/bin/sudo
+    substitute run_tofino_model.sh $out/bin/run_tofino_model.sh \
+      --replace sudo /usr/bin/sudo \
+      --replace /usr/local/lib: ""
     wrap $out/bin/run_tofino_model.sh \
       "${lib.strings.makeBinPath [ coreutils utillinux findutils ]}:/usr/bin"
 
