@@ -53,8 +53,7 @@ let
     tar -C $out -xf ${sdeSpec.sde.src} --strip-components 1
   '';
 in rec {
-  isCmake = lib.strings.versionAtLeast version "9.6.0" &&
-            builtins.pathExists (sdeSrc + "/CMakeLists.txt");
+  isCmake = lib.strings.versionAtLeast version "9.6.0";
   topLevel = assert isCmake; ./. + "/CMakeLists.txt-${version}";
   cmakeDir = assert isCmake; runCommand "cmake-extract" {} ''
     mkdir $out
