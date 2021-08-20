@@ -2,6 +2,7 @@
 set -e
 set -o pipefail
 shopt -s extglob
+shopt -s inherit_errexit
 
 PROFILE=@PROFILE@
 LIB=@SELF@/lib
@@ -107,6 +108,9 @@ done
 
 paths_to_rm=()
 _cleanup () {
+    if [ $? -gt 0 -a $? -ne 255 ]; then
+       echo "${red}Unexpected error, aborting${normal}" >&2
+    fi
     for path in ${paths_to_rm[@]}; do
         rm -rf $path
     done
@@ -126,7 +130,7 @@ INFO () {
 
 ERROR () {
     echo "${red}ERROR: $@${normal}" >&2
-    exit 1
+    exit 255
 }
 
 branch_from_tag () {
@@ -223,45 +227,27 @@ list_installed () {
 
 ## Input: partial URL to append to $API_URL
 ## Output: Result of API call in JSON
-## RC: 0 on success, 1 on API failure
-_api_call () {
-    local http_code request
-    request=$1
-    exec 17>&1
-    set -e
-    http_code=$(curl -s --write-out '\n%{http_code}\n' $API_URL$request | tee /dev/fd/17 | tail -n 1)
-    set +e
-    exec 17>&-
-    if [ $http_code -ge 400 ] && [ $http_code -lt 600 ]; then
-	echo -e "\nHTTP $http_code" >&2
-	return 1
-    fi
-}
-
-## Input: partial URL to append to $API_URL
-## Output: Result of API call in JSON
 ## Terminates on API error
 api_call () {
-    local request result rc
-    request=$1
-    set +e
-    result=$(_api_call $request | sed '$d')
-    rc=$?
-    set -e
-    if [ $rc == 0 ]; then
-	echo $result
-    else
-	ERROR "Github API call $1 failed: $result"
+    local url out http_code result
+    url=$API_URL$1
+    out=$(curl -s --write-out '\n%{http_code}\n' $url)
+    http_code=$(echo "$out" | tail -n1)
+    result=$(echo "$out" | sed '$d')
+    if [ $http_code -ge 400 ] && [ $http_code -lt 600 ]; then
+	ERROR "API call $url failed with HTTP code $http_code: $result"
     fi
+    echo $result
 }
 
 ## Input: none
 ## Output: none
 ## Populates the global available_releases
 get_available_releases () {
-    local tag version
+    local tags tag version
     INFO "Checking for release tags of $REPO_URL"
-    for tag in $(get_tags); do
+    tags=$(get_tags)
+    for tag in $tags; do
         [[ $tag =~ ^release-.*$ ]] || continue
         version=$(echo $tag | cut -d- -f2)
         available_releases[$version]=$tag
@@ -271,7 +257,7 @@ get_available_releases () {
 ## Input: none
 ## Output: none
 list_available () {
-    local version up_to_date tag commit commit_head commit_tag
+    local version up_to_date tag branch_commits commit commit_head commit_tag
     get_available_releases
     echo
     echo "Version  Status"
@@ -280,7 +266,8 @@ list_available () {
         printf "%8s " $version
         if [ -n "${installed_releases[$version]}" ]; then
             printf 'Installed'
-	    read commit_head commit_tag <<<$(get_branch_commits ${available_releases[$version]})
+	    branch_commits=$(get_branch_commits ${available_releases[$version]})
+	    read commit_head commit_tag <<<$branch_commits
             if [ $commit_tag != $commit_head ]; then
                 up_to_date=
                 for tag in ${installed_releases[$version]}; do
@@ -395,7 +382,7 @@ install_git () {
     git init -b master
     git remote add origin $REPO_URL
     git fetch origin
-    git reset --hard $hash
+    git reset --hard $hash || ERROR "Git commit \"$hash\" does not exist"
 
     gitTag=$(git describe --always)
     if ! [[ "$gitTag" =~ ^release-.*$ ]]; then
@@ -445,12 +432,13 @@ install_release () {
 ## Output: none
 ## Terminates if release does not exist
 update_release () {
-    local release switch
+    local release switch gitTag hash
     release=$1
     switch=$2
     check_root
     gitTag=$(_check_release $release)
-    install_git $(commit_hash_from_tag $gitTag) $switch
+    hash=$(commit_hash_from_tag $gitTag)
+    install_git $hash $switch
 }
 
 ## Input: generation
