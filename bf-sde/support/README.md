@@ -368,7 +368,7 @@ The `partialSlice` argument must be the same `slice` function that was
 used in the call of `mkRelease`, but partially evaluated with the same
 kernel module used in the `bootstrapProfile`.
 
-The `profiles` argument must be a list of platform names that the
+The `platforms` argument must be a list of platform names that the
 installer should support.
 
 The remaining arguments are passed to the underlying function from the
@@ -441,6 +441,29 @@ installer checks whether there is a platform-specific file that
 matches the install target's platform. If so, it is copied to
 `/etc/default/grub`, other wise the default is used.  The directory
 `/etc/default/grub-platforms` is removed in any case.
+
+Finally, the last platform-dependent component of the installer is the
+interface used for managing the device.  It is assumed that every
+platform has one interface dedicated to this purpose.  The name of
+this interface is determined by the default rules of the `udev`
+subsystem and, in general, differs from platform to platform.  To
+unify the handling of this interface accross all platforms, the PCI
+address of the interface dedicated to this purpose is registered in
+`../bf-platforms/properties.nix` for each platform in the
+`mgmtEthPciAddr` attribute.  The `mkOnieInstaller` function
+automatically creates a `udev` rule that renames this interface to the
+common name `mgmt0` for each platform.  This allows the caller of this
+function to provide a platform-independent configuration of the
+interface via the `fileTree` argument.  For example, to enable the
+interface at boot time and use DHCP on it, one would simply add a file
+containing
+
+```
+auto mgmt0
+iface mgmt0 inet dhcp
+```
+
+to `/etc/network/interfaces.d` in `fileTree`.
 
 ### <a name="mkStandaloneInstaller"/>`mkStandaloneInstaller`
 
