@@ -198,23 +198,22 @@ let
         "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
       };
     };
-    Debian11 = {
-      ## Moving target as long as Debian 11 (bullseye) is testing
-      kernelRelease = "5.10.0-6-amd64";
+    Debian11_0 = {
+      kernelRelease = "5.10.0-8-amd64";
       buildTree = mkDebian {
         spec = {
-          snapshotTimestamp = "20210601T022916Z";
+          snapshotTimestamp = "20210916T090242Z";
           arch = {
-            name = "linux-headers-5.10.0-6-amd64_5.10.28-1_amd64.deb";
-            sha256 = "0lnijmsb8hrdss76hcl33zf9w4hn5z0iciqjwj9ff8fxpqm3l1dq";
+            name = "linux-headers-5.10.0-8-amd64_5.10.46-4_amd64.deb";
+            sha256 = "1lpriwpsq74ym6hyzh75bgkf2r8kkb4sdjmff5hlzbizdk6skgr4";
           };
           common = {
-            name = "linux-headers-5.10.0-6-common_5.10.28-1_all.deb";
-            sha256 = "11yy6l0mxvh48qfdyfmgvirwv7par5ga0jgvwbnhbm20358pq9jf";
+            name = "linux-headers-5.10.0-8-common_5.10.46-4_all.deb";
+            sha256 = "1vh1fwrqglbv049vazn038si6j5nmdrsjaj1dfr1bchm2bjvizs8";
           };
           kbuild = {
-            name = "linux-kbuild-5.10_5.10.28-1_amd64.deb";
-            sha256 = "0v2rlb2liv0s9r9kxhsnydj18rgn11y35smb2fd6j75chqg7zl85";
+            name = "linux-kbuild-5.10_5.10.46-4_amd64.deb";
+            sha256 = "1ihg819bmgn3934xwnjnbclmvki1cb562a3gwa3dnykrqp7wcm3f";
           };
         };
         patchelfInputs = [ openssl_1_1.out elfutils ];
