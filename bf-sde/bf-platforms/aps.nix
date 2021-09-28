@@ -39,7 +39,7 @@ let
             cd bf-platforms
             unzip ${src'}/bsp/${zipPattern}
             patch -p1 <${diff}
-            for patch in ${builtins.concatStringsSep " " (patches.default or [])}; do
+            for patch in ${builtins.concatStringsSep " " ((patches.default or []) ++ (patches.${baseboard} or []))}; do
               patch -p1 <$patch
             done
 

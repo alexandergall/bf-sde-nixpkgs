@@ -304,7 +304,7 @@ let
           name = "9.5.0_AOT1.5.4_SAL1.3.4.zip";
           outputHash = "510e5e18a91203fe6c4c0aabd807eb69ad53224500f7cb755f7c5b09c8e4525d";
           patches = {
-            default = [ bf-platforms/aps/bf_pltfm_smb.patch ];
+            aps_bf2556 = [ bf-platforms/aps/bf_pltfm_smb.patch ];
           };
         };
         inventec = fetchFromStore {
