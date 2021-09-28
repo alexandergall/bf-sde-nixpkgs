@@ -24,7 +24,6 @@ redirect () {
 }
 
 cleanup () {
-    set -x
     /usr/bin/sudo @pkill@ tofino-model
     wait
     sleep 2

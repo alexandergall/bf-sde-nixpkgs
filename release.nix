@@ -13,10 +13,16 @@ let
     filterAttrs (n: v: attrsets.isDerivation v) attrs;
   ## Hydra doesn't like non-derivation attributes
   bf-sde' = filterDrvs bf-sde;
-  kernels = import ./bf-sde/kernels pkgs;
-  mk = sde: {
-    inherit sde;
-    inherit (sde) pkgs;
-  };
+  mk = sde:
+    with builtins;
+    let
+      baseboards = attrNames sde.pkgs.bf-platforms;
+      mkSdeForBoard = baseboard:
+        nameValuePair
+          "sde-${baseboard}"
+          (sde.override { inherit baseboard; });
+    in {
+      inherit (sde) pkgs;
+    } // listToAttrs (map mkSdeForBoard baseboards);
   versions = mapAttrs (version: sde: mk sde) bf-sde';
 in versions

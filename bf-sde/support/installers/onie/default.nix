@@ -7,8 +7,8 @@ with builtins;
 let
   mkOnieInstaller = pkgs.callPackage (pkgs.fetchgit {
     url = "https://github.com/alexandergall/onie-debian-nix-installer";
-    rev = "6811df";
-    sha256 = "0bv1lwkiyg872kfwr282h3jnrga8ahd8kki7yi5gw9n8f1dxjdpz";
+    rev = "80f192";
+    sha256 = "191p68hwljjc1q7wzj9lx9asligzky50wa8mcqzw894bdzz62qw7";
   }) {};
   platformSpecs = map (
     platform:
@@ -56,7 +56,29 @@ let
       '';
     };
   grubDefault = builtins.foldl' (final: next: final // mkGrubDefault next) {} platforms;
+
+  ## Add platform-dependent udev rules to the file tree
+  addUdevRule = platform:
+    let
+      pciAddr = platformProperties.${platform}.mgmtEthPciAddr or null;
+    in
+      if pciAddr != null then
+        ''
+          dir=$out/__platforms/${platform}/etc/udev/rules.d
+          mkdir -p $dir
+          echo 'ACTION=="add", SUBSYSTEM=="net", KERNELS=="${pciAddr}", NAME="mgmt0"' >$dir/20-mgmt0.rules
+        ''
+      else
+        "";
+  fileTree' = pkgs.runCommand "file-tree-udev-rules" {} (''
+    mkdir $out
+    cp -r ${fileTree}/* $out
+  '' +
+  (with builtins; concatStringsSep "\n" (
+    map addUdevRule platforms
+  )));
 in pkgs.lib.makeOverridable mkOnieInstaller {
   inherit version rootPaths users postRootFsCreateCmd postRootFsInstallCmd
-    component NOS grubDefault bootstrapProfile fileTree binaryCaches;
+    component NOS grubDefault bootstrapProfile binaryCaches;
+  fileTree = fileTree';
 }

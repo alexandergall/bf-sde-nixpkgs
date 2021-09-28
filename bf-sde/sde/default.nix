@@ -23,7 +23,10 @@ let
      else
        [ bf-syslibs bf-drivers bf-drivers.dev bf-utils bf-utils.dev
          p4c tofino-model ptf-modules ptf-utils ])
-    ++ lib.optional (baseboard != null) bf-platforms.${baseboard};
+    ++ lib.optional (baseboard != null)
+      (assert lib.asserts.assertMsg (builtins.hasAttr baseboard bf-platforms)
+        "Baseboard ${baseboard} not supported by SDE ${version}";
+        bf-platforms.${baseboard});
 
   ## Additional things from the SDE source that need to go into
   ## sdeEnv.
