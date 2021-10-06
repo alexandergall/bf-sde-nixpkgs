@@ -39,11 +39,11 @@ in pkgs.mkShell {
     Load/unload kernel modules: $ sudo \$(type -p bf_{kdrv,kpkt,knet}_mod_{load,unload})
 
     Compile: $ p4_build.sh <p4name>.p4
-    Run:     $ run_switchd -p <p4name>
+    Run:     $ run_switchd.sh -p <p4name>
     Run Tofino model:
              $ sudo \$(type -p veth_setup.sh)
-             $ run_tofino_model -p <p4name>
-             $ run_switchd -p <p4name> -- --model
+             $ run_tofino_model.sh -p <p4name>
+             $ run_switchd.sh -p <p4name> -- --model
              $ sudo \$(type -p veth_teardown.sh)
     Run PTF tests: run the Tofino model, then
              $ run_p4_tests.sh -p <p4name> -t <path-to-dir-with-test-scripts>
