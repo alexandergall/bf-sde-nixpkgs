@@ -518,7 +518,7 @@ simple form of release management.
 
 The `release-manager` command supports the following options
 
-   * `--list-installed`
+   * `--list-installed[=full]`
    * `--list-available`
    * `--install-release <version> [ --auto-switch ]`
    * `--install-git <git-commit> [ --auto-switch ]`
@@ -577,6 +577,12 @@ the release slice was installed.
 **Implementation note**: The notion of generations is taken straight
 from the underlying [Nix
 profile](https://nixos.org/manual/nix/unstable/package-management/profiles.html).
+
+Without an argument, `--list-installed` truncates the output of each
+field to the width determined by the column headers.  If any non-empty
+string is passed as argument, e.g. `--list-installed=full`, the fields
+are not truncated, which may cause the output to no longer be
+column-aligned.
 
 #### `--list-available`
 
