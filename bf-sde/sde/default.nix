@@ -33,7 +33,7 @@ let
   addToEnv = stdenv.mkDerivation {
     pname = "bf-sde-misc-components";
     inherit version src;
-    patches = lib.optional (lib.versionAtLeast version "9.7.0") [ ./P4Build.cmake.patch ];
+    patches = patches.mainCMake or [];
     phases = [ "unpackPhase" "installPhase" ];
     installPhase = ''
       mkdir $out
@@ -67,7 +67,7 @@ let
   };
   tools = callPackage ./tools.nix {
     inherit src version sdeEnv runtime baseboard;
-    patches = patches.tools or [];
+    patches = patches.mainTools or [];
     python = bf-drivers.pythonModule;
   };
 in buildEnv {
