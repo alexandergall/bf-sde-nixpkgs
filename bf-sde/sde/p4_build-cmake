@@ -1,0 +1,59 @@
+#!/bin/bash
+
+self=p4_build.sh
+usage () {
+    echo "usage: $self OPTIONS <path-to-p4-program>
+       Available options:
+         --p4-name <name>
+         --p4c-flags <flags>
+         --help"
+    exit 0
+}
+
+opts=$(getopt -l p4-name: \
+              -l p4c-flags: \
+              -l help \
+              -o "" \
+              -n $self \
+              -- "$@")
+[ $? -eq 0 ] || usage
+eval set -- $opts
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --p4-name)
+            p4_name=$2
+            shift 2
+            ;;
+        --p4c-flags)
+            P4FLAGS=$2
+            shift 2
+            ;;
+        --help)
+            usage
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+[ $# -gt 2 ] && usage
+set -e
+
+P4_PATH=$2
+P4_NAME=${p4_name:-$(basename -s .p4 $2)}
+mkdir -p $P4_INSTALL/build
+cd $P4_INSTALL/build
+cmake $SDE_INSTALL/p4_build \
+      -DCMAKE_INSTALL_PREFIX=$P4_INSTALL \
+      -DCMAKE_MODULE_PATH=$SDE_INSTALL/p4_build/cmake \
+      -DP4_NAME=${P4_NAME} \
+      -DP4_PATH=${P4_PATH} \
+      -DP4FLAGS="${P4FLAGS}"
+make
+make install
+# Replace relative paths with absolute paths to the install directory to
+# support build artefacts outside of SDE_INSTALL
+for file in $(find $P4_INSTALL/share/p4 -name ${P4_NAME}.conf); do
+    sed -e "s,\"share/tofinopd,\"$P4_INSTALL/share/tofinopd,g" $file > $file.tmp && mv $file.tmp $file
+done

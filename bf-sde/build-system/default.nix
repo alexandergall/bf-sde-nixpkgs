@@ -48,10 +48,12 @@
 
 let
   version = sdeSpec.version;
-  sdeSrc = runCommand "bf-sde-${version}-unpacked" {} ''
+  sdeSrc = runCommand "bf-sde-${version}-unpacked" {} (''
     mkdir $out
     tar -C $out -xf ${sdeSpec.sde.src} --strip-components 1
-  '';
+  '' + lib.optionalString (lib.versionAtLeast version "9.7.0") ''
+    patch -d $out -p1 <${../sde/P4Build.cmake.patch}
+  '');
 in rec {
   isCmake = lib.strings.versionAtLeast version "9.6.0";
   topLevel = assert isCmake; ./. + "/CMakeLists.txt-${version}";

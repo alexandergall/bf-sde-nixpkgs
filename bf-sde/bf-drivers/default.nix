@@ -27,6 +27,15 @@ let
         requiredPythonModules = python.pkgs.requiredPythonModules drv.propagatedBuildInputs;
       };
     });
+  ## The location of C header files for the Python version that comes
+  ## embedded in bf-utils to provide the bfrt_python shell in
+  ## bf_switchd. Some bf_rt components in bf-drivers need to be
+  ## compiled with those headers.
+  bfUtilsPythonInclude =
+    if lib.versionOlder version "9.7.0" then
+      "${bf-utils.dev}/include/python3.4m"
+    else
+      "${bf-utils.dev}/include/python3.8";
   bf-drivers = stdenv.mkDerivation ({
     pname = pname + lib.optionalString runtime "-runtime";
     inherit version src;
@@ -51,7 +60,7 @@ let
     ];
 
     buildFlags = lib.optional (! buildSystem.isCmake) [
-      "CFLAGS+=-I${bf-utils.dev}/include/python3.4m"
+      "CFLAGS+=-I${bfUtilsPythonInclude}"
     ];
 
     preConfigure = buildSystem.preConfigure {
@@ -70,7 +79,7 @@ let
         ## Our modular build can't do that (and libedit is not in the
         ## output path of bf-utils), so we add the standard libedit to
         ## the dependencies.
-        NIX_CFLAGS_COMPILE="-I${bf-utils.dev}/include/python3.4m -ledit $NIX_CFLAGS_COMPILE"
+        NIX_CFLAGS_COMPILE="-I${bfUtilsPythonInclude} -ledit $NIX_CFLAGS_COMPILE"
 
         ## Install path for bfrt
         cmakeFlags="-DPYTHON_SITE=$out/lib/${python.libPrefix}/site-packages $cmakeFlags"
@@ -131,10 +140,6 @@ let
       rm $sitePath/tofino_pd_api/tenjin.*
     '' +
 
-    lib.optionalString buildSystem.isCmake ''
-      python -m compileall $sitePath
-    '' +
-
     ## Link the directories in site-packages/tofino and
     ## site-packages/tofino_pd_api to site-packages. This allows
     ## importing those modules without having to add the tofino and
@@ -142,14 +147,13 @@ let
     ## fine as long as it doesn't create conflicts, which is currently
     ## not the case.
     ##
-    ## Also, turn google/rpc into a "google" namespace package
-    ## by adding a .pth file, creating a link to google
-    ## in the top-level siteq-packages directory and removing
-    ## __init__.py.  To make this work, all portions of the
-    ## name space have to be added with site.addsite(), for
-    ## example by adding bf-drivers and the protobuf Python
-    ## package to a Python environment (just adding them to
-    ## PYTHONPATH is not sufficient).
+    ## Also, turn google/rpc into a "google" namespace package by
+    ## adding a .pth file, creating a link to google in the top-level
+    ## site-packages directory and removing __init__.py.  To make this
+    ## work, all portions of the name space have to be added with
+    ## site.addsite(), for example by adding bf-drivers and the
+    ## protobuf Python package to a Python environment (just adding
+    ## them to PYTHONPATH is not sufficient).
     ''
       for obj in $sitePath/tofino/* ${lib.optionalString (! runtime) "$sitePath/tofino_pd_api/*"}; do
         ln -sr $obj $sitePath
@@ -158,13 +162,21 @@ let
       rm -f $sitePath/tofino/google/__init__.py*
     '' +
 
+    lib.optionalString buildSystem.isCmake ''
+      python -m compileall $sitePath
+    '' +
+
     ## The runtime version doesn't have a "dev" output.
     lib.optionalString runtime ''
       rm -rf $out/include
     '';
 
+    ## This declares the set of modules to be used by
+    ## wrapPythonPrograms.
     pythonPath = with python.pkgs; [ tenjin six ];
-    postFixup = ''
+    postFixup = lib.optionalString (! runtime && lib.versionAtLeast version "9.6.0") ''
+      [ -f $out/bin/split_pd_thrift.py ] && chmod a+x $out/bin/split_pd_thrift.py
+    '' + ''
       wrapPythonPrograms
     '';
   } // lib.optionalAttrs buildSystem.isCmake {

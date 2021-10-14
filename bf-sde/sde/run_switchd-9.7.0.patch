@@ -1,0 +1,50 @@
+diff -Naur bf-sde-9.7.0.orig/run_switchd.sh bf-sde-9.7.0/run_switchd.sh
+--- bf-sde-9.7.0.orig/run_switchd.sh	2021-10-07 06:11:51.000000000 +0200
++++ bf-sde-9.7.0/run_switchd.sh	2021-10-11 20:27:43.147948127 +0200
+@@ -1,5 +1,6 @@
+ #!/bin/bash
+ # Start running switchd application program
++set -e
+ 
+ function print_help() {
+   echo "USAGE: $(basename ""$0"") {-p <...> | -c <...>} [OPTIONS -- SWITCHD_OPTIONS]"
+@@ -71,9 +72,13 @@
+     sudo mount -t hugetlbfs nodev /mnt/huge
+ }
+ 
+-OLD_STTY_SETTINGS=`stty -g`
++if [ -t 0 ]; then
++    OLD_STTY_SETTINGS=`stty -g`
++fi
+ function finish {
+-   stty $OLD_STTY_SETTINGS
++    if [ -n "$OLD_STTY_SETTINGS" ]; then
++        stty $OLD_STTY_SETTINGS
++    fi
+    exit
+ }
+ trap finish EXIT
+@@ -186,7 +191,7 @@
+     echo "Detected custom conf file $(<$CUSTOM_CONF_FILE)"
+     TARGET_CONFIG_FILE=$SDE_INSTALL/share/p4/targets/$CHIP_ARCH/$(<$CUSTOM_CONF_FILE)
+   else
+-    TARGET_CONFIG_FILE=$SDE_INSTALL/share/p4/targets/$CHIP_ARCH/$P4_NAME.conf
++    TARGET_CONFIG_FILE=${P4_INSTALL:-$SDE_INSTALL}/share/p4/targets/$CHIP_ARCH/$P4_NAME.conf
+   fi
+ fi
+ 
+diff -Naur bf-sde-9.7.0.orig/run_tofino_model.sh bf-sde-9.7.0/run_tofino_model.sh
+--- bf-sde-9.7.0.orig/run_tofino_model.sh	2021-10-07 06:11:51.000000000 +0200
++++ bf-sde-9.7.0/run_tofino_model.sh	2021-10-11 20:29:05.667947283 +0200
+@@ -146,9 +146,9 @@
+     if [[ $TARGET_CONFIG_FILE == "" ]]; then
+       if [[ -f $CUSTOM_CONF_FILE ]]; then
+         echo "Detected custom conf file $(<$CUSTOM_CONF_FILE)"
+-        TARGET_CONFIG_FILE=$SDE_INSTALL/share/p4/targets/${CHIP_ARCH}/$(<$CUSTOM_CONF_FILE)
++        TARGET_CONFIG_FILE=${P4_INSTALL:-$SDE_INSTALL}/share/p4/targets/${CHIP_ARCH}/$(<$CUSTOM_CONF_FILE)
+       else
+-        TARGET_CONFIG_FILE=$SDE_INSTALL/share/p4/targets/${CHIP_ARCH}/${P4_NAME}.conf
++        TARGET_CONFIG_FILE=${P4_INSTALL:-$SDE_INSTALL}/share/p4/targets/${CHIP_ARCH}/${P4_NAME}.conf
+       fi
+     fi
+     [[ ! -r $TARGET_CONFIG_FILE ]] && echo "Target config file not found" && exit 1

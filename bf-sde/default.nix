@@ -145,6 +145,7 @@ let
       self = SDE.callPackage ./sde {
         inherit passthru;
         src = sdeSrc;
+        patches = sdeSpec.sde.patches or [];
         runtime = false;
         baseboard = "model";
       };
@@ -181,6 +182,7 @@ let
     python_bf_drivers = python2;
     sde = {
       patches = {
+        tools = [ sde/run_switchd.patch sde/run_bfshell.patch sde/run_p4_tests.patch ];
         p4-examples = [ ./p4-16-examples/ptf.patch ];
       };
     };
@@ -292,6 +294,8 @@ let
         name = "bf-sde-${version}.tgz";
         outputHash = "61d55a06fa6f80fc1f859a80ab8897eeca43f06831d793d7ec7f6f56e6529ed7";
         patches = {
+          tools = [ sde/run_switchd.patch sde/run_bfshell.patch
+                    sde/run_p4_tests-9.5.0.patch ];
           p4-examples = [];
         };
       };
@@ -321,6 +325,8 @@ let
         name = "bf-sde-${version}.tgz";
         outputHash = "0e73fd8e7fe22c62cafe7dc4415649f0e66c04607c0056bd08adc1c7710fd193";
         patches = {
+          tools = [ sde/run_switchd.patch sde/run_bfshell-9.6.0.patch
+                    sde/run_p4_tests-9.6.0.patch ];
           bf-syslibs = [ bf-syslibs/bf-sal-CMakeLists.txt.patch ];
           bf-drivers = [ bf-drivers/libpython-dependency.patch ];
           p4-examples = [];
@@ -346,6 +352,35 @@ let
       thrift = thrift_0_13;
       libcli = libcli1_10;
     };
+    v9_7_0 = rec {
+      version = "9.7.0";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "a4ca94f2d9602535c52613f9d8ad3504b55d99283a4e3dfc64de19e24d767423";
+        patches = {
+          tools = [ sde/run_switchd-9.7.0.patch sde/run_bfshell-9.7.0.patch
+                    sde/run_p4_tests-9.7.0.patch ];
+          bf-drivers = [ bf-drivers/libpython-dependency-9.7.0.patch ];
+          p4-examples = [];
+          ptf-modules = [ ptf-modules/run_ptf_tests.patch
+                          ## The getmac module used by bf-pktpy
+                          ## returns None as MAC address if run in a
+                          ## VM. This patch sets a static address in
+                          ## this case.
+                          ptf-modules/getmac.patch ];
+        };
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "87f91540c0947edff2694cea9beeca78f95062b0aaca812a81c238ff39343e46";
+        };
+      };
+      stdenv = gcc8Stdenv;
+      thrift = thrift_0_13;
+      libcli = libcli1_10;
+      python_bf_drivers = python3;
+    };
   };
 
-in bf-sde // { latest = bf-sde.v9_6_0; }
+in bf-sde // { latest = bf-sde.v9_7_0; }
