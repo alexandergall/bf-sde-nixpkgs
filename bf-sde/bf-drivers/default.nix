@@ -48,7 +48,7 @@ let
     outputs = [ "out" ] ++ lib.optional (! runtime) "dev";
     enableParallelBuilding = true;
 
-    patches = patches ++ [ ./bf_switchd_model.patch ];
+    patches = patches;
 
     configureFlags = lib.optional (! buildSystem.isCmake) [
       "enable_thrift=yes"
