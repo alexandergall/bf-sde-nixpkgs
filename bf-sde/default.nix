@@ -379,6 +379,9 @@ let
         reference = fetchFromStore {
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "87f91540c0947edff2694cea9beeca78f95062b0aaca812a81c238ff39343e46";
+          patches = {
+            default = [ bf-platforms/reference-get-media-type.patch ];
+          };
         };
       };
       stdenv = gcc8Stdenv;
