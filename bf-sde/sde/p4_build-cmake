@@ -40,13 +40,14 @@ done
 [ $# -gt 2 ] && usage
 set -e
 
-P4_PATH=$2
-P4_NAME=${p4_name:-$(basename -s .p4 $2)}
+P4_PATH=$(realpath $2)
+P4_NAME=${p4_name:-$(basename -s .p4 ${P4_PATH})}
 mkdir -p $P4_INSTALL/build
 cd $P4_INSTALL/build
 cmake $SDE_INSTALL/p4_build \
       -DCMAKE_INSTALL_PREFIX=$P4_INSTALL \
       -DCMAKE_MODULE_PATH=$SDE_INSTALL/p4_build/cmake \
+      -DP4_LANG=p4-16 \
       -DP4_NAME=${P4_NAME} \
       -DP4_PATH=${P4_PATH} \
       -DP4FLAGS="${P4FLAGS}"
