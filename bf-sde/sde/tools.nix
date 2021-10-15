@@ -56,7 +56,7 @@ stdenv.mkDerivation {
       "${lib.strings.makeBinPath [ coreutils utillinux gawk python ]}" \
       --run "export PYTHONPATH=\$PTF_PYTHONPATH:\$PYTHONPATH"
 
-  '' + (if (lib.versionOlder version "9.6.0") then
+  '' + (if (lib.versionOlder version "9.7.0") then
           ''
             ## This script was copied from the tools provided for
             ## the BF Academy courses.
