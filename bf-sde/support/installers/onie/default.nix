@@ -64,6 +64,9 @@ let
     in
       if pciAddr != null then
         ''
+          if [ -d $out/__platforms ]; then
+             chmod -R a+w $out/__platforms
+          fi
           dir=$out/__platforms/${platform}/etc/udev/rules.d
           mkdir -p $dir
           echo 'ACTION=="add", SUBSYSTEM=="net", KERNELS=="${pciAddr}", NAME="mgmt0"' >$dir/20-mgmt0.rules
