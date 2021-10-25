@@ -1,0 +1,11 @@
+diff -Naur ptf-modules-9.7.0.orig/ptf-utils/run_ptf_tests.py.in ptf-modules-9.7.0/ptf-utils/run_ptf_tests.py.in
+--- ptf-modules-9.7.0.orig/ptf-utils/run_ptf_tests.py.in	2021-10-07 06:01:33.000000000 +0200
++++ ptf-modules-9.7.0/ptf-utils/run_ptf_tests.py.in	2021-10-12 13:42:21.467313380 +0200
+@@ -182,6 +182,6 @@
+                         os.pathsep + os.environ.get("PYTHONPATH", "")
+ 
+     ptf_path = find_executable(args.ptf)
+-    child = subprocess.Popen([sys.executable, ptf_path] + new_args, env=env)
++    child = subprocess.Popen([ptf_path] + new_args, env=env)
+     child.wait()
+     sys.exit(child.returncode)

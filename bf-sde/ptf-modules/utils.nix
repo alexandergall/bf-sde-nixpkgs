@@ -40,7 +40,16 @@ in stdenv.mkDerivation rec {
         --set PATH "${lib.strings.makeBinPath [ bridge-utils inetutils gnugrep ]}"
     done
 
-  '' + (if buildSystem.isCmake then ''
+  '' + (if buildSystem.isCmake then
+          ## ptf-modules was converted to python3 in 9.7.0 but some
+          ## modules were missed, which leads to errors during
+          ## compilation below.  The CMake installer does not
+          ## perform python compilation, which is probably why Intel
+          ## did not notice the problem.  We simply don't install those
+          ## scripts and assume they are not used anywhere.
+          lib.optionalString (version == "9.7.0") ''
+            rm -f $utilsPath/{traffic_streams.py,traffic_utils.py}
+          '' + ''
             python -m compileall $utilsPath
             substituteInPlace $out/bin/veth_setup.sh --replace /sbin/ethtool ethtool
             wrapProgram $out/bin/veth_setup.sh \

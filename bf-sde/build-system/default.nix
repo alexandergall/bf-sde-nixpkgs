@@ -48,10 +48,15 @@
 
 let
   version = sdeSpec.version;
-  sdeSrc = runCommand "bf-sde-${version}-unpacked" {} ''
+  cmakePatches = sdeSpec.sde.patches.mainCMake or [];
+  applyPatch = patch:
+    "patch -d $out -p1 <${patch}";
+  applyPatches = builtins.concatStringsSep "\n"
+    (map applyPatch cmakePatches);
+  sdeSrc = runCommand "bf-sde-${version}-unpacked" {} (''
     mkdir $out
     tar -C $out -xf ${sdeSpec.sde.src} --strip-components 1
-  '';
+  '' + applyPatches);
 in rec {
   isCmake = lib.strings.versionAtLeast version "9.6.0";
   topLevel = assert isCmake; ./. + "/CMakeLists.txt-${version}";
