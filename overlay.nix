@@ -185,4 +185,17 @@ let
     ## by underscores, e.g. "v9_2_0".
     bf-sde = self.recurseIntoAttrs (import ./bf-sde { pkgs = self; });
   };
-in [ overlay ]
+
+  ## This overlay is only used when building the BSP for the APS
+  ## BF2556.  It creates a special version of grpc that includes a
+  ## symlink for the so version of libgrpc++.so. This is needed by
+  ## the autoPatchelfHook to resolv this dependency when patching
+  ## the salRefApp binary.
+  overlayAPS = self: super: {
+    grpcForAPSSalRefApp = super.grpc.overrideAttrs (_: {
+      postFixup = ''
+        ln -sr $out/lib/libgrpc++.so $out/lib/libgrpc++.so.1
+      '';
+    });
+  };
+in [ overlay overlayAPS ]

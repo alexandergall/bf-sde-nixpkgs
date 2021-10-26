@@ -8,8 +8,8 @@ let
       derivation =
         { runCommand, version, unzip, stdenv, thrift, boost, libusb,
           curl, coreutils, bf-syslibs, bf-drivers, bf-utils, autoconf,
-          automake115x, autoPatchelfHook, icu60, i2c-tools, gawk, xz,
-          utillinux, mount, umount, cpio, gnused }:
+          automake115x, autoPatchelfHook, icu60, boost167, grpcForAPSSalRefApp,
+          i2c-tools, gawk, xz, utillinux, mount, umount, cpio, gnused }:
 
         let
           ## This is the full "APS One Touch" package. It contains the
@@ -28,7 +28,7 @@ let
 
           buildInputs = [ python thrift boost libusb curl unzip bf-syslibs.dev
                           bf-drivers.dev bf-utils autoconf automake115x
-                          autoPatchelfHook icu60 ];
+                          autoPatchelfHook icu60 boost167 grpcForAPSSalRefApp ];
           outputs = [ "out" "dev" ];
           enableParallelBuilding = true;
 
@@ -67,7 +67,6 @@ let
             pushd ${src'}/APS-One-touch*/release/sal*
             cp build/salRefApp $out/bin
             chmod a+x $out/bin/salRefApp
-            cp sal_tp_install/lib/*.so* $out/lib
             mkdir $out/config
             ## Configuration Files used by the SAL
             cp ${aps/sal.ini} -r $out/config/sal.ini
