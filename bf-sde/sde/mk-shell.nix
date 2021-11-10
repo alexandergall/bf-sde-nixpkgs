@@ -1,6 +1,9 @@
 { bf-sde, pkgs }:
 
-{ inputFn ? { pkgs, pythonPkgs }: {}, kernelRelease, platform ? "model" }:
+{ inputFn ? { pkgs, pythonPkgs }: {}, kernelRelease ? null, platform ? "model" }:
+
+assert platform == "model" -> kernelRelease == null;
+assert platform != "model" -> kernelRelease != null;
 
 let
   sde = bf-sde.override {
@@ -21,8 +24,8 @@ let
                                        ++ inputs.cpModules);
 in pkgs.mkShell {
   ## kmod provides insmod, procps provides sysctl
-  buildInputs = [ sde (sde.modulesForKernel kernelRelease) pythonEnv ]
-                  ++ inputs.pkgs;
+  buildInputs = [ sde pythonEnv ] ++ inputs.pkgs
+                ++ (pkgs.lib.optional (kernelRelease != null) (sde.modulesForKernel kernelRelease));
   shellHook = ''
     export P4_INSTALL=~/.bf-sde/${sde.version}
     export SDE=${sde}
