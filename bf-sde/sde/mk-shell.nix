@@ -1,14 +1,18 @@
 { bf-sde, pkgs }:
 
-{ inputFn ? { pkgs, pythonPkgs }: {}, kernelRelease ? null, platform ? "model" }:
-
-assert platform == "model" -> kernelRelease == null;
-assert platform != "model" -> kernelRelease != null;
+{ inputFn ? { pkgs, pythonPkgs }: {}, kernelID ? null,
+  kernelRelease ? null, platform ? "model" }:
 
 let
   sde = bf-sde.override {
     baseboard = bf-sde.baseboardForPlatform platform;
   };
+  kernelModules = pkgs.lib.optional (platform != "model")
+    (assert kernelID != null -> kernelRelease == null;
+      if kernelID != null then
+        sde.pkgs.kernel-modules.${kernelID}
+      else
+        sde.modulesForKernel kernelRelease);
   bf-drivers = sde.pkgs.bf-drivers;
   python = bf-drivers.pythonModule;
   defaultInputs = {
@@ -23,9 +27,8 @@ let
   pythonEnv = python.withPackages (ps: [ bf-drivers ]
                                        ++ inputs.cpModules);
 in pkgs.mkShell {
-  ## kmod provides insmod, procps provides sysctl
-  buildInputs = [ sde pythonEnv ] ++ inputs.pkgs
-                ++ (pkgs.lib.optional (kernelRelease != null) (sde.modulesForKernel kernelRelease));
+  buildInputs = [ sde pythonEnv ] ++ inputs.pkgs ++ kernelModules;
+
   shellHook = ''
     export P4_INSTALL=~/.bf-sde/${sde.version}
     export SDE=${sde}

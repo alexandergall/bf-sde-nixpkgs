@@ -1,3 +1,5 @@
+nixpkgsSrc:
+
 let
   grpc_1_17_0_attrs = super: pname: fetchSubmodules: sha256: rec {
     version = "1.17.0";
@@ -164,6 +166,23 @@ let
     ## This set contains one derivation per SDE version.  The names of
     ## the attributes are of the form "v<version>" with dots replaced
     ## by underscores, e.g. "v9_2_0".
-    bf-sde = self.recurseIntoAttrs (import ./bf-sde { pkgs = self; });
+    bf-sde = self.recurseIntoAttrs (import ./bf-sde {
+      pkgs = self;
+      inherit nixpkgsSrc;
+    });
+    ## Utility functions
+    bf-sde-versions =
+      with self.lib;
+      with builtins;
+      sort versionOlder
+        (unique (map (sde: sde.version)
+          (filter isDerivation (attrValues self.bf-sde))));
+    bf-sde-has-version = version:
+      assert self.lib.assertOneOf "version" version self.bf-sde-versions;
+      true;
+    bf-sde-foreach = f:
+      with self.lib;
+      with builtins;
+      map (sde: f sde) (filter isDerivation (attrValues self.bf-sde));
   };
 in [ overlay ]

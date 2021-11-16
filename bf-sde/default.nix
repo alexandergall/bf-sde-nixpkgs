@@ -1,4 +1,4 @@
-{ pkgs }:
+{ pkgs, nixpkgsSrc }:
 
 with pkgs;
 
@@ -106,7 +106,7 @@ let
         baseboardForPlatform = platform:
           let
             properties = import bf-platforms/properties.nix;
-          in assert lib.assertMsg (builtins.hasAttr platform properties) "Unknown platform: ${platform}";
+          in assert lib.assertOneOf "platform" platform (builtins.attrNames properties);
             properties.${platform}.baseboard;
 
         runtimeEnv = baseboard:
@@ -131,6 +131,12 @@ let
         mkShell = import sde/mk-shell.nix {
           bf-sde = self;
           inherit pkgs;
+        };
+
+        envCommand = SDE.callPackage sde/env {};
+        envStandalone = callPackage sde/env/standalone.nix {
+          bf-sde = self;
+          inherit nixpkgsSrc;
         };
 
         ## Support functions to create installers and a generic

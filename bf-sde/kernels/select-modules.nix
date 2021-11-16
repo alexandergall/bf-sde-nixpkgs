@@ -21,7 +21,7 @@ in
         name = "bf-sde-unsupported-kernel";
         passthru = {
           kernelID = "<unsupported>";
-	  inherit kernelRelease;
+          inherit kernelRelease;
         };
         phases = [ "installPhase" ];
         installPhase = ''

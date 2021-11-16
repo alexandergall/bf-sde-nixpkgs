@@ -42,6 +42,7 @@ Table of Contents
       * [Run on Tofino Model](#runOnModel)
       * [Run PTF Tests](#runPTF)
       * [Advanced Usage: Adding Packages to the Development Shell](#mkShellAdvanced)
+      * [Building a standalone Installer for the SDE](#standaloneSDE)
    * [The SDE Nix Package](#sdePackage)
       * [The Basic SDE Environment](#basicEnv)
       * [SDE Derivations (Sub-Packages)](#subPackages)
@@ -190,6 +191,7 @@ the `sha256` sums are as follows
 | bf-sde-9.4.0.tgz           | `daec162c2a857ae0175e57ab670b59341d39f3ac2ecd5ba99ec36afa15566c4e` |
 | bf-sde-9.5.0.tgz           | `61d55a06fa6f80fc1f859a80ab8897eeca43f06831d793d7ec7f6f56e6529ed7` |
 | bf-sde-9.6.0.tgz           | `61d55a06fa6f80fc1f859a80ab8897eeca43f06831d793d7ec7f6f56e6529ed7` |
+| bf-sde-9.7.0.tgz           | `a4ca94f2d9602535c52613f9d8ad3504b55d99283a4e3dfc64de19e24d767423` |
 
 #### <a name="BSPArchives"></a> BSP
 
@@ -221,6 +223,7 @@ Support](#baseboardPlatform))
 | `accton` `model`  | Intel | `bf-reference-bsp-9.4.0.tgz` | 9.4.0 | `269eecaf3186d7c9a061f6b66ce3d1c85d8f2022ce3be81ee9e532d136552fa4` |
 | `accton` `model`  | Intel | `bf-reference-bsp-9.5.0.tgz` | 9.5.0 | `b6a293c8e2694d7ea8d7b12c24b1d63c08b0eca3783eeb7d54e8ecffb4494c9f` |
 | `accton` `model`  | Intel | `bf-reference-bsp-9.6.0.tgz` | 9.6.0 | `88cb4b0978f23c28499faff75098f939374d9071859593353a18c2235e0be461` |
+| `accton` `model`  | Intel | `bf-reference-bsp-9.7.0.tgz` | 9.7.0 | `87f91540c0947edff2694cea9beeca78f95062b0aaca812a81c238ff39343e46` |
 | `aps_bf2556` `aps_bf6064` | APS Networks | `9.5.0_AOT1.5.1_SAL1.3.2.zip` | 9.4.0 9.5.0 | `2e56f51233c0eef1289ee219582ea0ec6d7455c3f78cac900aeb2b8214df0544`|
 | `inventec`   | Inventec     | `bf-inventec-bsp93.tgz`                   | 9.3.0 9.3.1 9.4.0 9.5.0 9.6.0 | `fd1e4852d0b7543dd5d2b81ab8e0150644a0f24ca87d59f1369216f1a6e796ad`|
 
@@ -271,7 +274,8 @@ $ git clone --branch <tag> https://github.com/alexandergall/bf-sde-nixpkgs.git
 $ cd bf-sde-nixpkgs
 ```
 
-Replace `<tag>` with the desired release tag.
+Replace `<tag>` with the desired release tag. See [below](#sdeShell)
+how to build and use the SDE for P4 program development.
 
 ## <a name="baseboardPlatform"></a> Baseboard and Platform Support
 
@@ -349,45 +353,64 @@ installed or any host or VM without such hardware (as long as Nix can
 be installed on the platform).  In the latter case, the Tofino ASIC
 software emulation (Tofino Model) can be used to test your programs.
 
-It is assumed that the user has full `sudo` privileges on the system
-required to execute all of the actions described below.
-
-To enter the shell, execute `make env` in the top-level directory of
-the repository
+The SDE shell is accessed through a command that must be installed
+before it can be used.  The installation is performed by building the
+`install` target from the `Makefile` in the top-level directory of the
+repository. Make sure that you followed all the [prerequisite
+steps](#prerequisites) before proceeding. It is sufficient to add only
+the `bf-sde` and `bf-reference-bsp` files to the Nix store that
+correspond to the SDE version that you want to build.
 
 ```
-$ make env
+$ make install
+installing 'sde-env-9.7.0'
+...
+```
+
+This installs the command for the latest available version of the SDE
+(9.7.0 in this example).  You will find that this build finishes very
+quickly and it does not yet build the actual SDE. That will happen
+only when the `sde-env-9.7.0` command is executed for the first time.
+The reason for this is that only at that time is it known to the
+system for which platform and possibly kernel it needs to build. This
+process takes, of course, place only once.
+
+After the build has finished, the user is greeted by the SDE shell
+
+```
+$ sde-env-9.7.0
+[... lots of build output ...]
 Can't determine platform from /etc/machine.conf, using Tofino model
 
-Barefoot SDE 9.5.0 on platform "model"
+Barefoot SDE 9.7.0 on platform "model"
 
 Load/unload kernel modules: $ sudo $(type -p bf_{kdrv,kpkt,knet}_mod_{load,unload})
 
 Compile: $ p4_build.sh <p4name>.p4
-Run:     $ run_switchd -p <p4name>
+Run:     $ run_switchd.sh -p <p4name>
 Run Tofino model:
          $ sudo $(type -p veth_setup.sh)
-         $ run_tofino_model -p <p4name>
-         $ run_switchd -p <p4name> -- --model
+         $ run_tofino_model.sh -p <p4name>
+         $ run_switchd.sh -p <p4name> -- --model
          $ sudo $(type -p veth_teardown.sh)
 Run PTF tests: run the Tofino model, then
          $ run_p4_tests.sh -p <p4name> -t <path-to-dir-with-test-scripts>
 
-Build artefacts and logs are stored in /home/gall/.bf-sde/9.5.0
+Build artifacts and logs are stored in /home/nixos/.bf-sde/9.7.0
 
 Use "exit" or CTRL-D to exit this shell.
 
 
-[nix-shell(SDE-9.5.0):~/bf-sde-nixpkgs]$
+[nix-shell(SDE-9.7.0):~]$
 ```
 
-The first line of output informs the user that the hardware platform
-could not be identified and the SDE is configured to support only the
-Tofino software emulation.  The Makefile uses the following method to
-determine the platform:
+The first line after the output of the build process informs the user
+that the hardware platform could not be identified and the SDE is
+configured to support only the Tofino software emulation.  The command
+uses the following method to determine the platform:
 
-   * Use the value of the `PLATFORM` Make variable
-   * If `PLATFORM` is not set, extract the `onie_machine` identifier
+   * Use the value passed with the `--platform` option
+   * If `--platform` is not supplied, extract the `onie_machine` identifier
      from `/etc/machine.conf`
    * If `etc/machine.conf` does not exist, use the `model` platform as
      a fallback
@@ -395,7 +418,7 @@ determine the platform:
 To select a platform manually, use
 
 ```
-$ make env PLATFORM=<platform>
+$ sde-env-<version> --platform=<platform>
 ```
 
 where `<platform>` can be any of the supported [platform
@@ -408,25 +431,70 @@ available in the search path and all SDE-specific environment
 variables are set to make compiling and running P4 programs straight
 forward.
 
-Once inside the shell, the location of the current directory is
-irrelevant for any of the given commands. An obvious choice is to
-enter the directory where the P4 source code is located but even that
-is not a requirement.
+The working directory of the SDE shell is inherited from the calling
+shell as is the command search path (`PATH`) [unless the `--pure`
+option](#pureSDE) is used
 
-By default the shell uses the most recent SDE available. To select a
-different version, use
-
-```
-$ make env VERSION=<version>
-```
-
-where `<version>` must be one of the choices offered by `make
-env-list-versions`, for example
+To install the command for any other version, pass the version number
+(e.g. 9.6.0 or 9.7.0) to the `make` command by setting the `VERSION`
+variable, e.g.
 
 ```
-$ make env-list-versions
-[ "latest" "v9_1_1" "v9_2_0" "v9_3_0" "v9_3_1" "v9_4_0" "v9_5_0" ]
+$ make install VERSION=9.6.0
+installing 'sde-env-9.6.0'
+...
 ```
+
+The available versions can be displayed with the `list-versions`
+target, e.g.
+
+```
+$ make list-versions
+9.1.1
+9.2.0
+9.3.0
+9.3.1
+9.4.0
+9.5.0
+9.6.0
+9.7.0
+```
+
+After installation, the command `sde-env-<version>`
+(e.g. `sde-env-9.7.0`) is available in the user's search path using a
+Nix-specific feature called a _profile_
+
+```
+$ type -p sde-env-9.7.0
+/home/gall/.nix-profile/bin/sde-env-9.7.0
+```
+
+The commands for different SDE versions can be installed concurrently
+
+```
+$ type -p sde-env-9.7.0 sde-env-9.6.0
+/home/gall/.nix-profile/bin/sde-env-9.7.0
+/home/gall/.nix-profile/bin/sde-env-9.6.0
+```
+
+For convenience, a separate `make` target exists to install all
+versions
+
+```
+$ make install-all
+```
+
+The command
+
+```
+$ make uninstall
+```
+
+removes all `sde-env-*` commands from the search path.
+
+To make a command available to all users, simply perform the
+installation as the `root` user to install the command in a global Nix
+profile that is part of the search path for all users.
 
 ### <a name="compile"></a>Compile
 
@@ -540,7 +608,7 @@ connect to the model.  If the shell was started in `model` mode,
 e.g. with
 
 ```
-$ make env PLATFORM=model
+$ sde-env-<version> --platform=model
 ```
 
 then the invocation is exactly the same as for the ASIC:
@@ -584,13 +652,11 @@ tested is run on the Tofino model.
 
 ### <a name="mkShellAdvanced"></a>Advanced Usage: Adding Packages to the Development Shell
 
-By default, the development shell only provides the packages and
-Python modules required for basic operation.  This should suffice for
-compiling and running any P4 program, but it may not be enough to run
-arbitrary control-plane Python code or PTF scripts.
+#### Python modules
 
 The default environment contains the Python interpreter required by
-the `bf-drivers` package, e.g. to access the `bfrt_grcp` modules
+the `bf-drivers` package (Python 3 for SDE 9.7.0 and newer and Python
+2 for all older SDE versions), e.g. to access the `bfrt_grcp` modules
 provided by that package.  This environment contains only the standard
 Python modules as well as all the modules provided by `bf-drivers`.
 This interpreter is the preferred match of `python` in the default
@@ -603,81 +669,166 @@ the `ptf-modules` package.
 
 Any of the control-plane or PTF scripts requiring non-standard Python
 modules will fail to run.  To solve this problem, the development
-shell can be called with an additional parameter
+shell can be called with two additional parameters
 
 ```
-$ make env INPUT_FN="<nix-expression>"
+$ sde-env-<version> --python-modules=<module>,... --python-ptf-modules=<module>,...
 ```
 
-The `<nix-expression>` must be a Nix expression which evaluates to a
-function of the form
-
-```Nix
-{ pkgs, pythonPkgs}: {
-  pkgs = [ ... ];
-  cpModules = [ ... ];
-  ptfModules = [ ... ];
-}
-```
-
-I.e. it must be a function which accepts a set with two attributes as
-input and returns a set with up to three attributes.  The `pkgs` input
-is the full set of Nix packages provided by `bf-sde-nixpkgs` (the
-standard Nix packages plus all SDE-specific packages and
-modifications).  The `pythonPkgs` input is the set of all available
-Python modules for the Python interpreter which is used to execute
-control-plane and PTF scripts.
-
-All attributes in the set returned by the function are optional and
-default to empty lists.
-
-   * `pkgs`. This list can contain any of the packages from the `pkgs`
-     input. They will be added to the default environment of the shell
-     (i.e. the commands provided by them will be available in the
-     search path).
-   * `cpModules`. This list can contain any of the packages from the
-     `pythonPkgs` input. They will be added to the default Python
-     environment when the shell is created.
-   * `ptfModules`. This list can contain any of the packages from the
-     `pythonPkgs` input.  They will be added to the Python environment
-     in which the PTF scripts are executed.
-
-For example, the standard environment uses `perl` from `/usr/bin` and
-doesn't know the `jsonschema` Python Module
+For example, the standard environment doesn't know the `jsonschema`
+Python Module
 
 ```
-$ make env
+$ sde-env-9.7.0
 [...]
-[nix-shell(SDE-9.4.0):~/bf-sde-nixpkgs]$ type perl
-perl is /usr/bin/perl
-
-[nix-shell(SDE-9.4.0):~/bf-sde-nixpkgs]$ perl -V:version
-version='5.28.1';
-
-[nix-shell(SDE-9.4.0):~/bf-sde-nixpkgs]$ python -c "import jsonschema; print(jsonschema)"
+[nix-shell(SDE-9.7.0):~]$ python -c "import jsonschema; print(jsonschema)"
 Traceback (most recent call last):
   File "<string>", line 1, in <module>
 ImportError: No module named jsonschema
 
-[nix-shell(SDE-9.4.0):~/bf-sde-nixpkgs]$
+[nix-shell(SDE-9.7.0):~]$
 ```
 
-Let's add Perl 5.32 and `jsonschema`
+Let's add `jsonschema` to the environment
 
 ```
-$ make env INPUT_FN="{pkgs, pythonPkgs}: { pkgs = [ pkgs.perl532 ]; cpModules = [ pythonPkgs.jsonschema ]; }"
+$ sde-env-9.7.0 --python-modules=jsonschema
 [...]
-[nix-shell(SDE-9.4.0):~/bf-sde-nixpkgs]$ type perl
+[nix-shell(SDE-9.7.0):~]$ python -c "import jsonschema; print(jsonschema)"
+<module 'jsonschema' from '/nix/store/6215k8b5pxvshkacq1dlg2m4bx3ij81a-python3-3.8.5-env/lib/python3.8/site-packages/jsonschema/__init__.py'>
+
+[nix-shell(SDE-9.7.0):~]$
+```
+
+This works in a similar manner as the native Python virtual
+environments (`venv`) but is based on Nix.
+
+Modules added with `--python-ptf-modules` are not visible to the
+Python interpteter:
+
+```
+$ sde-env-9.7.0 --python-ptf-modules=jsonschema
+[...]
+
+[nix-shell(SDE-9.7.0):~]$ python -c "import jsonschema; print(jsonschema)"
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+ModuleNotFoundError: No module named 'jsonschema'
+```
+
+What happens in this case is that the locations of those modules are
+added to the `PTF_PYTHONPATH` environment variable in the shell rather
+than adding the modules to the Python interpreter.  The
+`run_p4_tests.sh` script merges `PTF_PYTHONPATH` with `PYTHONPATH`
+before starting the PTF tests. The result is that modules added with
+`--python-ptf-modules` are only visible to the PTF scripts.
+
+The names of the modules must be exactly those used by Nix to identify
+them in the package repository. Here is a hack that can be used to get
+the list of avaiable modules for the Nixpkgs version used by the SDE:
+
+```
+$ echo -e $(nix eval '(with import ./. {}; with builtins; concatStringsSep "\n" (attrNames python3.pkgs))')
+```
+
+It needs to be executed in the top-level directory of the
+`bf-sde-nixepr` repository. To see the list for a different Python
+version, replace `python3` by, e.g. `python2`.
+
+#### <a name="pureSDE"></a>Non-Python Packages and Pure Nix Mode
+
+By default, the shell started by a `sde-env-*` command inherits the
+`PATH` from the calling shell. To be precise, `PATH` inside the shell
+consists of a number of paths from the Nix store with `PATH` inherited
+from the parent shell appended to it. The paths provided by Nix
+include `gcc`, `make`, `binutils`, `coreutils` (most standard Unix
+utilties), `diff`, `sed`, `gep`, `awk`, `tar`, `gzip`, `bzip`,
+`xz`. Those will take precedence over the same commands provided by
+the native package manager.
+
+More Nix-based packages can be added to the shell by using the
+`--pkgs` option of the `sde-env-*` command. For instance, suppose we
+have a system that provides Perl 5.28 with a native package:
+
+```
+$ type perl
+perl is /usr/bin/perl
+$ perl -V:version
+version='5.28.1';
+```
+
+By default, this version of `perl` would be available in the SDE
+shell. To override it with `perl` from Nix, start the shell with
+
+```
+$ sde-env-9.7.0 --pkgs=perl
+[...]
+
+[nix-shell(SDE-9.7.0):~]$ type perl
 perl is /nix/store/5fz4mi6ghnq6qxy8y39m3sbpzwr6nzaw-perl-5.32.0/bin/perl
 
-[nix-shell(SDE-9.4.0):~/bf-sde-nixpkgs]$ perl -V:version
+[nix-shell(SDE-9.7.0):~]$ perl -V:version
 version='5.32.0';
-
-[nix-shell(SDE-9.4.0):~/bf-sde-nixpkgs]$ python -c "import jsonschema; print(jsonschema)"
-<module 'jsonschema' from '/nix/store/2a6g6hm4bzlimk0shzkz56pxp5rzj85x-python-2.7.18-env/lib/python2.7/site-packages/jsonschema/__init__.pyc'>
-
-[nix-shell(SDE-9.4.0):~/bf-sde-nixpkgs]$
 ```
+
+To remove all dependencies on packages provided by the native package
+manager, the SDE shell can be started with the `--pure` option. In
+that case, `PATH` is not inherited from the calling shell and all
+commands that the user wants to have available in the SDE shell need
+to be added explicitly with `--pkgs` (apart from the default packages
+mentioned above).
+
+```
+$ sde-env-9.7.9 --pure
+[...]
+
+[nix-shell(SDE-9.7.0):~]$ type perl
+bash: type: perl: not found
+```
+
+As with the Python modules, the names passed with the `--pkgs` option
+must be the identifiers used by Nix for that specific package. To see
+the list of available packages, execute
+
+```
+$ echo -e $(nix eval '(let pkgs = import ./. {}; in with builtins; concatStringsSep "\n" (attrNames pkgs))')
+```
+in the top-level directory of the `bf-sde-nixpkgs` repository.
+
+### <a name="standaloneSDE"></a>Building a standalone Installer for the SDE
+
+The build procedure using `make install` requires Internet access to
+download the source code for various components and to access
+pre-built Nix packages from a binary cache. If, for any reason, the
+host on which the SDE is intended to be used has no or just restricted
+Internet access, it is possible to build a "standalone" installer for
+the SDE that does not require network access once it has been copied
+to the system.
+
+The installer is created with the `standalone` target
+
+```
+$ make standalone
+```
+
+for the most recent version or
+
+```
+$ make standalone VERSION=<version>
+```
+
+for any other supported version. This will create a self-extracting
+archive called `sde-env-<version>-standalone-installer` in the user's
+home directory. To use it, copy the file to the destination and
+execute it as root, e.g.
+
+```
+$ sudo sde-env-9.7.0-standalone-installer
+```
+
+The only requirement for this to work is that `nixpkgs` has been [installed
+on the system](#installNix). After the installation, the
+`sde-env-<version>` command is available for all users on the system.
 
 ## <a name="sdePackage"></a>The SDE Nix Package
 
@@ -822,8 +973,8 @@ In principle, one could use the output of `nix-build` directly by
 setting `PATH`, `P4_INSTALL` and `SDE_BUILD` appropriately. To avoid
 this inconvenience, the Nix package offers a method to easily create a
 new shell in which all of these settings are created automatically,
-which is exactly what `make env` [described previously](#sdeShell)
-does.
+which is exactly what the `sde-env-*` command [described
+previously](#sdeShell) does.
 
 <a name="twoStageBuild"></a>
 The output of `nix-build` is the closest thing to a binary package of
@@ -939,6 +1090,8 @@ be accessed with the "attribute path" `bf-sde.<version>.<attribute>`.
    * `baseboardForPlatform`, type: function
    * `support`, type: attribute set of functions
    * `mkShell`, type: function
+   * `envCommand`, type: derivation
+   * `envStandalone`, type: derivation
    * `test`, type: attribute set of derivations
 
 All of the attributes of type "derivation" can be built with
@@ -954,8 +1107,9 @@ $ nix eval '(with import ./. {}; bf-sde.latest.version)'
 ```
 
 The `mkShell` function is a special object that can only be used by
-the `nix-shell` command, for example as used by the `env` Makefile
-target to create the [development shell](#sdeShell).
+the `nix-shell` command, for example as used implicitly by the
+`sde-env-*` commands built with `make install` that provide a
+[development shell](#sdeShell).
 
 `version` is self-explanatory and `pkgs` has been described in the
 previous section. The other attributes are explained in detail below.
@@ -1191,13 +1345,33 @@ which the selected SDE is available and can be used to compile and run
 P4 programs on-the-fly.  It does not return a proper derivation and
 therefore cannot be called with `nix-build`. Instead it must be
 evaluated through the `nix-shell` command in a rather cryptic
-manner. The interested reader can have a look at the `env` Makefile
-target to see the exact invocation.
+manner. `mkShell` is used by `envCommand` to provide a user-friendly
+way to create a [developmen shell](#sdeShell).
 
 [Standard](#sdeShell) and [advanced](#mkShellAdvanced) usage of this
-function through the `env` Makefile target has been described earlier
-and is not repeated here (in particular the use of the `inputFn`
-argument to the `mkShell` function call).
+function through the `sde-env-*` commands has been described earlier.
+
+#### <a name="envCommand"></a>`envCommand`
+
+This derivation contains a single command called `sde-env-<version>`
+that launches a [development shell](#sdeShell).
+
+#### <a name="envStandalone"></a>`envStandalone`
+
+This derivation contains a single command called `installer.sh`. It is
+a self-extracting archive that contains the `envCommand` derivation
+together with all its recursive runtime dependencies (its "closure" in
+Nix-speak) for all supported platforms and kernels. The result of
+executing the installer is the same as building the `envCommand`
+derivation locally but does not require any network access. Its
+purpose is to facilitate the installation of the SDE on hosts in
+restricted environments.
+
+The installer itself requires a number of Nix packages to be present
+on the target system. To avoid a catch-22 situation, the [`standalone`
+target](#standaloneSDE) in the top-level `Makefile` of the repository
+creates an additional wrapper that installs these dependencies before
+calling the installer itself.
 
 #### <a name="examplesPTF"></a>`test`: P4_16 Example Programs and PTF Tests
 
