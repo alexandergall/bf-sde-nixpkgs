@@ -87,16 +87,14 @@ let
         ln -s ${p4Name}.p4 $path/${execName}.p4
         exec_name=${execName}
       fi
-      cmd="${bf-sde}/bin/p4_build.sh $buildFlags $path/$exec_name.p4"
-      echo "Build command: $cmd"
-      $cmd
+      echo "Building \"${p4Name}.p4\" as \"${execName}\" with p4c flags \"$buildFlags\""
+      ${bf-sde}/bin/p4_build.sh $buildFlags $path/$exec_name.p4
     '' else
     ''
       set -e
       export P4_INSTALL=$out
-      cmd="${bf-sde}/bin/p4_build.sh --p4-name=${execName} --p4c-flags="$buildFlags" $(realpath ${path}/${p4Name}.p4)"
-      echo "Build command: $cmd"
-      $cmd
+      echo "Building \"${p4Name}.p4\" as \"${execName}\" with p4c flags \"$buildFlags\""
+      ${bf-sde}/bin/p4_build.sh --p4-name=${execName} --p4c-flags="$buildFlags" $(realpath ${path}/${p4Name}.p4)
     '';
 
     installPhase = ''true'';
