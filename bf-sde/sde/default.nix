@@ -9,8 +9,8 @@
 ## rules concerning the distribution of SDE components to third
 ## parties imposed by Intel.
 
-{ runtime ? false, baseboard, version, src, passthru ? {}, lib,
-  stdenv, buildEnv, callPackage, bf-syslibs, bf-drivers,
+{ runtime ? false, baseboard, version, src, patches, passthru ? {},
+  lib, stdenv, buildEnv, callPackage, bf-syslibs, bf-drivers,
   bf-drivers-runtime, bf-utils, bf-platforms, p4c, tofino-model,
   ptf-modules, ptf-utils, ptf-utils-runtime }:
 
@@ -33,16 +33,23 @@ let
   addToEnv = stdenv.mkDerivation {
     pname = "bf-sde-misc-components";
     inherit version src;
+    patches = patches.mainCMake or [];
     phases = [ "unpackPhase" "installPhase" ];
     installPhase = ''
       mkdir $out
       cp *manifest $out
 
-    '' + lib.optionalString (! runtime) ''
-
-      mkdir -p $out/pkgsrc/p4-build
-      tar -C $out/pkgsrc/p4-build -xf packages/p4-build* --strip-component 1
-      chmod a+x $out/pkgsrc/p4-build/tools/*
+    '' + lib.optionalString (! runtime)
+      (if (lib.versionOlder version "9.7.0") then ''
+         mkdir -p $out/pkgsrc/p4-build
+         tar -C $out/pkgsrc/p4-build -xf packages/p4-build* --strip-component 1
+         chmod a+x $out/pkgsrc/p4-build/tools/*
+        ''
+       else ''
+         mkdir $out/p4_build
+         cp p4studio/CMakeLists.txt $out/p4_build
+         cp -r cmake $out/p4_build
+       '') + ''
 
       mkdir -p $out/pkgsrc/p4-examples
       tar -C $out/pkgsrc/p4-examples -xf packages/p4-examples* \
@@ -60,6 +67,8 @@ let
   };
   tools = callPackage ./tools.nix {
     inherit src version sdeEnv runtime baseboard;
+    patches = patches.mainTools or [];
+    python = bf-drivers.pythonModule;
   };
 in buildEnv {
   name = "bf-sde" + maybeBaseboard + maybeRuntime + "-${version}";

@@ -1,0 +1,16 @@
+diff -Naur ptf-modules-9.7.0.orig/bf-pktpy/bf_pktpy/library/helpers/mac.py ptf-modules-9.7.0/bf-pktpy/bf_pktpy/library/helpers/mac.py
+--- ptf-modules-9.7.0.orig/bf-pktpy/bf_pktpy/library/helpers/mac.py	2021-10-07 06:10:30.000000000 +0200
++++ ptf-modules-9.7.0/bf-pktpy/bf_pktpy/library/helpers/mac.py	2021-10-12 20:40:27.955056872 +0200
+@@ -22,7 +22,11 @@
+     """
+     # noinspection PyBroadException
+     try:
+-        return getmac.get_mac_address()
++        mac = getmac.get_mac_address()
++        if mac is None:
++            return "00:00:00:00:de:ad"
++        else:
++            return mac
+     except Exception:
+         return "00:00:00:00:00:00"
+ 

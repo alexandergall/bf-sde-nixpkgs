@@ -1,0 +1,21 @@
+diff -Naur bf-sde-9.7.0.orig/run_p4_tests.sh bf-sde-9.7.0/run_p4_tests.sh
+--- bf-sde-9.7.0.orig/run_p4_tests.sh	2021-10-07 06:11:51.000000000 +0200
++++ bf-sde-9.7.0/run_p4_tests.sh	2021-10-11 20:48:58.303935089 +0200
+@@ -230,7 +230,7 @@
+ fi
+ STS_HOST_STR="--host $STATUS_SERVER"
+ if [ $SKIP_STATUS_SRV = false ]; then
+-  python3 $SDE_INSTALL/$PYTHON_LIB_DIR/site-packages/p4testutils/bf_switchd_dev_status.py \
++  $SDE_INSTALL/$PYTHON_LIB_DIR/site-packages/p4testutils/bf_switchd_dev_status.py \
+     $STS_HOST_STR $STS_PORT_STR
+ fi
+ 
+@@ -259,7 +259,7 @@
+ fi
+ 
+ #Run PTF tests
+-sudo env "PATH=$PATH" "PYTHONPATH=$PYTHONPATH" "GEN_XML_OUTPUT=$GEN_XML_OUTPUT" "PKTPY=$PKTPY" python3 \
++sudo env "PATH=$PATH" "PYTHONPATH=$PYTHONPATH" "GEN_XML_OUTPUT=$GEN_XML_OUTPUT" "PKTPY=$PKTPY" \
+     $SDE_INSTALL/$PYTHON_LIB_DIR/site-packages/p4testutils/run_ptf_tests.py \
+     --arch $CHIP_FAMILY \
+     --target $TARGET \

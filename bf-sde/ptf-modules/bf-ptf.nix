@@ -50,7 +50,10 @@ in if buildSystem.isCmake
        ## directory to follow propagated build inputs and nix-support
        ## is part of the "dev" output.
        pythonPath = [ bf-drivers.dev bf-pktpy ]
-                    ++ (with python.pkgs; [ thrift scapy-helper ]);
+                    ++ (with python.pkgs; [ thrift scapy-helper ]
+                                          ++ lib.optional (lib.versionAtLeast version "9.7.0")
+                                            [ getmac ]
+                    );
        postFixup = ''
          wrapPythonProgramsIn $out/bin "$out/bin $pythonPath"
        '';

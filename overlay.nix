@@ -1,3 +1,5 @@
+nixpkgsSrc:
+
 let
   grpc_1_17_0_attrs = super: pname: fetchSubmodules: sha256: rec {
     version = "1.17.0";
@@ -10,6 +12,73 @@ let
     };
     ## Fix issue with glibc 2.30 and later
     patches = [ ./grpc/1.17.0-glibc.patch ];
+  };
+  pythonCommon = super: python-self: python-super: {
+    grpcio = python-super.grpcio.overrideAttrs (oldAttrs:
+      grpc_1_17_0_attrs super "grpcio" true "06jpr27l71wz0fbifizdsalxvpraix7s5dg30pgd2wvd77ky5p3h");
+    ## Required by Intel's modified PTF from ptf-modules/bf-ptf
+    scapy-helper = python-super.buildPythonPackage rec {
+      pname = "scapy_helper";
+      version = "0.10.0";
+
+      buildInputs = with python-self; [ pyperclip scapy ];
+      propagatedBuildInputs = with python-self; [ tabulate ];
+      src = python-super.fetchPypi {
+        inherit pname version;
+        sha256 = "1xkmkb2vx2j5ca2367m1v4p821nnsm7rfxp621bbkxsav8kgc77g";
+      };
+      doCheck = python-self.python.isPy2;
+    };
+    pyperclip = python-super.pyperclip.overridePythonAttrs (_:  rec {
+      pname = "pyperclip";
+      version = "1.8.2";
+
+      src = python-super.fetchPypi {
+        inherit pname version;
+        sha256 = "0mxzm43z2anr55gyz7awagvam4d5c2rlxhp9hjyg0d29n2l58lhh";
+      };
+    });
+    ## tenjin.py is included in the bf-drivers packages and
+    ## installed in
+    ## SDE_INSTALL/lib/python2.7/site-packages/tofino_pd_api/.
+    ## The module is used to build bf-diags, but it appears to
+    ## have a bug which causes the build to fail. Inspection of
+    ## a working build environment on ONL reveals that the
+    ## module is actually overridden by tenjin from
+    ## /usr/local/lib. We do the same here.
+    tenjin = python-super.buildPythonPackage rec {
+      pname = "Tenjin";
+      version = "1.1.1";
+      name = "${pname}-${version}";
+
+      src = python-super.fetchPypi {
+        inherit pname version;
+        sha256 = "15s681770h7m9x29kvzrqwv20ncg3da3s9v225gmzz60wbrl9q55";
+      };
+    };
+
+    ## Used to compile the protobuf python bindings for the aps_bf2556 baseboard.
+    grpcio-tools = python-super.grpcio-tools.overrideAttrs (oldAttrs: rec {
+      version = "1.17.0";
+      inherit (oldAttrs) pname;
+      name = "${pname}-${version}";
+
+      ## setuptools is needed by the grpc_tools scripts
+      propagatedBuildInputs = oldAttrs.propagatedBuildInputs ++ (with python-self; [ setuptools ]);
+      src = python-self.fetchPypi {
+        inherit version pname;
+        sha256 = "0qfjxvgk78w3m4wwk10qqkv027qhirrnc7c1dx41l1i1hwhws5wl";
+      };
+      ## The tools are intended to be run as scripts. Make them executable so
+      ## wrapPythonPrograms can find them.
+      postInstall = ''
+        chmod a+x $out/lib/${python-self.python.libPrefix}/site-packages/grpc_tools/*.py
+      '';
+      ## By default, only scripts in $out are wrapped.
+      postFixup = ''
+        wrapPythonProgramsIn $out/lib/${python-self.python.libPrefix}/site-packages/grpc_tools "$out $pythonPath"
+      '';
+    });
   };
 
   overlay = self: super: rec {
@@ -83,52 +152,8 @@ let
     });
 
     python2 = super.python2.override {
-      packageOverrides = python-self: python-super: {
-        grpcio = python-super.grpcio.overrideAttrs (oldAttrs:
-          grpc_1_17_0_attrs super "grpcio" true "06jpr27l71wz0fbifizdsalxvpraix7s5dg30pgd2wvd77ky5p3h");
-
-        ## Used to compile the protobuf python bindings for the aps_bf2556 baseboard.
-        grpcio-tools = python-super.grpcio-tools.overrideAttrs (oldAttrs: rec {
-          version = "1.17.0";
-          inherit (oldAttrs) pname;
-          name = "${pname}-${version}";
-
-          ## setuptools is needed by the grpc_tools scripts
-          propagatedBuildInputs = oldAttrs.propagatedBuildInputs ++ (with python2.pkgs; [ setuptools ]);
-          src = python-self.fetchPypi {
-            inherit version pname;
-            sha256 = "0qfjxvgk78w3m4wwk10qqkv027qhirrnc7c1dx41l1i1hwhws5wl";
-          };
-          ## The tools are intended to be run as scripts. Make them executable so
-          ## wrapPythonPrograms can find them.
-          postInstall = ''
-            chmod a+x $out/lib/${python2.libPrefix}/site-packages/grpc_tools/*.py
-          '';
-          ## By default, only scripts in $out are wrapped.
-          postFixup = ''
-            wrapPythonProgramsIn $out/lib/${python2.libPrefix}/site-packages/grpc_tools "$out $pythonPath"
-          '';
-        });
-
-        ## tenjin.py is included in the bf-drivers packages and
-        ## installed in
-        ## SDE_INSTALL/lib/python2.7/site-packages/tofino_pd_api/.
-        ## The module is used to build bf-diags, but it appears to
-        ## have a bug which causes the build to fail. Inspection of
-        ## a working build environment on ONL reveals that the
-        ## module is actually overridden by tenjin from
-        ## /usr/local/lib. We do the same here.
-        tenjin = python-super.buildPythonPackage rec {
-          pname = "Tenjin";
-          version = "1.1.1";
-          name = "${pname}-${version}";
-
-          src = python-super.fetchPypi {
-            inherit pname version;
-            sha256 = "15s681770h7m9x29kvzrqwv20ncg3da3s9v225gmzz60wbrl9q55";
-          };
-        };
-
+      packageOverrides = python-self: python-super:
+        (pythonCommon super python-self python-super) // {
         ply = python-super.ply.overrideAttrs (_: rec {
           pname = "ply";
           version = "3.9";
@@ -138,33 +163,12 @@ let
             sha256 = "0gpl0yli3w03ipyqfrp3w5nf0iawhsq65anf5wwm2wf5p502jzhd";
           };
         });
-
-        ## Required by Intel's modified PTF from ptf-modules/bf-ptf
-        scapy-helper = python-super.buildPythonPackage rec {
-          pname = "scapy_helper";
-          version = "0.10.0";
-
-          buildInputs = with python-self; [ pyperclip scapy ];
-          propagatedBuildInputs = with python-self; [ tabulate ];
-          src = python-super.fetchPypi {
-            inherit pname version;
-            sha256 = "1xkmkb2vx2j5ca2367m1v4p821nnsm7rfxp621bbkxsav8kgc77g";
-          };
-        };
-        pyperclip = python-super.pyperclip.overridePythonAttrs (_:  rec {
-          pname = "pyperclip";
-          version = "1.8.2";
-
-          src = python-super.fetchPypi {
-            inherit pname version;
-            sha256 = "0mxzm43z2anr55gyz7awagvam4d5c2rlxhp9hjyg0d29n2l58lhh";
-          };
-        });
       };
     };
 
     python3 = super.python3.override {
-      packageOverrides = python-self: python-super: {
+      packageOverrides = python-self: python-super:
+        (pythonCommon super python-self python-super) // {
         jsl = python-super.buildPythonPackage rec {
           pname = "jsl";
           version = "0.2.4";
@@ -183,7 +187,24 @@ let
     ## This set contains one derivation per SDE version.  The names of
     ## the attributes are of the form "v<version>" with dots replaced
     ## by underscores, e.g. "v9_2_0".
-    bf-sde = self.recurseIntoAttrs (import ./bf-sde { pkgs = self; });
+    bf-sde = self.recurseIntoAttrs (import ./bf-sde {
+      pkgs = self;
+      inherit nixpkgsSrc;
+    });
+    ## Utility functions
+    bf-sde-versions =
+      with self.lib;
+      with builtins;
+      sort versionOlder
+        (unique (map (sde: sde.version)
+          (filter isDerivation (attrValues self.bf-sde))));
+    bf-sde-has-version = version:
+      assert self.lib.assertOneOf "version" version self.bf-sde-versions;
+      true;
+    bf-sde-foreach = f:
+      with self.lib;
+      with builtins;
+      map (sde: f sde) (filter isDerivation (attrValues self.bf-sde));
   };
 
   ## This overlay is only used when building the BSP for the APS

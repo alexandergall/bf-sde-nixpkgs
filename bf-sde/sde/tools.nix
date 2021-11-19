@@ -1,24 +1,13 @@
-{ src, version, sdeEnv, runtime, baseboard, stdenv, lib, makeWrapper,
-  python, coreutils, ethtool, iproute, utillinux, gnugrep, gnused,
-  gawk, less, findutils, gcc, gnumake, which, procps, bash }:
+{ src, patches, version, sdeEnv, runtime, baseboard, stdenv, lib,
+  makeWrapper, python, coreutils, ethtool, iproute, utillinux,
+  gnugrep, gnused, gawk, less, findutils, gcc, gnumake, which, procps,
+  bash, cmake }:
 
 stdenv.mkDerivation {
-  inherit version src;
+  inherit version src patches;
   pname = "bf-tools" + lib.optionalString runtime "-runtime";
 
   buildInputs = [ makeWrapper ];
-  patches = [ ./run_switchd.patch ] ++
-            (if (lib.strings.versionOlder version "9.6.0") then
-              [ ./run_bfshell.patch ]
-             else
-               [ ./run_bfshell-9.6.0.patch ]) ++
-            (if (lib.strings.versionOlder version "9.5.0") then
-              [./run_p4_tests.patch ]
-             else
-               (if (lib.strings.versionOlder version "9.6.0") then
-                 [./run_p4_tests-9.5.0.patch ]
-                else
-                  [./run_p4_tests-9.6.0.patch ]));
 
   installPhase = ''
     mkdir -p $out/bin
@@ -67,11 +56,19 @@ stdenv.mkDerivation {
       "${lib.strings.makeBinPath [ coreutils utillinux gawk python ]}" \
       --run "export PYTHONPATH=\$PTF_PYTHONPATH:\$PYTHONPATH"
 
-    ## This script was copied from the tools provided for
-    ## the BF Academy courses.
-    copy ${./p4_build.sh} p4_build.sh \
-      "${lib.strings.makeBinPath [ coreutils utillinux gnugrep gnused gawk
-                                   less findutils gcc gnumake which python ]}"
+  '' + (if (lib.versionOlder version "9.7.0") then
+          ''
+            ## This script was copied from the tools provided for
+            ## the BF Academy courses.
+            copy ${./p4_build.sh} p4_build.sh \
+              "${lib.strings.makeBinPath [ coreutils utillinux gnugrep gnused gawk
+                                           less findutils gcc gnumake which python ]}"
 
-  '';
+          ''
+        else
+          ''
+            copy ${./p4_build-cmake} p4_build.sh \
+              "${lib.strings.makeBinPath [ sdeEnv coreutils utillinux cmake gnumake
+                                           gcc findutils gnused python ]}"
+          '');
 }

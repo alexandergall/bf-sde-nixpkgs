@@ -84,7 +84,7 @@ let
     pname = "${execName}-artifacts";
     inherit version src p4Name patches buildFlags;
 
-    buildPhase = ''
+    buildPhase = if lib.versionOlder bf-sde.version "9.7.0" then ''
       set -e
       export P4_INSTALL=$out
       export SDE_BUILD=$TEMP
@@ -97,6 +97,13 @@ let
         exec_name=${execName}
       fi
       cmd="${bf-sde}/bin/p4_build.sh $buildFlags $path/$exec_name.p4"
+      echo "Build command: $cmd"
+      $cmd
+    '' else
+    ''
+      set -e
+      export P4_INSTALL=$out
+      cmd="${bf-sde}/bin/p4_build.sh --p4-name=${execName} --p4c-flags="$buildFlags" $(realpath ${path}/${p4Name}.p4)"
       echo "Build command: $cmd"
       $cmd
     '';

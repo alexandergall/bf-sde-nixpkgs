@@ -1,0 +1,23 @@
+diff -Naur bf-sde-9.7.0.orig/cmake/P4Build.cmake bf-sde-9.7.0/cmake/P4Build.cmake
+--- bf-sde-9.7.0.orig/cmake/P4Build.cmake	2021-10-07 06:03:12.000000000 +0200
++++ bf-sde-9.7.0/cmake/P4Build.cmake	2021-10-13 15:52:08.558350323 +0200
+@@ -187,8 +187,8 @@
+   )
+   # generate pd.c, pdcli.c, p4_pd_rpc.thrift
+   add_custom_command(OUTPUT ${PDDOTC} ${PDCLIDOTC} ${PDRPCDOTTHRIFT}
+-    COMMAND ${PYTHON_EXECUTABLE} ${PDGEN} --path ${t}/${target} --manifest ${t}/${target}/manifest.json ${COMPUTED_PDFLAGS} ${PDFLAGS_INTERNAL} -o ${t}/${target}
+-    COMMAND ${PYTHON_EXECUTABLE} ${PDGENCLI} ${t}/${target}/cli/pd.json -po ${t}/${target}/src -xo ${t}/${target}/cli/xml -xd ${CMAKE_INSTALL_PREFIX}/share/cli/xml -ll ${CMAKE_INSTALL_PREFIX}/lib/${target}pd/${t}
++    COMMAND ${PDGEN} --path ${t}/${target} --manifest ${t}/${target}/manifest.json ${COMPUTED_PDFLAGS} ${PDFLAGS_INTERNAL} -o ${t}/${target}
++    COMMAND ${PDGENCLI} ${t}/${target}/cli/pd.json -po ${t}/${target}/src -xo ${t}/${target}/cli/xml -xd ${CMAKE_INSTALL_PREFIX}/share/cli/xml -ll ${CMAKE_INSTALL_PREFIX}/lib/${target}pd/${t}
+     DEPENDS ${t}/${target}/manifest.json
+   )
+   add_custom_target(${t}-${target}-gen DEPENDS ${PDDOTC} ${PDCLIDOTC} ${PDRPCDOTTHRIFT} driver)
+@@ -200,7 +200,7 @@
+       COMMAND ${THRIFT_COMPILER} --gen py  -o ${t}/${target} -r ${t}/${target}/thrift/p4_pd_rpc.thrift
+       COMMAND mv -f ${t}/${target}/gen-cpp/${t}.h ${t}/${target}/gen-cpp/p4_prefix.h
+       COMMAND sed --in-place 's/include \"${t}.h\"/include \"p4_prefix.h\"/' ${t}/${target}/gen-cpp/${t}.cpp
+-      COMMAND ${PYTHON_EXECUTABLE} ${PDSPLIT} ${t}/${target}/gen-cpp/${t}.cpp ${t}/${target}/gen-cpp 8
++      COMMAND ${PDSPLIT} ${t}/${target}/gen-cpp/${t}.cpp ${t}/${target}/gen-cpp 8
+       DEPENDS ${t}/${target}/manifest.json ${THRIFT_COMPILER}
+     )
+     add_custom_target(${t}-${target}-gen-thrift DEPENDS ${t}-${target}-gen ${PDTHRIFT})
