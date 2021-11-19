@@ -1,0 +1,12 @@
+diff -Naur bf-reference-bsp-9.7.0-BF2556_1.0.0.orig/platforms/apsn/src/bf_pltfm_smb/bf_pltfm_smb.c bf-reference-bsp-9.7.0-BF2556_1.0.0/platforms/apsn/src/bf_pltfm_smb/bf_pltfm_smb.c
+--- bf-reference-bsp-9.7.0-BF2556_1.0.0.orig/platforms/apsn/src/bf_pltfm_smb/bf_pltfm_smb.c	2021-11-15 12:33:14.000000000 +0100
++++ bf-reference-bsp-9.7.0-BF2556_1.0.0/platforms/apsn/src/bf_pltfm_smb/bf_pltfm_smb.c	2021-11-19 16:29:57.952544465 +0100
+@@ -17,8 +17,6 @@
+ 
+ char *getSMBusDev() {
+     char resp[256] = {0};
+-    exe_system_cmd("sudo modprobe i2c-i801", resp);
+-    resp[strcspn(resp, "\n")] = 0;
+     if (access("/sys/bus/i2c/devices/", F_OK) != -1) {
+         exe_system_cmd("ls /sys/bus/i2c/devices/", resp);
+         char delim[] = "\n";

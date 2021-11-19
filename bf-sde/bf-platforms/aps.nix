@@ -3,17 +3,19 @@
 let
   ## This derivation uses the reference BSP as source and merges the
   ## APS BSP into it.
-  mkBaseboard = baseboard: { diff, zipPattern, CFLAGS }:
+  mkBaseboard = baseboard: { diff, pattern, CFLAGS }:
     let
       derivation =
-        { runCommand, version, unzip, stdenv, thrift, boost, libusb,
-          curl, coreutils, bf-syslibs, bf-drivers, bf-utils, autoconf,
-          automake115x, autoPatchelfHook, icu60, boost167, grpcForAPSSalRefApp,
-          i2c-tools, gawk, xz, utillinux, mount, umount, cpio, gnused }:
+        { runCommand, version, buildSystem, unzip, stdenv, buildEnv,
+          thrift, boost, libusb, curl, coreutils, bf-syslibs,
+          bf-drivers, bf-drivers-runtime, bf-utils, cmake, autoconf,
+          automake115x, autoPatchelfHook, boost167,
+          grpcForAPSSalRefApp, i2c-tools, gawk, xz, utillinux, mount,
+          umount, cpio, gnused }:
 
         let
           ## This is the full "APS One Touch" package. It contains the
-          ## zip files of the BSPs in the bsp directory.
+          ## BSPs in the bsp directory, either zipped or plain.
           src' = runCommand "aps-unpack-bsp" {} ''
             mkdir $out
             cd $out
@@ -21,83 +23,137 @@ let
           '';
           python = bf-drivers.pythonModule;
 
-        in stdenv.mkDerivation {
-          pname = "bf-platforms-${baseboard}";
-          inherit version CFLAGS;
-          inherit (reference) src;
+          ## This is the platform package without the salRefApp binary
+          aps = stdenv.mkDerivation {
+            pname = "bf-platforms-${baseboard}-aux";
+            inherit version CFLAGS;
+            inherit (reference) src;
 
-          buildInputs = [ python thrift boost libusb curl unzip bf-syslibs.dev
-                          bf-drivers.dev bf-utils autoconf automake115x
-                          autoPatchelfHook icu60 boost167 grpcForAPSSalRefApp ];
-          outputs = [ "out" "dev" ];
-          enableParallelBuilding = true;
+            buildInputs =
+              [ python thrift boost libusb curl unzip
+                bf-syslibs.dev bf-drivers.dev bf-utils ] ++
+              (if buildSystem.isCmake then
+                [ cmake ]
+               else
+                 [ autoconf automake115x ]);
 
-          ## Merge the APS BSP with the reference BSP
-          preConfigure = ''
-            mkdir bf-platforms
-            tar -C bf-platforms -xf packages/bf-platforms* --strip-components 1
-            cd bf-platforms
-            unzip ${src'}/bsp/${zipPattern}
-            patch -p1 <${diff}
-            for patch in ${builtins.concatStringsSep " " ((patches.default or []) ++ (patches.${baseboard} or []))}; do
-              patch -p1 <$patch
-            done
+            outputs = [ "out" "dev" ];
+            enableParallelBuilding = true;
 
-            substituteInPlace platforms/apsn/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c \
-              --replace onie-syseeprom $out/bin/onie-syseeprom
+            preConfigure =
+              ## Merge the APS BSP with the reference BSP
+              ''
+                mkdir bf-platforms
+                tar -C bf-platforms -xf packages/bf-platforms* --strip-components 1
+                cd bf-platforms
+                if [ -n "$(shopt -s nullglob; echo ${src'}/bsp/${pattern}.zip)" ]; then
+                  unzip ${src'}/bsp/${pattern}.zip
+                else
+                  cp -r ${src'}/bsp/${pattern}/* .
+                  chmod -R a+w .
+                fi
+                if [ -f ${diff} ]; then
+                  patch -p1 <${diff}
+                fi
+                for patch in ${builtins.concatStringsSep " " ((patches.default or []) ++ (patches.${baseboard} or []))}; do
+                  patch -p1 <$patch
+                done
 
-          '';
+                substituteInPlace platforms/apsn/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c \
+                  --replace onie-syseeprom $out/bin/onie-syseeprom
+              '' + buildSystem.preConfigure {
+                package = "bf-platforms";
+                preCmds = ''
+                  substituteInPlace CMakeLists.txt --replace "PROJECT_SOURCE_DIR}" "PROJECT_SOURCE_DIR}/\''${BF_PKG_DIR}/bf-platforms"
+                  export SDE_INSTALL=$out
+                '';
+                cmakeRules = ''
+                  find_package(Thrift REQUIRED)
+                  add_subdirectory(''${BF_PKG_DIR}/bf-platforms)
+                '';
+              };
 
-          configureFlags = [
-            "--with-tofino"
-            "--with-tof-brgup-plat"
-            "enable_thrift=yes"
-          ];
+            cmakeFlags = [
+              "-DSTANDALONE=OFF"
+              "-DASIC=ON"
+              "-DNEWPORT=OFF"
+              "-DACCTON=OFF"
+              "-DAPSN=ON"
+              "-DACCTON-DIAGS=OFF"
+              "-DNEWPORT-DIAGS=OFF"
+            ];
 
-          postInstall = ''
+            configureFlags = [
+              "--with-tofino"
+              "--with-tof-brgup-plat"
+              "enable_thrift=yes"
+            ];
 
-            ## The APS boxes actually don't have a CP2112 (at least
-            ## not the BF2556X_1T). Maybe we should just remove the
-            ## scripts that reference the cp2112 utility.
-            for file in $out/bin/*.sh; do
-              substituteInPlace $file --replace ./cp2112 $out/bin/cp2112
-            done
+            postInstall = ''
+              ## The APS boxes actually don't have a CP2112 (at least
+              ## not the BF2556X_1T). Maybe we should just remove the
+              ## scripts that reference the cp2112 utility.
+              for file in $out/bin/*.sh; do
+                substituteInPlace $file --replace ./cp2112 $out/bin/cp2112
+              done
 
-            ## Install the pre-built SAL
-            pushd ${src'}/APS-One-touch*/release/sal*
-            cp build/salRefApp $out/bin
-            chmod a+x $out/bin/salRefApp
-            mkdir $out/config
-            ## Configuration Files used by the SAL
-            cp ${aps/sal.ini} -r $out/config/sal.ini
-            cp ${aps/logger.ini} -r $out/config/logger.ini
+              ## Generate the gRPC python bindings for the SAL
+              pushd ${src'}/APS-One-touch*/release/sal*
+              ${python.pkgs.grpcio-tools}/lib/${python.libPrefix}/site-packages/grpc_tools/protoc.py -I ./proto \
+                --python_out=$out/lib/${python.libPrefix}/site-packages/ \
+                --grpc_python_out=$out/lib/${python.libPrefix}/site-packages/ \
+                proto/sal_services.proto
+              popd
 
-            ## Generate the gRPC python bindings for the SAL
-            ${python.pkgs.grpcio-tools}/lib/${python.libPrefix}/site-packages/grpc_tools/protoc.py -I ./proto \
-              --python_out=$out/lib/${python.libPrefix}/site-packages/ \
-              --grpc_python_out=$out/lib/${python.libPrefix}/site-packages/ \
-              proto/sal_services.proto
-            popd
+              substitute ${./aps/onie-syseeprom} $out/bin/onie-syseeprom \
+                --subst-var-by PATH \
+                  "${lib.strings.makeBinPath [ coreutils i2c-tools gawk xz utillinux mount umount cpio gnused ]}"
+              chmod a+x $out/bin/onie-syseeprom
+            '';
+          };
 
-            substitute ${./aps/onie-syseeprom} $out/bin/onie-syseeprom \
-              --subst-var-by PATH \
-                "${lib.strings.makeBinPath [ coreutils i2c-tools gawk xz utillinux mount umount cpio gnused ]}"
-            chmod a+x $out/bin/onie-syseeprom
-          '';
+          ## This package contains only the salRefApp pre-built binary
+          ## treated with autoPatchelf.  It is built separately from
+          ## the APS platform package above because it requires some
+          ## of the shared libraries from there for patchelf. Lumping
+          ## it all together would result in unnecessary work for
+          ## autoPatchelf. It also produces a bad RPATH for
+          ## libstdc++.so.6 for the 9.7.0 version of the package.
+          salRefApp = stdenv.mkDerivation {
+            pname = "aps-sal-refapp";
+            inherit version;
+            src = src';
+            buildInputs = [ autoPatchelfHook aps grpcForAPSSalRefApp boost167 bf-drivers-runtime ];
+            installPhase = ''
+              mkdir -p $out/bin
+              cp APS-One-touch*/release/sal*/build/salRefApp $out/bin
+              chmod a+x $out/bin/salRefApp
+              mkdir $out/config
+              cp ${aps/sal.ini} -r $out/config/sal.ini
+              cp ${aps/logger.ini} -r $out/config/logger.ini
+            '';
+          };
+        in
+          ## Now we assemble both parts into the proper APS platform
+          ## package.
+          buildEnv {
+           name = "bf-platforms-${baseboard}-${version}";
+           paths = [ aps ] ++ (lib.optional (baseboard == "aps_bf2556") salRefApp);
         };
     in callPackage derivation {};
 in lib.mapAttrs mkBaseboard {
   aps_bf2556 = {
     diff = "bf2556x_1t.diff";
-    zipPattern = "*BF2556*.zip";
+    pattern = "*BF2556*";
     CFLAGS = [
       "-Wno-error=unused-result"
       "-Wno-error=unused-variable"
+      "-Wno-error=format"
     ];
   };
   aps_bf6064 = {
     diff = "bf6064x_t.diff";
-    zipPattern = "*BF6064*.zip";
+    pattern = "*BF6064*";
     CFLAGS = [
       "-Wno-error=maybe-uninitialized"
       "-Wno-error=sizeof-pointer-memaccess"

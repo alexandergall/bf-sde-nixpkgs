@@ -392,6 +392,13 @@ let
             default = [ bf-platforms/reference-get-media-type.patch ];
           };
         };
+        aps = fetchFromStore {
+          name = "9.7.0_AOT1.6.1_SAL1.3.5.zip";
+          outputHash = "0936ca0ae2620384831e3beac98b3421e915a0755be911697f973b58568f2afb";
+          patches = {
+            aps_bf2556 = [ bf-platforms/aps/bf_pltfm_smb-9.7.0.patch ];
+          };
+        };
       };
       stdenv = gcc8Stdenv;
       thrift = thrift_0_13;
