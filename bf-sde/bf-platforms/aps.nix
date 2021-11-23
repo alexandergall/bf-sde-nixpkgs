@@ -24,9 +24,9 @@ let
           python = bf-drivers.pythonModule;
 
           ## This is the platform package without the salRefApp binary
-          aps = stdenv.mkDerivation {
-            pname = "bf-platforms-${baseboard}-aux";
-            inherit version CFLAGS;
+          self = stdenv.mkDerivation {
+            pname = "bf-platforms-${baseboard}";
+            inherit version CFLAGS passthru;
             inherit (reference) src;
 
             buildInputs =
@@ -119,27 +119,23 @@ let
           ## it all together would result in unnecessary work for
           ## autoPatchelf. It also produces a bad RPATH for
           ## libstdc++.so.6 for the 9.7.0 version of the package.
-          salRefApp = stdenv.mkDerivation {
-            pname = "aps-sal-refapp";
-            inherit version;
-            src = src';
-            buildInputs = [ autoPatchelfHook aps grpcForAPSSalRefApp boost167 bf-drivers-runtime ];
-            installPhase = ''
-              mkdir -p $out/bin
-              cp APS-One-touch*/release/sal*/build/salRefApp $out/bin
-              chmod a+x $out/bin/salRefApp
-              mkdir $out/config
-              cp ${aps/sal.ini} -r $out/config/sal.ini
-              cp ${aps/logger.ini} -r $out/config/logger.ini
-            '';
+          passthru = lib.optionalAttrs (baseboard == "aps_bf2556") {
+            salRefApp = stdenv.mkDerivation {
+              pname = "aps-sal-refapp";
+              inherit version;
+              src = src';
+              buildInputs = [ autoPatchelfHook self grpcForAPSSalRefApp boost167 bf-drivers-runtime ];
+              installPhase = ''
+                mkdir -p $out/bin
+                cp APS-One-touch*/release/sal*/build/salRefApp $out/bin
+                chmod a+x $out/bin/salRefApp
+                mkdir $out/config
+                cp ${aps/sal.ini} -r $out/config/sal.ini
+                cp ${aps/logger.ini} -r $out/config/logger.ini
+              '';
+            };
           };
-        in
-          ## Now we assemble both parts into the proper APS platform
-          ## package.
-          buildEnv {
-           name = "bf-platforms-${baseboard}-${version}";
-           paths = [ aps ] ++ (lib.optional (baseboard == "aps_bf2556") salRefApp);
-        };
+        in self;
     in callPackage derivation {};
 in lib.mapAttrs mkBaseboard {
   aps_bf2556 = {

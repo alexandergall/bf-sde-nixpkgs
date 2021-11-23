@@ -119,39 +119,37 @@ let
       [ "${p4Name}" != "${execName}" ] && EXEC_NAME=${execName}
       BUILD=${build}
       RUNTIME_ENV=${runtimeEnv}
-
-      ### Specific for the stordis_bf2556x_1t
-      RUNTIME_ENV_WITH_ARTIFACTS=${runtimeEnvWithArtifacts}
-      ## The sal_services_pb2*.py modules are provided by the
-      ## platforms package.
-      APS_BF2556_PLATFORM=${bf-sde.pkgs.bf-platforms.aps_bf2556}
-      P4_PROG=$EXEC_NAME
-      _PATH=${lib.strings.makeBinPath [ coreutils gnused gnugrep ]}
-      _LD_LIBRARY_PATH=${lib.strings.makeLibraryPath [ runtimeEnvWithArtifacts ]}
-
-      ## This script executes bf_switchd via the run_switchd.sh
-      ## wrapper with our P4 program artifacts.
-      if [ ${platform} = model ]; then
-        script=${./run-model.sh}
-      elif [ ${platform} = stordis_bf2556x_1t ]; then
-        ## This platform uses a wrapper around bf_switchd to manage
-        ## an external gearbox. bf_switchd is started by the wrapper.
-        script=${./run-aps_bf2556.sh}
-      else
-        script=${./run.sh}
-      fi
-      substitute $script $out/bin/$EXEC_NAME \
+    '' +
+    ({
+      model = ''
+        substitute ${./run-model.sh} $out/bin/$EXEC_NAME \
+          --subst-var BUILD \
+          --subst-var RUNTIME_ENV \
+          --subst-var EXEC_NAME \
+          --subst-var-by pkill ${procps}/bin/pkill \
+          --subst-var-by rmmod ${kmod}/bin/rmmod
+        chmod a+x $out/bin/$EXEC_NAME
+      '';
+      stordis_bf2556x_1t = ''
+        RUNTIME_ENV_WITH_ARTIFACTS=${runtimeEnvWithArtifacts}
+        APS_SAL_REFAPP=${bf-sde.pkgs.bf-platforms.aps_bf2556.salRefApp}
+        P4_PROG=$EXEC_NAME
+        _PATH=${lib.strings.makeBinPath [ coreutils gnused gnugrep ]}
+        _LD_LIBRARY_PATH=${lib.strings.makeLibraryPath [ runtimeEnvWithArtifacts ]}
+        substitute ${./run-aps_bf2556.sh} $out/bin/$EXEC_NAME \
+          --subst-var RUNTIME_ENV_WITH_ARTIFACTS \
+          --subst-var APS_SAL_REFAPP \
+          --subst-var P4_PROG \
+          --subst-var _PATH \
+          --subst-var _LD_LIBRARY_PATH
+        chmod a+x $out/bin/$EXEC_NAME
+      '';
+    }.${platform} or ''
+      substitute ${./run.sh} $out/bin/$EXEC_NAME \
         --subst-var BUILD \
         --subst-var RUNTIME_ENV \
-        --subst-var RUNTIME_ENV_WITH_ARTIFACTS \
-        --subst-var APS_BF2556_PLATFORM \
-        --subst-var P4_PROG \
-        --subst-var _PATH \
-        --subst-var _LD_LIBRARY_PATH \
-        --subst-var EXEC_NAME \
-        --subst-var-by pkill ${procps}/bin/pkill \
-        --subst-var-by rmmod ${kmod}/bin/rmmod
-      chmod a+x $out/bin/$EXEC_NAME
-    '';
+        --subst-var EXEC_NAME
+        chmod a+x $out/bin/$EXEC_NAME
+    '');
   };
 in self
