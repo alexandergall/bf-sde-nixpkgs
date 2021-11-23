@@ -95,6 +95,7 @@ let
       export P4_INSTALL=$out
       echo "Building \"${p4Name}.p4\" as \"${execName}\" with p4c flags \"$buildFlags\""
       ${bf-sde}/bin/p4_build.sh --p4-name=${execName} --p4c-flags="$buildFlags" $(realpath ${path}/${p4Name}.p4)
+      rm -rf $out/build
     '';
 
     installPhase = ''true'';
