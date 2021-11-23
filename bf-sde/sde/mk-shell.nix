@@ -4,8 +4,9 @@
   kernelRelease ? null, platform ? "model" }:
 
 let
+  baseboard = bf-sde.baseboardForPlatform platform;
   sde = bf-sde.override {
-    baseboard = bf-sde.baseboardForPlatform platform;
+    inherit baseboard;
   };
   kernelModules = pkgs.lib.optional (platform != "model")
     (assert kernelID != null -> kernelRelease == null;
@@ -27,9 +28,15 @@ let
   pythonEnv = python.withPackages (ps: [ bf-drivers ]
                                        ++ inputs.cpModules);
 in pkgs.mkShell {
-  buildInputs = [ sde pythonEnv ] ++ inputs.pkgs ++ kernelModules;
+  buildInputs = [ sde pythonEnv ] ++ inputs.pkgs ++ kernelModules
+                ++ (pkgs.lib.optional (baseboard == "aps_bf2556")
+                  sde.pkgs.bf-platforms.aps_bf2556.salRefApp);
 
-  shellHook = ''
+  shellHook =
+    pkgs.lib.optionalString (baseboard == "aps_bf2556") ''
+      export LD_LIBRARY_PATH=${pkgs.lib.strings.makeLibraryPath [ sde ]}
+      export SAL_HOME=''${SAL_HOME:-${sde.pkgs.bf-platforms.aps_bf2556.salRefApp}}
+    '' + ''
     export P4_INSTALL=~/.bf-sde/${sde.version}
     export SDE=${sde}
     export SDE_INSTALL=${sde}
