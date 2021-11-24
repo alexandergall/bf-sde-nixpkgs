@@ -393,8 +393,8 @@ let
           };
         };
         aps = fetchFromStore {
-          name = "9.7.0_AOT1.6.1_SAL1.3.5.zip";
-          outputHash = "0936ca0ae2620384831e3beac98b3421e915a0755be911697f973b58568f2afb";
+          name = "9.7.0_AOT1.6.1_SAL1.3.5_2.zip";
+          outputHash = "4941987c4489d592de9b3676c79cb2011a22fe329425e8876fa8ae026fc959ad";
           patches = {
             aps_bf2556 = [ bf-platforms/aps/bf_pltfm_smb-9.7.0.patch ];
           };
