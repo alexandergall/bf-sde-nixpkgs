@@ -38,6 +38,7 @@ in runCommand "${component}-standalone-installer" {
 
   tar cf ../archive.tar *
   cd ..
+  rm -rf tmp
   xz -T0 archive.tar
 
   mkdir $out
