@@ -120,20 +120,27 @@ let
           ## autoPatchelf. It also produces a bad RPATH for
           ## libstdc++.so.6 for the 9.7.0 version of the package.
           passthru = lib.optionalAttrs (baseboard == "aps_bf2556") {
-            salRefApp = stdenv.mkDerivation {
-              pname = "aps-sal-refapp";
-              inherit version;
-              src = src';
-              buildInputs = [ autoPatchelfHook self grpcForAPSSalRefApp boost167 bf-drivers-runtime ];
-              installPhase = ''
-                mkdir -p $out/bin
-                cp APS-One-touch*/release/sal*/build/salRefApp $out/bin
-                chmod a+x $out/bin/salRefApp
-                mkdir $out/config
-                cp ${aps/sal.ini} -r $out/config/sal.ini
-                cp ${aps/logger.ini} -r $out/config/logger.ini
-              '';
-            };
+            salRefApp =
+              let
+                salGrpcPort = "50053";
+              in stdenv.mkDerivation {
+                pname = "aps-sal-refapp";
+                inherit version;
+                src = src';
+                passthru = {
+                  inherit salGrpcPort;
+                };
+                buildInputs = [ autoPatchelfHook self grpcForAPSSalRefApp boost167 bf-drivers-runtime ];
+                installPhase = ''
+                  mkdir -p $out/bin
+                  cp APS-One-touch*/release/sal*/build/salRefApp $out/bin
+                  chmod a+x $out/bin/salRefApp
+                  mkdir $out/config
+                  substitute ${aps/sal.ini} $out/config/sal.ini \
+                    --subst-var-by GRPC_PORT ${salGrpcPort}
+                  cp ${aps/logger.ini} -r $out/config/logger.ini
+                '';
+              };
           };
         in self;
     in callPackage derivation {};
