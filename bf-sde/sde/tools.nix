@@ -30,8 +30,9 @@ stdenv.mkDerivation {
     wrap $out/bin/run_switchd.sh \
       "${lib.strings.makeBinPath [ coreutils utillinux findutils gnugrep gnused procps bash ]}"
 
-    copy run_bfshell.sh run_bfshell.sh \
-      "${lib.strings.makeBinPath [ coreutils utillinux ]}"
+    substitute run_bfshell.sh $out/bin/run_bfshell.sh \
+      --subst-var-by PYTHON ${python.libPrefix}
+    wrap $out/bin/run_bfshell.sh "${lib.strings.makeBinPath [ coreutils utillinux ]}"
 
     '' + lib.optionalString (! runtime || baseboard == "model") ''
 
