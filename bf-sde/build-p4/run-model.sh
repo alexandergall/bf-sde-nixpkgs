@@ -45,7 +45,7 @@ done
 export P4_INSTALL=@BUILD@
 echo "Starting Tofino model..."
 redirect save
-@RUNTIME_ENV@/bin/run_tofino_model.sh -p @EXEC_NAME@ &
+@RUNTIME_ENV@/bin/run_tofino_model.sh -p @EXEC_NAME@ --arch=@ARCH@ &
 redirect restore
 
-@RUNTIME_ENV@/bin/run_switchd.sh -p @EXEC_NAME@
+@RUNTIME_ENV@/bin/run_switchd.sh -p @EXEC_NAME@ --arch=@ARCH@

@@ -1146,6 +1146,9 @@ definition of this function can be found in
      conflict because all programs would have the same name,
      i.e. `p4Name`)
 
+   * `target`: optional target for which to compile. Must be one of
+     `tofino` or `tofino2`. The default is `tofino`.
+
    * `buildFlags`: optional list of strings of options to be passed to
      the `p4_build.sh` build script, for example a list of
      preprocessor symbols `[ "-Dfoo" "-Dbar" ]`

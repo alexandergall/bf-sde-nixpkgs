@@ -20,6 +20,8 @@
 # of bf_kdrv, bf_kpkt, bf_knet. Used by the makeModuleWrapper
 # support function to load the module before executing bf_switchd.
   requiredKernelModule ? null,
+# Build target
+  target ? "tofino",
 # The flags passed to the p4_build.sh script
   buildFlags ? [],
   src,
@@ -33,7 +35,14 @@ assert requiredKernelModule != null -> lib.assertOneOf "kernel module"
 assert lib.assertOneOf "platform" platform (builtins.attrNames (import
   ../bf-platforms/properties.nix));
 
+assert lib.assertOneOf "target" target [ "tofino" "tofino2" ];
+
 let
+  targetFlag = {
+    tofino = "-DTOFINO=ON";
+    tofino2 = "-DTOFINO2=ON";
+  }.${target};
+
   runtimeEnv = bf-sde.runtimeEnv' platform;
 
   ## The SAL wrapper for the aps_bf2556 platform currently requires
@@ -44,7 +53,7 @@ let
   };
 
   passthru = {
-    inherit p4Name;
+    inherit p4Name target;
 
     ## Build a shell script to load the required kernel module for a given
     ## kernel before executing the program.
@@ -102,8 +111,9 @@ let
     ''
       set -e
       export P4_INSTALL=$out
-      echo "Building \"${p4Name}.p4\" as \"${execName}\" with p4c flags \"$buildFlags\""
-      ${bf-sde}/bin/p4_build.sh --p4-name=${execName} --p4c-flags="$buildFlags" $(realpath ${path}/${p4Name}.p4)
+      echo "Building \"${p4Name}.p4\" as \"${execName}\" for target \"${target}\" with p4c flags \"$buildFlags\""
+      ${bf-sde}/bin/p4_build.sh --p4-name=${execName} --p4c-flags="$buildFlags" \
+        --cmake-flags ${targetFlag} $(realpath ${path}/${p4Name}.p4)
       rm -rf $out/build
     '';
 
@@ -117,6 +127,7 @@ let
       mkdir -p $out/bin
 
       EXEC_NAME=${p4Name}
+      ARCH=${target}
       [ "${p4Name}" != "${execName}" ] && EXEC_NAME=${execName}
       BUILD=${build}
       RUNTIME_ENV=${runtimeEnv}
@@ -127,6 +138,7 @@ let
           --subst-var BUILD \
           --subst-var RUNTIME_ENV \
           --subst-var EXEC_NAME \
+          --subst-var ARCH \
           --subst-var-by pkill ${procps}/bin/pkill \
           --subst-var-by rmmod ${kmod}/bin/rmmod
         chmod a+x $out/bin/$EXEC_NAME
@@ -149,7 +161,8 @@ let
       substitute ${./run.sh} $out/bin/$EXEC_NAME \
         --subst-var BUILD \
         --subst-var RUNTIME_ENV \
-        --subst-var EXEC_NAME
+        --subst-var EXEC_NAME \
+        --subst-var ARCH
         chmod a+x $out/bin/$EXEC_NAME
     '');
   };
