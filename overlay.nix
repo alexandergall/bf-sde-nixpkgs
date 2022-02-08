@@ -122,6 +122,21 @@ let
 
     });
 
+    thrift_0_14 = super.thrift.overrideAttrs (oldAttrs: rec {
+      version = "0.14.0";
+      name = "thrift-${version}";
+
+      src = super.fetchurl {
+          url = "https://archive.apache.org/dist/thrift/${version}/${name}.tar.gz";
+          sha256 = "0wgzk2wcjmr01k719d9yw7qx7hwvhgjzcnyn7wd2wli667v69jwd";
+      };
+      patches = [];
+      cmakeFlags = oldAttrs.cmakeFlags ++ [
+        "-DBUILD_JAVASCRIPT:BOOL=OFF"
+        "-DBUILD_NODEJS:BOOL=OFF"
+      ];
+    });
+
     ## Used to patch the tofino-model binary
     libcli1_10 = super.libcli.overrideAttrs (oldAttrs: rec {
       version = "1.10.0";

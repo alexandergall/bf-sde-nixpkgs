@@ -1,5 +1,5 @@
 { pname, version, buildSystem, src, patches, bf-drivers, bf-pktpy,
-  lib, stdenv, cmake }:
+  lib, stdenv, cmake, thrift }:
 
 ## The PTF itself does not depend on bf-drivers, but some of the tests
 ## run by it do.  We are supposed to pass additional modules on to the
@@ -25,7 +25,8 @@ in if buildSystem.isCmake
        passthru = {
          inherit python;
        };
-       buildInputs = [ python python.pkgs.wrapPython cmake ];
+       buildInputs = [ python python.pkgs.wrapPython cmake ]
+                     ++ lib.optional (lib.versionAtLeast version "9.8.0") [ thrift ];
        preConfigure = buildSystem.preConfigure rec {
          package = "ptf-modules";
          cmakeRules = ''
@@ -37,9 +38,14 @@ in if buildSystem.isCmake
              OUTPUT_VARIABLE PYTHON_SITE
              OUTPUT_STRIP_TRAILING_WHITESPACE)
            set(PYTHON_SITE "''${PYTHON_SITE}/site-packages")
+         '' +
+         (if (lib.versionOlder version "9.8.0") then ''
            install(PROGRAMS ''${CMAKE_CURRENT_SOURCE_DIR}/''${BF_PKG_DIR}/''${PTF_PKG_DIR}/bf-ptf/ptf DESTINATION bin RENAME bf-ptf)
            install(DIRECTORY ''${CMAKE_CURRENT_SOURCE_DIR}/''${BF_PKG_DIR}/''${PTF_PKG_DIR}/bf-ptf/src/ DESTINATION ''${PYTHON_SITE}/bf-ptf)
-         '';
+         '' else ''
+           install(PROGRAMS ''${CMAKE_CURRENT_SOURCE_DIR}/''${BF_PKG_DIR}/''${PTF_PKG_DIR}/ptf/ptf DESTINATION bin)
+           install(DIRECTORY ''${CMAKE_CURRENT_SOURCE_DIR}/''${BF_PKG_DIR}/''${PTF_PKG_DIR}/ptf/src/ DESTINATION ''${PYTHON_SITE})
+         '');
        };
 
        postInstall = ''

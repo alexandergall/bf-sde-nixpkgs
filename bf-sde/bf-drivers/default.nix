@@ -186,6 +186,11 @@ let
     ## The runtime version doesn't have a "dev" output.
     lib.optionalString runtime ''
       rm -rf $out/include
+    '' +
+
+    ## This utility was part of the ptf-utils package up to 9.7.0
+    lib.optionalString (lib.versionAtLeast version "9.8.0") ''
+      chmod a+x $out/lib/${python.libPrefix}/site-packages/p4testutils/bf_switchd_dev_status.py
     '';
 
     ## This declares the set of modules to be used by
@@ -195,6 +200,8 @@ let
       [ -f $out/bin/split_pd_thrift.py ] && chmod a+x $out/bin/split_pd_thrift.py
     '' + ''
       wrapPythonPrograms
+    '' + lib.optionalString (lib.versionAtLeast version "9.8.0") ''
+      wrapPythonProgramsIn $out/lib/${python.libPrefix}/site-packages/p4testutils "$pythonPath"
     '';
   } // lib.optionalAttrs buildSystem.isCmake {
     cmakeFlags = [

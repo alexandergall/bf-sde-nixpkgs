@@ -405,6 +405,37 @@ let
       libcli = libcli1_10;
       python_bf_drivers = python3;
     };
+    v9_8_0 = rec {
+      version = "9.8.0";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "8d367f0812f17e64cef4acbe2c10130ae4b533bf239e554dc6246c93f826c12a";
+        patches = {
+          mainTools = [ sde/run_switchd-9.7.0.patch sde/run_bfshell-9.7.0.patch
+                        sde/run_p4_tests-9.7.0.patch ];
+          mainCMake = [ sde/P4Build.cmake.patch ];
+          bf-drivers = [ bf-drivers/libpython-dependency-9.8.0.patch
+                         bf-drivers/bf_switchd_model.patch ];
+          p4-examples = [];
+          ptf-modules = [ ptf-modules/run_ptf_tests.patch
+                          ## The getmac module used by bf-pktpy
+                          ## returns None as MAC address if run in a
+                          ## VM. This patch sets a static address in
+                          ## this case.
+                          ptf-modules/getmac.patch ];
+        };
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "975fa33e37abffa81ff01c1142043907f05726e31efcce0475adec0f1a80f919";
+        };
+      };
+      stdenv = gcc8Stdenv;
+      thrift = thrift_0_14;
+      libcli = libcli1_10;
+      python_bf_drivers = python3;
+    };
   };
 
-in bf-sde // { latest = bf-sde.v9_7_0; }
+in bf-sde // { latest = bf-sde.v9_8_0; }
