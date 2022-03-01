@@ -66,6 +66,6 @@ in pkgs.mkShell {
     Use "exit" or CTRL-D to exit this shell.
 
     EOF
-    PS1="\n\[\033[1;32m\][nix-shell(\033[31mSDE-${sde.version}\033[1;32m):\w]\$\[\033[0m\] "
+    PS1="\n\[\033[1;32m\][nix-shell(\[\033[31m\]SDE-${sde.version}\[\033[1;32m\]):\w]\$\[\033[0m\] "
   '';
 }
