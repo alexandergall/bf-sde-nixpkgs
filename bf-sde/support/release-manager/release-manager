@@ -19,7 +19,7 @@ usage () {
        Available options:
          --list-installed[=full]
          --list-available
-         --switch-to-generation GENERATION
+         --switch-to-generation GENERATION | latest
          --install-release RELEASE [ --auto-switch ]
          --install-git COMMIT [ --auto-switch ]
          --update-release RELEASE [ --auto-switch ]
@@ -304,6 +304,10 @@ list_available () {
 switch_to_generation () {
     local gen
     gen=$1
+    if [ $1 == "latest" ]; then
+	gen=$(printf '%s\n' "${!gens[@]}" | sort -rn | head -1)
+	INFO "Switching to most recent generation $gen"
+    fi
     check_root
     if [ -z "${gens[$gen]}" ]; then
         ERROR "Generation $switch_to_generation does not exist"
