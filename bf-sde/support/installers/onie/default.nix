@@ -7,8 +7,8 @@ with builtins;
 let
   mkOnieInstaller = pkgs.callPackage (pkgs.fetchgit {
     url = "https://github.com/alexandergall/onie-debian-nix-installer";
-    rev = "afe5f5";
-    sha256 = "0msjad4la9y4zr8vhr6934dihnzv7zxnddckq743iya8z8qwrx7k";
+    rev = "658343a";
+    sha256 = "0071sz63xz141yffjz5qrw9nxx9i396yr3fwabbw5nfmliq0vj97";
   }) {};
   platformSpecs = map (
     platform:
@@ -84,4 +84,8 @@ in pkgs.lib.makeOverridable mkOnieInstaller {
   inherit version rootPaths users postRootFsCreateCmd postRootFsInstallCmd
     component NOS grubDefault bootstrapProfile binaryCaches;
   fileTree = fileTree';
+  ## Prevent accidental upgrades of the kernel. Kernel upgrades have
+  ## to be coordinated with an upgrade of the NOS to provide matching
+  ## kernel modules.
+  holdPackages = [ "linux-image-amd64" ];
 }

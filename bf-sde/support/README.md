@@ -389,6 +389,13 @@ different root password than the default, one would use
   }).override { rootPassword = "foo"; };
 ```
 
+Note that the resulting image marks the `linux-image-amd64` package to
+be on hold, i.e. it will not be upgraded by the standard `apt` or
+`apt-get` commands.  This is to avoid accidental upgrades of the
+kernel, which would render the NOS unusable due to a mismatch of the
+SDE kernel modules.  If this is not desired, an override to the
+`holdPackages` attribute is required.
+
 To support multiple platforms, the installer actually installs all
 slices for the requested platforms in temporary profiles. Suppose that
 `nixProfile` is `/nix/var/nix/profiles/foo` and `platforms` is `[
