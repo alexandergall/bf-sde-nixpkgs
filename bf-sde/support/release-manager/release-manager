@@ -121,12 +121,10 @@ _cleanup () {
 
 trap _cleanup EXIT TERM INT
 
-if [ -t 0 ]; then
-    if [ $(tput colors) -gt 1 ]; then
-	red=$(tput setaf 1)
-	green=$(tput setaf 2)
-	normal=$(tput sgr0)
-    fi
+if [ -t 0 -a $(($(tput colors 2>/dev/null)+0)) -gt 1 ]; then
+    red=$(tput setaf 1)
+    green=$(tput setaf 2)
+    normal=$(tput sgr0)
 fi
 
 INFO () {
