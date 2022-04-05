@@ -190,7 +190,7 @@ the `sha256` sums are as follows
 | bf-sde-9.3.1.tgz           | `71db320fa7d12757127c7da1c16ea98453f4c88ecca7853c73b2bd4dccd1d891` |
 | bf-sde-9.4.0.tgz           | `daec162c2a857ae0175e57ab670b59341d39f3ac2ecd5ba99ec36afa15566c4e` |
 | bf-sde-9.5.0.tgz           | `61d55a06fa6f80fc1f859a80ab8897eeca43f06831d793d7ec7f6f56e6529ed7` |
-| bf-sde-9.6.0.tgz           | `61d55a06fa6f80fc1f859a80ab8897eeca43f06831d793d7ec7f6f56e6529ed7` |
+| bf-sde-9.6.0.tgz           | `0e73fd8e7fe22c62cafe7dc4415649f0e66c04607c0056bd08adc1c7710fd193` |
 | bf-sde-9.7.0.tgz           | `a4ca94f2d9602535c52613f9d8ad3504b55d99283a4e3dfc64de19e24d767423` |
 | bf-sde-9.7.1.tgz           | `dc0eb79b04797a7332f3995f37533a255a9a12afb158c53cdd421d1d4717ee28` |
 | bf-sde-9.8.0.tgz           | `8d367f0812f17e64cef4acbe2c10130ae4b533bf239e554dc6246c93f826c12a` |
