@@ -22,6 +22,7 @@ usage () {
          --switch-to-generation GENERATION | latest
          --install-release RELEASE [ --auto-switch ]
          --install-git COMMIT [ --auto-switch ]
+         --install-local DIRECTORY [ --auto-switch ]
          --update-release RELEASE [ --auto-switch ]
          --uninstall-generation GENERATION
          --activate-current
@@ -36,6 +37,7 @@ opts=$(getopt -l list-installed:: \
               -l switch-to-generation: \
               -l install-release: \
               -l install-git: \
+              -l install-local: \
               -l update-release: \
 	      -l auto-switch \
               -l uninstall-generation: \
@@ -77,6 +79,10 @@ while [ $# -gt 0 ]; do
             ;;
         --install-git)
             install_git=$2
+            shift 2
+            ;;
+        --install-local)
+            install_local=$2
             shift 2
             ;;
         --update-release)
@@ -406,6 +412,32 @@ install_git () {
     popd >/dev/null
 }
 
+## Input: directory containing a checked-out repository
+## Output: none
+install_local () {
+    local dir switch
+    dir=$(realpath $1)
+    switch=$2
+    [ -d $dir ] || ERROR "$dir does not exist or is not a directory"
+    check_root
+
+    INFO "Installing from $dir"
+    pushd $dir >/dev/null
+
+    gitTag=$(git describe --always)
+    if [ -n "$(git status --porcelain)" ]; then
+	INFO "The Git repository is dirty, creating extended version identifier"
+	extraTag=$(find . -type f ! -path "./.git/*" ! -name "result*" ! -name "*~" -exec sha256sum {} \;\
+		       | sha256sum | cut -c1-6)
+	gitTag=$gitTag-$extraTag
+    fi
+
+    INFO "Installing $gitTag"
+    _auto_install $gitTag $switch
+
+    popd >/dev/null
+}
+
 ## Input: release version
 ## Output: gitTag of principal release
 ## Terminates if release does not exist
@@ -478,6 +510,7 @@ cleanup () {
 [ -n "$switch_to_generation" ] && switch_to_generation $switch_to_generation
 [ -n "$install_release" ] && install_release $install_release $auto_switch
 [ -n "$install_git" ] && install_git $install_git $auto_switch
+[ -n "$install_local" ] && install_local $install_local $auto_switch
 [ -n "$update_release" ] && update_release $update_release $auto_switch
 [ -n "$uninstall_generation" ] && uninstall_generation $uninstall_generation
 [ -n "$activate" ] && activate

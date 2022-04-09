@@ -529,6 +529,7 @@ The `release-manager` command supports the following options
    * `--list-available`
    * `--install-release <version> [ --auto-switch ]`
    * `--install-git <git-commit> [ --auto-switch ]`
+   * `--install-local <directory> [ --auto-switch ]`
    * `--update-release <version> [ --auto-switch ]`
    * `--uninstall-generation <gen>`
    * `--activate-current`
@@ -669,6 +670,43 @@ If the option `--auto-switch` is specified as well, the command will
 also switch to the new generation of the profile automatically.
 
 This is equivalent to using the option `--update-release 1`.
+
+#### `--install-local <directory> [ --auto-switch ]`
+
+This options allows the installation to be performed from a local
+directory that is assumed to contain a checked-out version of the Git
+repository. It is intended to facilitate the installation of versions
+that are not available from the standard repository, including local
+modifications that have not been committed anywhere.
+
+The command fails immediately if `<directory>` doesn't exist or is not
+a Git repository. Next it is checked whether the repository contains
+local modifications. If not, the installation proceeds exactly as with
+the `--install-git` option.
+
+If the repository is not clean, the problem arises of chosing a unique
+version identification for the release. The default version, which is
+the output of the `git describe --always` command, does not capture
+the local modifications and would lead to duplicate identifiers for
+different versions of the code.  To solve this problem, the output of
+the `git describe` command is augmented with the first 6 characters of
+the `sha256sum` of the repository obtained by executing the command
+
+```
+find . -type f ! -path "./.git/*" ! -name "result*" ! -name "*~" -exec sha256sum {} \; | sha256sum
+```
+
+The final version will thus be of the form
+`release-<release>-g<commit>-<extended-version>`.
+
+Note that if `<directory>` is a repository that does not contain the
+expected Nix expression for building a release, the command will fail
+one way or another, but most likely with
+
+```
+error: opening file '<directory>/default.nix': No such file or directory
+Unexpected error, aborting
+```
 
 #### `--update-release <version> [ --auto-switch ]`
 
