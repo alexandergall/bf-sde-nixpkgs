@@ -42,7 +42,7 @@ stdenv.mkDerivation {
     wrap $out/bin/run_tofino_model.sh \
       "${lib.strings.makeBinPath [ coreutils utillinux findutils ]}:/usr/bin"
 
-    '' + lib.optionalString (! runtime) ''
+    '' + lib.optionalString (! runtime) (''
 
     ## A test script could need additional Python modules at runtime.
     ## The bare ptf command has an option --pypath for this purpose,
@@ -71,5 +71,6 @@ stdenv.mkDerivation {
             copy ${./p4_build-cmake} p4_build.sh \
               "${lib.strings.makeBinPath [ sdeEnv coreutils utillinux cmake gnumake
                                            gcc findutils gnused python ]}"
-          '');
+          '')
+    );
 }
