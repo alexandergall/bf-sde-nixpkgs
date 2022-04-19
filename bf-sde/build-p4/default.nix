@@ -26,7 +26,13 @@
   buildFlags ? [],
   src,
 # Optional patches
-  patches ? []
+  patches ? [],
+# Create the artifacts package without dependencies. This has no
+# effect for SDEs older than 9.7.0. For 9.7.0 and above, it causes
+# files like source.json and frontend-ir.json to be omitted from
+# the package (they cause dependencies on the P4 source code and
+# the P4 compiler package)
+  pureArtifacts ? true
 }:
 
 assert requiredKernelModule != null -> lib.assertOneOf "kernel module"
@@ -107,15 +113,18 @@ let
       fi
       echo "Building \"${p4Name}.p4\" as \"${execName}\" with p4c flags \"$buildFlags\""
       ${bf-sde}/bin/p4_build.sh $buildFlags $path/$exec_name.p4
-    '' else
-    ''
-      set -e
-      export P4_INSTALL=$out
-      echo "Building \"${p4Name}.p4\" as \"${execName}\" for target \"${target}\" with p4c flags \"$buildFlags\""
-      ${bf-sde}/bin/p4_build.sh --p4-name=${execName} --p4c-flags="$buildFlags" \
-        --cmake-flags ${targetFlag} $(realpath ${path}/${p4Name}.p4)
-      rm -rf $out/build
-    '';
+    '' else (
+      ''
+        set -e
+        export P4_INSTALL=$out
+        echo "Building \"${p4Name}.p4\" as \"${execName}\" for target \"${target}\" with p4c flags \"$buildFlags\""
+        ${bf-sde}/bin/p4_build.sh --p4-name=${execName} --p4c-flags="$buildFlags" \
+          --cmake-flags ${targetFlag} $(realpath ${path}/${p4Name}.p4)
+        rm -rf $out/build
+      '' + lib.optionalString pureArtifacts ''
+        find $out/share \( -name source.json -o -name frontend-ir.json \) -exec rm {} \;
+      ''
+    );
 
     installPhase = ''true'';
   };

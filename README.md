@@ -1182,6 +1182,13 @@ definition of this function can be found in
    * `patches`: An optional list of patches to be applied to the
      source tree before building the package
 
+   * `pureArtifacts`: an optional flag whether to remove files from
+     the P4 artifacts produced by the compiler that are not needed for
+     execution but generate dependencies on the source code of the
+     program being compiled as well as the P4 compiler package. This
+     option has no effect for SDEs older than 9.7.0. For 9.7.0 and
+     later, it removes specific JSON files like `source.json` and
+     `frontend-ir.json`. The default is `true`.
 
 The function essentially performs
 
