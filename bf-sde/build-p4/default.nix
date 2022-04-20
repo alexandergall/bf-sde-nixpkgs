@@ -84,7 +84,7 @@ let
           '';
         };
       in callPackage ./run-test.nix ({
-        inherit self p4Name bf-sde;
+        inherit self p4Name bf-sde build;
         src = src';
         ## Default directory of PTF test scripts relative to
         ## the source tree

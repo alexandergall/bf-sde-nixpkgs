@@ -12,7 +12,7 @@
 ##
 ## The file "passed" can be imported as a Nix expression
 
-{ self, p4Name, src, testDir, lib, buildEnv, vmTools, runCommand,
+{ self, p4Name, src, testDir, lib, build, vmTools, runCommand,
   bf-sde, ptf-modules, pythonModules ? [] }:
 
 let
