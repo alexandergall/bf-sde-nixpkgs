@@ -116,4 +116,8 @@ stdenv.mkDerivation ({
         sed -i -e 's!LDFLAGS=\([^ ]*\)!"CPPFLAGS=-I${zlib.dev}/include -I${sqlite.dev}/include" "LDFLAGS=-L${zlib.static}/lib -L${sqlite.out}/lib \1"!' third-party/CMakeLists.txt
       '';
   };
+
+  postInstall = ''
+    $out/bin/$(basename $out/lib/python*) -m compileall $out/lib/python*/bfrt*
+  '';
 })
