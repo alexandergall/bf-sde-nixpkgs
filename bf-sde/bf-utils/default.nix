@@ -117,7 +117,7 @@ stdenv.mkDerivation ({
       '';
   };
 
-  postInstall = ''
+  postInstall = lib.optionalString (lib.versionAtLeast version "9.7.0") ''
     $out/bin/$(basename $out/lib/python*) -m compileall $out/lib/python*/bfrt*
   '';
 })
