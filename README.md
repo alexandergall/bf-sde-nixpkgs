@@ -193,6 +193,7 @@ the `sha256` sums are as follows
 | bf-sde-9.6.0.tgz           | `0e73fd8e7fe22c62cafe7dc4415649f0e66c04607c0056bd08adc1c7710fd193` |
 | bf-sde-9.7.0.tgz           | `a4ca94f2d9602535c52613f9d8ad3504b55d99283a4e3dfc64de19e24d767423` |
 | bf-sde-9.7.1.tgz           | `dc0eb79b04797a7332f3995f37533a255a9a12afb158c53cdd421d1d4717ee28` |
+| bf-sde-9.7.2.tgz           | `e8cf3ef364e33e97f6af6dd4e39331221d61c951ffea30cc7221a624df09e4ed` |
 | bf-sde-9.8.0.tgz           | `8d367f0812f17e64cef4acbe2c10130ae4b533bf239e554dc6246c93f826c12a` |
 
 #### <a name="BSPArchives"></a> BSP
@@ -227,6 +228,7 @@ Support](#baseboardPlatform))
 | `accton` `model`  | Intel | `bf-reference-bsp-9.6.0.tgz` | 9.6.0 | `88cb4b0978f23c28499faff75098f939374d9071859593353a18c2235e0be461` |
 | `accton` `model`  | Intel | `bf-reference-bsp-9.7.0.tgz` | 9.7.0 | `87f91540c0947edff2694cea9beeca78f95062b0aaca812a81c238ff39343e46` |
 | `accton` `model`  | Intel | `bf-reference-bsp-9.7.1.tgz` | 9.7.1 | `78aa14c5ec463cd4025b241e898e812c980bcd5e4d039213e397fcb6abb61c66` |
+| `accton` `model`  | Intel | `bf-reference-bsp-9.7.2.tgz` | 9.7.2 | `d578438c44a19d2162079d9e4a4a5363a1503a64d7b05e96ceca96dc216f2380` |
 | `accton` `model`  | Intel | `bf-reference-bsp-9.8.0.tgz` | 9.8.0 | `975fa33e37abffa81ff01c1142043907f05726e31efcce0475adec0f1a80f919` |
 | `aps_bf2556` `aps_bf6064` | APS Networks | `9.5.0_AOT1.5.1_SAL1.3.2.zip` | 9.4.0 9.5.0 | `2e56f51233c0eef1289ee219582ea0ec6d7455c3f78cac900aeb2b8214df0544`|
 | `inventec`   | Inventec     | `bf-inventec-bsp93.tgz`                   | 9.3.0 9.3.1 9.4.0 9.5.0 9.6.0 | `fd1e4852d0b7543dd5d2b81ab8e0150644a0f24ca87d59f1369216f1a6e796ad`|
