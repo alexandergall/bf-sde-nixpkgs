@@ -39,7 +39,7 @@ opts=$(getopt -l list-installed:: \
               -l install-git: \
               -l install-local: \
               -l update-release: \
-	      -l auto-switch \
+              -l auto-switch \
               -l uninstall-generation: \
               -l activate-current \
               -l deactivate-current \
@@ -60,9 +60,9 @@ while [ $# -gt 0 ]; do
             ;;
         --list-installed)
             list_installed=1
-	    if [ -n "$2" ]; then
-		list_full=1
-	    fi
+            if [ -n "$2" ]; then
+                list_full=1
+            fi
             shift 2
             ;;
         --switch-to-generation)
@@ -91,7 +91,7 @@ while [ $# -gt 0 ]; do
             ;;
         --auto-switch)
             auto_switch=1
-	    shift
+            shift
             ;;
         --activate-current)
             activate=1
@@ -227,9 +227,9 @@ list_installed () {
     echo "Generation Current Release Git Tag                    KernelID       Kernel Release            Platform                   Install date"
     echo "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
     if [ "$list_full" ]; then
-	fmt="%-7s %-26s %-14s %-25s %-26s %s"
+        fmt="%-7s %-26s %-14s %-25s %-26s %s"
     else
-	fmt="%-7.7s %-26.26s %-14.14s %-25.25s %-26.26s %s"
+        fmt="%-7.7s %-26.26s %-14.14s %-25.25s %-26.26s %s"
     fi
     for gen in $(printf '%s\n' "${!gens[@]}" | sort -n); do
         read version gitTag kernelID kernelRelease platform < <(echo ${gens[$gen]} | tr ':' ' ')
@@ -249,7 +249,7 @@ api_call () {
     http_code=$(echo "$out" | tail -n1)
     result=$(echo "$out" | sed '$d')
     if [ $http_code -ge 400 ] && [ $http_code -lt 600 ]; then
-	ERROR "API call $url failed with HTTP code $http_code: $result"
+        ERROR "API call $url failed with HTTP code $http_code: $result"
     fi
     echo $result
 }
@@ -280,8 +280,8 @@ list_available () {
         printf "%8s " $version
         if [ -n "${installed_releases[$version]}" ]; then
             printf 'Installed'
-	    branch_commits=$(get_branch_commits ${available_releases[$version]})
-	    read commit_head commit_tag <<<$branch_commits
+            branch_commits=$(get_branch_commits ${available_releases[$version]})
+            read commit_head commit_tag <<<$branch_commits
             if [ $commit_tag != $commit_head ]; then
                 up_to_date=
                 for tag in ${installed_releases[$version]}; do
@@ -309,8 +309,8 @@ switch_to_generation () {
     local gen
     gen=$1
     if [ $1 == "latest" ]; then
-	gen=$(printf '%s\n' "${!gens[@]}" | sort -rn | head -1)
-	INFO "Switching to most recent generation $gen"
+        gen=$(printf '%s\n' "${!gens[@]}" | sort -rn | head -1)
+        INFO "Switching to most recent generation $gen"
     fi
     check_root
     if [ -z "${gens[$gen]}" ]; then
@@ -318,7 +318,7 @@ switch_to_generation () {
     fi
     if [ $gen -eq $current_gen ]; then
         INFO "Generation $gen is already the current version"
-	exit 0
+        exit 0
     fi
     INFO "Deactivating current instance"
     deactivate
@@ -336,7 +336,7 @@ _check_installed () {
     local gitTag id gen
     gitTag=$1
     id=$(nix eval --raw \
-	     '(let
+             '(let
                  fn = import ./.;
                  args = { gitTag = "'$gitTag'"; kernelRelease = "'$kernel_release'"; platform = "'$platform'"; };
                in
@@ -348,9 +348,9 @@ _check_installed () {
     gen=${gens_by_id[$id]}
     if [ -n "$gen" ]; then
         INFO "Release $version (Id: $id) is already installed as generation $gen"
-	echo $gen
+        echo $gen
     else
-	echo 0
+        echo 0
     fi
 }
 
@@ -367,7 +367,7 @@ _install () {
     nix-env -p $PROFILE --switch-generation $current_gen 2>/dev/null
 
     if [ -z "$switch" ]; then
-	INFO "Use \"release-manager --switch-to-generation $new_gen\" to switch to the new release"
+        INFO "Use \"release-manager --switch-to-generation $new_gen\" to switch to the new release"
     fi
     echo $new_gen
 }
@@ -378,11 +378,11 @@ _auto_install () {
     switch=$2
     gen=$(_check_installed $gitTag)
     if [ $gen -eq 0 ]; then
-	gen=$(_install $gitTag $switch)
-	add_path $PROFILE-${gen}-link
+        gen=$(_install $gitTag $switch)
+        add_path $PROFILE-${gen}-link
     fi
     if [ -n "$switch" ]; then
-	switch_to_generation $gen
+        switch_to_generation $gen
     fi
 }
 
@@ -426,10 +426,10 @@ install_local () {
 
     gitTag=$(git describe --always)
     if [ -n "$(git status --porcelain)" ]; then
-	INFO "The Git repository is dirty, creating extended version identifier"
-	extraTag=$(find . -type f ! -path "./.git/*" ! -name "result*" ! -name "*~" -exec sha256sum {} \;\
-		       | sha256sum | cut -c1-6)
-	gitTag=$gitTag-$extraTag
+        INFO "The Git repository is dirty, creating extended version identifier"
+        extraTag=$(find . -type f ! -path "./.git/*" ! -name "result*" ! -name "*~" -exec sha256sum {} \;\
+                       | sha256sum | cut -c1-6)
+        gitTag=$gitTag-$extraTag
     fi
 
     INFO "Installing $gitTag"
