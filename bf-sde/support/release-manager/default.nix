@@ -14,10 +14,11 @@ let
 in stdenv.mkDerivation {
   pname = "release-manager";
   inherit version patches;
-  phases = [ "installPhase" ];
+  src = ./.;
+  phases = [ "unpackPhase" "patchPhase" "installPhase" ];
   installPhase = ''
     mkdir -p $out/bin
-    substitute ${./release-manager} $out/bin/release-manager \
+    substitute ./release-manager $out/bin/release-manager \
       --subst-var-by PATH \
         "${lib.strings.makeBinPath [ coreutils utillinux gnused gawk
                                      jq curl systemd gnutar gzip git kmod ncurses
