@@ -240,11 +240,13 @@ list_installed () {
 }
 
 ## Input: partial URL to append to $API_URL
+##        optional alternate URL to replace $API_URL
 ## Output: Result of API call in JSON
 ## Terminates on API error
 api_call () {
-    local url out http_code result
-    url=$API_URL$1
+    local url api_url out http_code result
+    api_url=$2
+    url=${api_url:-$API_URL}$1
     out=$(curl -s --write-out '\n%{http_code}\n' $url)
     http_code=$(echo "$out" | tail -n1)
     result=$(echo "$out" | sed '$d')
@@ -329,15 +331,17 @@ switch_to_generation () {
     $PROFILE/bin/release-manager --activate
 }
 
-## Input: gitTag
+## Input: directory where the Nix expression is located
+##        gitTag
 ## Output: 0 if gitTag is not installed, profile generation if gitTag is
 ##         already installed
 _check_installed () {
-    local gitTag id gen
-    gitTag=$1
+    local dir gitTag id gen
+    dir=$1
+    gitTag=$2
     id=$(nix eval --raw \
              '(let
-                 fn = import ./.;
+                 fn = import '$dir';
                  args = { gitTag = "'$gitTag'"; kernelRelease = "'$kernel_release'"; platform = "'$platform'"; };
                in
                  with builtins;
@@ -354,13 +358,19 @@ _check_installed () {
     fi
 }
 
-## Input: gitTag
+## Input: directory where the Nix expression is located
+##        gitTag
+##        auto-switch flag
 ## Output: new generation of profile
 _install () {
-    local gitTag switch new_gen
-    gitTag=$1
-    switch=$2
-    nix-env -f . -p $PROFILE -r -i -A install --argstr gitTag $gitTag --argstr kernelRelease $kernel_release --argstr platform $platform
+    local dir gitTag switch new_gen
+    dir=$1
+    gitTag=$2
+    switch=$3
+    nix-env -f $dir -p $PROFILE -r -i -A install \
+            --argstr gitTag $gitTag \
+            --argstr kernelRelease $kernel_release \
+            --argstr platform $platform
     new_gen=$(gen_from_path $(readlink $PROFILE))
     ## nix-env has automatically switched to the new
     ## generation, revert back
@@ -372,13 +382,17 @@ _install () {
     echo $new_gen
 }
 
+## Input: directory where the Nix expression is located
+##        gitTag
+##        auto-switch flag
 _auto_install () {
-    local gitTag switch gen
-    gitTag=$1
-    switch=$2
-    gen=$(_check_installed $gitTag)
+    local dir gitTag switch gen
+    dir=$1
+    gitTag=$2
+    switch=$3
+    gen=$(_check_installed $dir $gitTag)
     if [ $gen -eq 0 ]; then
-        gen=$(_install $gitTag $switch)
+        gen=$(_install $gitTag "$switch")
         add_path $PROFILE-${gen}-link
     fi
     if [ -n "$switch" ]; then
@@ -386,7 +400,38 @@ _auto_install () {
     fi
 }
 
+## Fetch a particular commit at $REPO_URL
+## Input: commitish
+##        destination directory
+## Output: none
+_fetch_git() {
+    local hash dir
+    hash=$1
+    dir=$2
+    INFO "Fetching $hash from $REPO_URL"
+    git -C $dir init -b master
+    git -C $dir remote add origin $REPO_URL
+    git -C $dir fetch origin
+    git -C $dir reset --hard $hash || ERROR "Git commit \"$hash\" does not exist"
+}
+
+## Perform a "git describe" in the repo cloned by _fetch_git(), check
+## for the presence of a tag starting with "release-"
+## Input:  directory
+## Output: none
+_git_describe () {
+    local dir
+    dir=$1
+
+    gitTag=$(git -C $dir describe --always)
+    if ! [[ "$gitTag" =~ ^release-.*$ ]]; then
+        ERROR "Commits preceeding any release-* tags are not supported"
+    fi
+    echo $gitTag
+}
+
 ## Input: git commit hash
+##        auto-switch flag
 ## Output: none
 install_git () {
     local hash switch tmp gitTag gen
@@ -395,24 +440,14 @@ install_git () {
     switch=$2
     tmp=$(mktemp -d)
     paths_to_rm+=$tmp
-    pushd $tmp >/dev/null
-    INFO "Fetching $hash"
-    git init -b master
-    git remote add origin $REPO_URL
-    git fetch origin
-    git reset --hard $hash || ERROR "Git commit \"$hash\" does not exist"
-
-    gitTag=$(git describe --always)
-    if ! [[ "$gitTag" =~ ^release-.*$ ]]; then
-        ERROR "Commits preceeding release-1 are not supported"
-    fi
-
-    _auto_install $gitTag $switch
-
-    popd >/dev/null
+    _fetch_git $hash $tmp
+    gitTag=$(_git_describe $tmp)
+    _auto_install $tmp $gitTag "$switch"
 }
 
+## Install from a local clone of $REPO_URL
 ## Input: directory containing a checked-out repository
+##        auto-switch flag
 ## Output: none
 install_local () {
     local dir switch
@@ -422,20 +457,16 @@ install_local () {
     check_root
 
     INFO "Installing from $dir"
-    pushd $dir >/dev/null
-
-    gitTag=$(git describe --always)
-    if [ -n "$(git status --porcelain)" ]; then
+    gitTag=$(_git_describe $dir)
+    if [ -n "$(git -C $dir status --porcelain)" ]; then
         INFO "The Git repository is dirty, creating extended version identifier"
         extraTag=$(find . -type f ! -path "./.git/*" ! -name "result*" ! -name "*~" -exec sha256sum {} \;\
                        | sha256sum | cut -c1-6)
-        gitTag=$gitTag-$extraTag
+        gitTag=$gitTag-local-$extraTag
     fi
 
     INFO "Installing $gitTag"
-    _auto_install $gitTag $switch
-
-    popd >/dev/null
+    _auto_install $dir $gitTag "$switch"
 }
 
 ## Input: release version
@@ -464,12 +495,8 @@ install_release () {
     INFO "Fetching package release tarball"
     tmp=$(mktemp -d)
     paths_to_rm+=$tmp
-    pushd $tmp >/dev/null
-    fetch_and_unpack_tarball $gitTag
-
-    _auto_install $gitTag $switch
-
-    popd >/dev/null
+    fetch_and_unpack_tarball $gitTag $dir
+    _auto_install $tmp $gitTag "$switch"
 }
 
 ## Input: release version
@@ -482,7 +509,7 @@ update_release () {
     check_root
     gitTag=$(_check_release $release)
     hash=$(commit_hash_from_tag $gitTag)
-    install_git $hash $switch
+    install_git $hash "$switch"
 }
 
 ## Input: generation
@@ -508,10 +535,10 @@ cleanup () {
 [ -n "$list_installed" ] && list_installed
 [ -n "$list_available" ] && list_available
 [ -n "$switch_to_generation" ] && switch_to_generation $switch_to_generation
-[ -n "$install_release" ] && install_release $install_release $auto_switch
-[ -n "$install_git" ] && install_git $install_git $auto_switch
-[ -n "$install_local" ] && install_local $install_local $auto_switch
-[ -n "$update_release" ] && update_release $update_release $auto_switch
+[ -n "$install_release" ] && install_release $install_release "$auto_switch"
+[ -n "$install_git" ] && install_git $install_git "$auto_switch"
+[ -n "$install_local" ] && install_local $install_local "$auto_switch"
+[ -n "$update_release" ] && update_release $update_release "$auto_switch"
 [ -n "$uninstall_generation" ] && uninstall_generation $uninstall_generation
 [ -n "$activate" ] && activate
 [ -n "$deactivate" ] && deactivate

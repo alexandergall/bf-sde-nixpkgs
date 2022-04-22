@@ -2,7 +2,7 @@
   gnutar, gzip, git, kmod, ncurses, findutils }:
 
 { version, nixProfile, repoUrl, apiUrl, apiType,
-  activationCode, installCmds ? "" }:
+  activationCode, installCmds ? "", patches ? [] }:
 
 assert lib.asserts.assertOneOf "API Type" apiType [ "github" "bitbucket" ];
 
@@ -13,7 +13,7 @@ let
   }.${apiType};
 in stdenv.mkDerivation {
   pname = "release-manager";
-  inherit version;
+  inherit version patches;
   phases = [ "installPhase" ];
   installPhase = ''
     mkdir -p $out/bin

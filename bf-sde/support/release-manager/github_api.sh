@@ -14,11 +14,10 @@ get_branch_commits () {
 }
 
 fetch_and_unpack_tarball () {
-    local gitTag tarball
+    local gitTag dir
     gitTag=$1
-    tarball=$REPO_URL/archive/$gitTag.tar.gz
-    curl -L -O $tarball
-    tar xf release-* --strip-component 1
+    dir=$2
+    curl -L $REPO_URL/archive/$gitTag.tar.gz | tar -C ${dir:-.} -xzf - --strip-component 1
 }
 
 commit_hash_from_tag () {

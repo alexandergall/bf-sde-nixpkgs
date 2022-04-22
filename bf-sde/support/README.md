@@ -511,10 +511,14 @@ the following arguments
      activate and deactivate the application. It is sourced from the
      main `release-manager` script and has access to the functions
      defined there (e.g. `checkRoot`).
-   * `installCmds`. A string containing a `bash` fragment which is
-     executed at the end of the installation phase of the
+   * `installCmds`. An optional string containing a `bash` fragment
+     which is executed at the end of the installation phase of the
      `release-manager` derivation. It is used to install files and
-     directories used by the `activationCode`.
+     directories used by the `activationCode`. The default is an empty
+     string.
+   * `patches`. An optional list of patches to be applied to the
+     release manager script for customization. The default is an empty
+     list.
 
 The result is a derivation that contains a command
 `bin/release-manager`. It acts on the Nix profile and application

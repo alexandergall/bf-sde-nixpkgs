@@ -13,10 +13,10 @@ get_branch_commits () {
 }
 
 fetch_and_unpack_tarball () {
-    local gitTag
+    local gitTag dir
     gitTag=$1
-    curl -L --output ${gitTag}.tar.gz $API_URL'/archive?at='$gitTag'&format=tar.gz' 2>/dev/null
-    tar xf release-*
+    dir=$2
+    curl -L $API_URL'/archive?at='$gitTag'&format=tar.gz' 2>/dev/null | tar -C ${dir:-.} -xzf -
 }
 
 commit_hash_from_tag () {
