@@ -495,7 +495,7 @@ install_release () {
     INFO "Fetching package release tarball"
     tmp=$(mktemp -d)
     paths_to_rm+=$tmp
-    fetch_and_unpack_tarball $gitTag $dir
+    fetch_and_unpack_tarball $gitTag $tmp
     _auto_install $tmp $gitTag "$switch"
 }
 
