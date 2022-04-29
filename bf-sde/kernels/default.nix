@@ -229,6 +229,37 @@ let
           "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
         };
     };
+    Debian11_3 = {
+      kernelRelease = "5.10.0-13-amd64";
+      buildTree = mkDebian {
+        spec = {
+          snapshotTimestamp = "20220429T092639Z";
+          arch = {
+            name = "linux-headers-5.10.0-13-amd64_5.10.106-1_amd64.deb";
+            sha256 = "1ha5b5ia3pqv9qchrhnmn9rg7ry6b9qfjy64d03h49rvnqry3s58";
+          };
+          common = {
+            name = "linux-headers-5.10.0-13-common_5.10.106-1_all.deb";
+            sha256 = "0df6i02m4ckp004mlmmgv64z2r7vp3yzndsgh89vj7iljcwg0s8g";
+          };
+          kbuild = {
+            name = "linux-kbuild-5.10_5.10.106-1_amd64.deb";
+            sha256 = "0pzzx5qjnkgcxdpl7rx9zpkqnp1d6mnqw73d8w3nqanjn8cgwsmh";
+          };
+        };
+        patchelfInputs = [ openssl_1_1.out elfutils ];
+      };
+      patches =
+        let
+          patch = [ ./bf-drivers-kernel-5.8.patch ];
+        in {
+          "9.1.1" = patch ++ [ ./bf-drivers-9.1.1.patch ];
+          "9.2.0" = patch;
+          "9.3.0" = patch;
+          "9.3.1" = patch;
+          "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+        };
+    };
   };
 in
   builtins.mapAttrs mkModules kernels
