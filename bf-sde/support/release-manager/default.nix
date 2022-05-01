@@ -1,5 +1,5 @@
-{ stdenv, lib, coreutils, utillinux, gnused, gawk, jq, curl, systemd,
-  gnutar, gzip, git, kmod, ncurses, findutils }:
+{ stdenv, lib, nix, coreutils, utillinux, gnused, gawk, jq, curl,
+  systemd, gnutar, gzip, git, kmod, ncurses, findutils }:
 
 { version, nixProfile, repoUrl, apiUrl, apiType,
   activationCode, installCmds ? "", patches ? [] }:
@@ -20,7 +20,7 @@ in stdenv.mkDerivation {
     mkdir -p $out/bin
     substitute ./release-manager $out/bin/release-manager \
       --subst-var-by PATH \
-        "${lib.strings.makeBinPath [ coreutils utillinux gnused gawk
+        "${lib.strings.makeBinPath [ nix coreutils utillinux gnused gawk
                                      jq curl systemd gnutar gzip git kmod ncurses
                                      findutils ]}" \
       --subst-var-by PROFILE ${nixProfile} \

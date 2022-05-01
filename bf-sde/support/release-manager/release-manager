@@ -9,7 +9,7 @@ LIB=@SELF@/lib
 REPO_URL=@REPO_URL@
 API_URL=@API_URL@
 
-PATH=/nix/var/nix/profiles/default/bin:@PATH@
+PATH=@PATH@
 NIX_PATH=
 
 self=$(basename $0)
