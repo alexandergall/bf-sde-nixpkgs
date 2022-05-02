@@ -30,7 +30,7 @@
     ## Make sure no module is loaded if none is required. This is
     ## mainly to avoid crashes of bf_switchd that have been observed
     ## when running on the model while a kernel module is loaded.
-   else '
+   else ''
     for mod in bf_kdrv bf_knet bf_kpkt; do
         if mod_exists ''${mod}; then
           echo "Unloading ''${mod}"
