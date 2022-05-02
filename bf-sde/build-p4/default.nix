@@ -65,7 +65,12 @@ let
     ## kernel before executing the program.
     moduleWrapper' = modules:
       callPackage ./modules-wrapper.nix {
-        inherit execName requiredKernelModule modules self;
+        inherit execName modules self;
+        requiredKernelModule =
+          if platform == "model" then
+            null
+          else
+            requiredKernelModule;
       };
 
     moduleWrapper = kernelRelease:
