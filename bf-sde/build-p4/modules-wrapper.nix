@@ -32,10 +32,8 @@
     ## when running on the model while a kernel module is loaded.
    else ''
     for mod in bf_kdrv bf_knet bf_kpkt; do
-        if mod_exists ''${mod}; then
-          echo "Unloading ''${mod}"
-          /usr/bin/sudo ${modules}/bin/''${mod}_mod_unload
-        fi
+        echo "Unloading ''${mod}"
+        /usr/bin/sudo ${modules}/bin/''${mod}_mod_unload
     done
 
     exec ${self}/bin/${execName} "$@"
