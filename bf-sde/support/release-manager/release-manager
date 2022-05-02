@@ -372,12 +372,19 @@ _install () {
             --argstr kernelRelease $kernel_release \
             --argstr platform $platform
     new_gen=$(gen_from_path $(readlink $PROFILE))
-    ## nix-env has automatically switched to the new
-    ## generation, revert back
-    nix-env -p $PROFILE --switch-generation $current_gen 2>/dev/null
+    ## nix-env has automatically switched to the new generation,
+    ## revert back (unless we just created the first generation, in
+    ## which case current_gen is blank).
+    if [ -n "$current_gen" ]; then
+	nix-env -p $PROFILE --switch-generation $current_gen 2>/dev/null
+    fi
 
     if [ -z "$switch" ]; then
-        INFO "Use \"release-manager --switch-to-generation $new_gen\" to switch to the new release"
+	if [ -n "$current_gen" ]; then
+            INFO "Use \"release-manager --switch-to-generation $new_gen\" to switch to the new release"
+	else
+	    INFO "This is the first generation of the profile, use \"release-manager --activate\" to activate"
+	fi
     fi
     echo $new_gen
 }
