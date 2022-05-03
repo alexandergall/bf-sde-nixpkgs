@@ -11,30 +11,30 @@ echo "Redirect file descriptors 3/4 to isolate stdout/stderr of the Tofino model
 redirect () {
     mode=$1
     for fd in 1 2; do
-	fdn=$(($fd + 2))
-	fds=$(($fd + 4))
-	if [ -e /proc/$$/fd/$fdn ]; then
-	    if [ $mode = save ]; then
-		eval "exec $fds>&$fd $fd>&$fdn"
-	    else
-		eval "exec $fd>&$fds $fds>&-"
-	    fi
-	fi
+        fdn=$(($fd + 2))
+        fds=$(($fd + 4))
+        if [ -e /proc/$$/fd/$fdn ]; then
+            if [ $mode = save ]; then
+                eval "exec $fds>&$fd $fd>&$fdn"
+            else
+                eval "exec $fd>&$fds $fds>&-"
+            fi
+        fi
     done
 }
 
 cleanup () {
     /usr/bin/sudo @pkill@ tofino-model
     wait
-    sleep 2
+    @sleep@ 2
     echo "Deleting veth interfaces..."
-    /usr/bin/sudo bash -e @RUNTIME_ENV@/bin/veth_teardown.sh
+    /usr/bin/sudo @bash@ -e @RUNTIME_ENV@/bin/veth_teardown.sh
 }
 
 trap cleanup EXIT INT TERM
 
 echo "Creating veth interfaces..."
-/usr/bin/sudo bash -e @RUNTIME_ENV@/bin/veth_setup.sh
+/usr/bin/sudo @bash@ -e @RUNTIME_ENV@/bin/veth_setup.sh
 
 ## bf_switchd segfaults if run in MODEL mode and a kernel module is
 ## loaded

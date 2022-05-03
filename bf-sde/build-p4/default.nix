@@ -1,5 +1,5 @@
 { stdenv, callPackage, procps, kmod, lib, buildEnv, coreutils, gnused,
-  gnugrep, bf-sde }:
+  gnugrep, bash, bf-sde }:
 
 { pname,
   version,
@@ -153,8 +153,10 @@ let
           --subst-var RUNTIME_ENV \
           --subst-var EXEC_NAME \
           --subst-var ARCH \
+          --subst-var-by bash ${bash}/bin/bash \
           --subst-var-by pkill ${procps}/bin/pkill \
-          --subst-var-by rmmod ${kmod}/bin/rmmod
+          --subst-var-by rmmod ${kmod}/bin/rmmod \
+          --subst-var-by sleep ${coreutils}/bin/sleep
         chmod a+x $out/bin/$EXEC_NAME
       '';
       stordis_bf2556x_1t = ''

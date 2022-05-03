@@ -206,6 +206,16 @@ kernel_release=${KERNEL_RELEASE:-$(uname -r)}
 platform=$onie_machine
 [ -z "$platform" ] && ERROR "Can't determine platform (check onie_machine in /etc/machine.conf)"
 
+if [ "$platform" == "model" ]; then
+    ## The model does not depend on the kernel.  The
+    ## modulesForKernel() support function of the SDE package accepts
+    ## an unsupported kernel and creates special load/unload scripts
+    ## that exit with an error when called from a module wrapper
+    ## script. The model wrappers never call those scripts, i.e. this
+    ## is an easy way to install the model on any kernel.
+    kernel_release="<none>"
+fi
+
 check_root () {
     [ $(id -u) == 0 ] && return
     ERROR "Please run this command as root"
