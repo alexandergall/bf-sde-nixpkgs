@@ -5,7 +5,12 @@
 
 stdenv.mkDerivation ({
   name = "bf-sde-${version}-kernel-modules-${spec.kernelRelease}";
-  inherit src;
+  src = buildSystem.cmakeFixupSrc {
+    inherit src;
+    ## Only copy the cmake directory from the top-level. The driver
+    ## package is not really self-contained even in standalone mode.
+    preambleOverride = true;
+  };
 
   passthru = {
     inherit kernelID;
@@ -70,6 +75,7 @@ stdenv.mkDerivation ({
   '';
 } // lib.optionalAttrs (buildSystem.isCmake) {
   cmakeFlags = [
+      "-DSTANDALONE=ON"
       "-DTHRIFT-DRIVER=OFF"
       "-DGRPC=OFF"
       "-DBFRT=OFF"
@@ -84,19 +90,10 @@ stdenv.mkDerivation ({
     "bf_knet"
     "bf_kpkt"
   ];
-  preConfigure = buildSystem.preConfigure {
-    package = "bf-drivers";
-    cmakeRules = ''
-      find_package(Thrift REQUIRED)
-      include_directories(''${BF_PKG_DIR}/bf-drivers)
-      include_directories(''${BF_PKG_DIR}/bf-drivers/include)
-      add_subdirectory(''${BF_PKG_DIR}/bf-drivers)
-    '';
-  };
   installPhase = ''
-    (cd pkgsrc/bf-drivers/kdrv && make install)
+    (cd kdrv && make install)
     for dir in bf_kdrv bf_knet bf_kpkt; do
-      (cd pkgsrc/bf-drivers/kdrv/$dir && make install)
+      (cd kdrv/$dir && make install)
     done
     runHook postInstall
   '';

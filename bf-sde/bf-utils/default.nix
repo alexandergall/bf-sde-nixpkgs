@@ -6,7 +6,17 @@
 ## method creates a dependency cycle between the "out" and "dev"
 ## outputs.  This should be investigated at some point.
 stdenv.mkDerivation ({
-  inherit pname version src patches;
+  inherit pname version patches;
+  src = buildSystem.cmakeFixupSrc {
+    inherit src;
+    cmakeRules = ''
+      include_directories(include)
+      include_directories(third-party/tommyds/include)
+      include_directories(third-party/xxhash/include)
+      include_directories(third-party/judy-1.0.5/src)
+      include_directories(third-party/libedit-3.1/src)
+    '';
+  };
 
   buildInputs = [ bf-syslibs.dev python3 ]
                 ++ lib.optional buildSystem.isCmake
@@ -19,6 +29,18 @@ stdenv.mkDerivation ({
   dontDisableStatic = true;
 
   outputs = [ "out" "dev" ];
+
+  passthru = {
+    ## The version of the embedded Python interpreter as it appears in
+    ## the package's include and lib directories. It is used by
+    ## bf-drivers to build the parts that need to be linked against
+    ## that specific Python version from bf-utils.
+    pythonLibPrefix =
+      if lib.versionOlder version "9.7.0" then
+        "python3.4m"
+      else
+        "python3.8";
+  };
 
   ## bf-python requires a bit of trickery starting with 9.3.0.
   ## bf-utils contains a full Python interpreter with a customized
@@ -79,45 +101,37 @@ stdenv.mkDerivation ({
       substituteInPlace $file --replace $dev /removed-bf-utils-dev-reference
     done
   '';
-} // lib.optionalAttrs (buildSystem.isCmake) {
-  preConfigure = buildSystem.preConfigure {
-    package = "bf-utils";
-    cmakeRules = ''
-      include_directories(''${BF_PKG_DIR}/bf-utils/third-party/tommyds/include)
-      include_directories(''${BF_PKG_DIR}/bf-utils/third-party/xxhash/include)
-      include_directories(''${BF_PKG_DIR}/bf-utils/third-party/cjson/include)
-      include_directories(''${BF_PKG_DIR}/bf-utils/third-party/judy-1.0.5/src)
-      include_directories(''${BF_PKG_DIR}/bf-utils/third-party/bigcode/include)
-      include_directories(''${BF_PKG_DIR}/bf-utils/third-party/klish)
-      include_directories(''${BF_PKG_DIR}/bf-utils/third-party/libedit-3.1/src)
-      include_directories(''${BF_PKG_DIR}/bf-utils/third-party/bf-python/Include)
-      include_directories(''${CMAKE_CURRENT_BINARY_DIR}/''${BF_PKG_DIR}/bf-utils/third-party/libpython3.4m/src/libpython3.4m-build/)
-      include_directories(''${BF_PKG_DIR}/bf-utils/include)
-      add_subdirectory(''${BF_PKG_DIR}/bf-utils)
-    '';
-    postCmds = if (lib.versionOlder version "9.7.0") then ''
-      patchShebangs third-party/bf-python
-    '' else
-      ## Starting with 9.7.0, the install procedure of the
-      ## bf_rt_python modules has been removed from
-      ## bf-utils.  However, our procedure still requires
-      ## those modules to be part of the bf-utils
-      ## package. The corresponding CMake rule is also
-      ## removed from the bf-drivers package.
-      ##
-      ## The other two lines set up the compiler flags needed by
-      ## third-party/cpython/setup.py to find the header files and
-      ## link libraries for libffi, libz and libsqlite3. By default,
-      ## it only searches in standard locations and the automatic Nix
-      ## magic doesn't work in this case.
-      ''
-        echo 'install(DIRECTORY ''${CMAKE_CURRENT_SOURCE_DIR}/bf_rt_python/ DESTINATION lib/python3.8)' >>CMakeLists.txt
-        NIX_CFLAGS_COMPILE="-lffi -lz -lsqlite3 $NIX_CFLAGS_COMPILE"
-        sed -i -e 's!LDFLAGS=\([^ ]*\)!"CPPFLAGS=-I${zlib.dev}/include -I${sqlite.dev}/include" "LDFLAGS=-L${zlib.static}/lib -L${sqlite.out}/lib \1"!' third-party/CMakeLists.txt
-      '';
-  };
+} // lib.optionalAttrs buildSystem.isCmake {
+  ## Attributes that did not exist in pre-cmake builds are added here
+  ## for cmake builds only to avoid re-building of the autoconf-based
+  ## packages. The empty attributes would not change the result of
+  ## builds but cause the out paths to change.
+    cmakeFlags = [ "-DBF-PYTHON=ON" ];
 
-  postInstall = lib.optionalString (lib.versionAtLeast version "9.7.0") ''
-    $out/bin/$(basename $out/lib/python*) -m compileall $out/lib/python*/bfrt*
-  '';
-})
+    preConfigure =
+      if (lib.versionOlder version "9.7.0") then ''
+        patchShebangs third-party/bf-python
+      '' else
+        ## Starting with 9.7.0, the install procedure of the
+        ## bf_rt_python modules has been removed from
+        ## bf-utils.  However, our procedure still requires
+        ## those modules to be part of the bf-utils
+        ## package. The corresponding CMake rule is also
+        ## removed from the bf-drivers package.
+        ##
+        ## The other two lines set up the compiler flags needed by
+        ## third-party/cpython/setup.py to find the header files and
+        ## link libraries for libffi, libz and libsqlite3. By default,
+        ## it only searches in standard locations and the automatic Nix
+        ## magic doesn't work in this case.
+        ''
+          echo 'install(DIRECTORY ''${CMAKE_CURRENT_SOURCE_DIR}/bf_rt_python/ DESTINATION lib/python3.8)' >>CMakeLists.txt
+          NIX_CFLAGS_COMPILE="-lffi -lz -lsqlite3 $NIX_CFLAGS_COMPILE"
+          sed -i -e 's!LDFLAGS=\([^ ]*\)!"CPPFLAGS=-I${zlib.dev}/include -I${sqlite.dev}/include" "LDFLAGS=-L${zlib.static}/lib -L${sqlite.out}/lib \1"!' third-party/CMakeLists.txt
+        '';
+
+    postInstall = lib.optionalString (lib.versionAtLeast version "9.7.0") ''
+      $out/bin/$(basename $out/lib/python*) -m compileall $out/lib/python*/bfrt*
+    '';
+  }
+)

@@ -31,24 +31,43 @@ let
   ## embedded in bf-utils to provide the bfrt_python shell in
   ## bf_switchd. Some bf_rt components in bf-drivers need to be
   ## compiled with those headers.
-  bfUtilsPythonInclude =
-    if lib.versionOlder version "9.7.0" then
-      "${bf-utils.dev}/include/python3.4m"
-    else
-      "${bf-utils.dev}/include/python3.8";
+  bfUtilsPythonInclude = "${bf-utils.dev}/include/${bf-utils.pythonLibPrefix}";
   bf-drivers = stdenv.mkDerivation ({
     pname = pname + lib.optionalString runtime "-runtime";
-    inherit version src;
+    inherit version patches;
+    src = buildSystem.cmakeFixupSrc {
+      inherit src;
+      cmakeRules = ''
+        find_package(Thrift REQUIRED)
+        include_directories(include)
+        include_directories(.)
+        set(PYTHON_SITE lib/${python.libPrefix}/site-packages)
+        find_library(BF_PYTHON_LIBRARY NAMES ${bf-utils.pythonLibPrefix} lib${bf-utils.pythonLibPrefix})
+      '' + lib.optionalString (lib.versionAtLeast version "9.7.0") ''
+        set(PYTHON_EXECUTABLE python3)
+      '';
+      ## Include the path for Python.h and add explicit linking to
+      ## libedit.  libedit is included as third-party component in
+      ## bf-utils. The standard monolithic build of the SDE links
+      ## bf-drivers to libedit of the source tree inside bf-utils.
+      ## Our modular build can't do that (and libedit is not in the
+      ## output path of bf-utils), so we add the standard libedit to
+      ## the dependencies.
+      postCmakeRules = ''
+        target_include_directories(bfshell_plugin_debug_o PUBLIC ${bfUtilsPythonInclude})
+        target_include_directories(bfshell_plugin_bf_rt_o PUBLIC ${bfUtilsPythonInclude})
+        cmake_policy(SET CMP0079 NEW)
+        target_link_libraries(bf_switchd edit)
+      '';
+    };
 
     propagatedBuildInputs = with python.pkgs; [ grpcio ];
     buildInputs = [ thrift openssl boost pkg-config grpc protobuf zlib
                     bf-syslibs.dev bf-utils bf-utils.dev python.pkgs.wrapPython ]
                   ++ lib.optional (runtime && ! buildSystem.isCmake) autoreconfHook
-                  ++ lib.optional buildSystem.isCmake [ cmake libedit ];
+                  ++ lib.optional buildSystem.isCmake [ cmake libedit python ];
     outputs = [ "out" ] ++ lib.optional (! runtime) "dev";
     enableParallelBuilding = true;
-
-    patches = patches;
 
     configureFlags = lib.optional (! buildSystem.isCmake) [
       "enable_thrift=yes"
@@ -63,50 +82,39 @@ let
       "CFLAGS+=-I${bfUtilsPythonInclude}"
     ];
 
-    preConfigure = buildSystem.preConfigure {
-      package = "bf-drivers";
-      cmakeRules = ''
-        find_package(Thrift REQUIRED)
-        include_directories(''${BF_PKG_DIR}/bf-drivers)
-        include_directories(''${BF_PKG_DIR}/bf-drivers/include)
-        add_subdirectory(''${BF_PKG_DIR}/bf-drivers)
-      '';
-      postCmds = ''
-        ## Include the path for Python.h and add explicit linking to
-        ## libedit.  libedit is included as third-party component in
-        ## bf-utils. The standard monolithic build of the SDE links
-        ## bf-drivers to libedit of the source tree inside bf-utils.
-        ## Our modular build can't do that (and libedit is not in the
-        ## output path of bf-utils), so we add the standard libedit to
-        ## the dependencies.
-        NIX_CFLAGS_COMPILE="-I${bfUtilsPythonInclude} -ledit $NIX_CFLAGS_COMPILE"
-
-        ## Install path for bfrt
-        cmakeFlags="-DPYTHON_SITE=$out/lib/${python.libPrefix}/site-packages $cmakeFlags"
-
+    preConfigure =
+      if (! buildSystem.isCmake) then
+        ## Intel prohibits the inclusion of pd_api_gen in the runtime
+        ## environment.
+        lib.optionalString runtime ''
+          substituteInPlace Makefile.am --replace "SUBDIRS = third-party include src pd_api_gen doc" "SUBDIRS = third-party include src doc"
+        ''
+      else
+        ## Override the location of libpython provided by
+        ## bf-utils.
+        ''
+          for dir in src/bf_rt src/lld; do
+              echo -e '\nset_property(TARGET bfpythonlib PROPERTY IMPORTED_LOCATION ''${BF_PYTHON_LIBRARY})' >>$dir/CMakeLists.txt
+          done
+        '' +
         ## Disable installation of bf_rt_python files, see the comment
         ## in ../bf-utils/default.nix for details
-        sed -i -e 's/^.*bf_rt_python.*$//' src/bf_rt/CMakeLists.txt
-
+        ''
+          sed -i -e 's/^.*bf_rt_python.*$//' src/bf_rt/CMakeLists.txt
+        '' +
         ## Disable bfrt_examples
-        sed -i -e 's/^.*bfrt_examples.*//' bf_switchd/CMakeLists.txt
-
+        ''
+          sed -i -e 's/^.*bfrt_examples.*//' bf_switchd/CMakeLists.txt
+        '' +
         ## Don't install module load/unload scripts, they are part of the kernel
         ## module packages
-        sed -i -e 's/^.*mod_.*load.*$//' CMakeLists.txt
-      '';
-    } + (lib.optionalString runtime
-      ## Intel prohibits the inclusion of pd_api_gen in the runtime
-      ## environment.
-      (if buildSystem.isCmake then
+        ''
+          sed -i -e 's/^.*mod_.*load.*$//' CMakeLists.txt
+        '' + lib.optionalString runtime
+          ## See above
           ''
             sed -i -e 's/^.*pd_api_gen.*$//' CMakeLists.txt
-          ''
-         else
-          ''
-            substituteInPlace Makefile.am --replace "SUBDIRS = third-party include src pd_api_gen doc" "SUBDIRS = third-party include src doc"
-          '')
-    );
+          '';
 
     ## Non-cmake builds: install the precompiled avago library and
     ## make it available to the builder.  Also disable building of
@@ -193,8 +201,7 @@ let
       chmod a+x $out/lib/${python.libPrefix}/site-packages/p4testutils/bf_switchd_dev_status.py
     '';
 
-    ## This declares the set of modules to be used by
-    ## wrapPythonPrograms.
+    ## Declare the set of modules to be used by wrapPythonPrograms.
     pythonPath = with python.pkgs; [ tenjin six ];
     postFixup = lib.optionalString (! runtime && lib.versionAtLeast version "9.6.0") ''
       [ -f $out/bin/split_pd_thrift.py ] && chmod a+x $out/bin/split_pd_thrift.py
@@ -210,6 +217,7 @@ let
       "-DBFRT=ON"
       "-DPI=OFF"
       "-DP4RT=OFF"
+      "-DBF-PYTHON=ON"
       ## Indirectly disable build of kdrv
       "-DASIC=OFF"
     ];

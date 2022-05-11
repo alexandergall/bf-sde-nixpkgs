@@ -2,7 +2,14 @@
   autoconf, automake, libtool }:
 
 stdenv.mkDerivation ({
-  inherit pname version src patches;
+  inherit pname version patches;
+  src = buildSystem.cmakeFixupSrc {
+      inherit src;
+      cmakeRules = ''
+        include_directories(third-party)
+        include_directories(\''${CMAKE_CURRENT_BINARY_DIR}/third-party/gperftools/src)
+      '';
+  };
 
   buildInputs = lib.optional buildSystem.isCmake [ cmake autoconf automake libtool ];
   outputs = [ "out" "dev" ] ++ lib.optional buildSystem.isCmake "doc";
@@ -12,13 +19,10 @@ stdenv.mkDerivation ({
   postInstall = ''
     rm -rf $out/bin
   '';
-} // lib.optionalAttrs (buildSystem.isCmake) {
-  preConfigure = buildSystem.preConfigure {
-    package = "bf-syslibs";
-    cmakeRules = ''
-      include_directories(''${BF_PKG_DIR}/bf-syslibs/include)
-      include_directories(''${BF_PKG_DIR}/bf-syslibs/third-party)
-      add_subdirectory(''${BF_PKG_DIR}/bf-syslibs)
-    '';
-  };
+} //   lib.optionalAttrs buildSystem.isCmake {
+  ## Attributes that did not exist in pre-cmake builds are added here
+  ## for cmake builds only to avoid re-building of the autoconf-based
+  ## packages. The empty attributes would not change the result of
+  ## builds but cause the out paths to change.
+  cmakeFlags = [ "-DTCMALLOC=ON" ];
 })

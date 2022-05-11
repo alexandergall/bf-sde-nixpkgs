@@ -20,33 +20,32 @@ let
 in if buildSystem.isCmake
    then
      python.pkgs.toPythonModule (stdenv.mkDerivation {
-       inherit pname version src patches;
+       inherit pname version patches;
+       src = buildSystem.cmakeFixupSrc {
+         inherit src;
+         preambleOverride = true;
+         ## bf-ptf does not have a CMakeLists.txt. It is built
+         ## directly from the top-level. The following rules are
+         ## copied from there with appropriate modifications.
+         cmakeRules = ''
+           cmake_minimum_required(VERSION 3.5)
+           project(none LANGUAGES C)
+           set(PYTHON_SITE lib/${python.libPrefix}/site-packages)
+         '' +
+         (if (lib.versionOlder version "9.8.0") then ''
+           install(PROGRAMS \''${CMAKE_CURRENT_SOURCE_DIR}/bf-ptf/ptf DESTINATION bin RENAME bf-ptf)
+           install(DIRECTORY \''${CMAKE_CURRENT_SOURCE_DIR}/bf-ptf/src/ DESTINATION \''${PYTHON_SITE}/bf-ptf)
+         '' else ''
+           install(PROGRAMS \''${CMAKE_CURRENT_SOURCE_DIR}/ptf/ptf DESTINATION bin)
+           install(DIRECTORY \''${CMAKE_CURRENT_SOURCE_DIR}/ptf/src/ DESTINATION \''${PYTHON_SITE})
+         '');
+       };
        ## Pass interpreter on to dependent packages
        passthru = {
          inherit python;
        };
        buildInputs = [ python python.pkgs.wrapPython cmake ]
                      ++ lib.optional (lib.versionAtLeast version "9.8.0") [ thrift ];
-       preConfigure = buildSystem.preConfigure rec {
-         package = "ptf-modules";
-         cmakeRules = ''
-           set(PTF_PKG_DIR "${package}")
-           execute_process(
-             COMMAND python -c "if True:
-               from distutils import sysconfig as sc
-               print(sc.get_python_lib(prefix=''', standard_lib=True, plat_specific=True))"
-             OUTPUT_VARIABLE PYTHON_SITE
-             OUTPUT_STRIP_TRAILING_WHITESPACE)
-           set(PYTHON_SITE "''${PYTHON_SITE}/site-packages")
-         '' +
-         (if (lib.versionOlder version "9.8.0") then ''
-           install(PROGRAMS ''${CMAKE_CURRENT_SOURCE_DIR}/''${BF_PKG_DIR}/''${PTF_PKG_DIR}/bf-ptf/ptf DESTINATION bin RENAME bf-ptf)
-           install(DIRECTORY ''${CMAKE_CURRENT_SOURCE_DIR}/''${BF_PKG_DIR}/''${PTF_PKG_DIR}/bf-ptf/src/ DESTINATION ''${PYTHON_SITE}/bf-ptf)
-         '' else ''
-           install(PROGRAMS ''${CMAKE_CURRENT_SOURCE_DIR}/''${BF_PKG_DIR}/''${PTF_PKG_DIR}/ptf/ptf DESTINATION bin)
-           install(DIRECTORY ''${CMAKE_CURRENT_SOURCE_DIR}/''${BF_PKG_DIR}/''${PTF_PKG_DIR}/ptf/src/ DESTINATION ''${PYTHON_SITE})
-         '');
-       };
 
        postInstall = ''
          python -m compileall $out/lib/${python.libPrefix}/site-packages

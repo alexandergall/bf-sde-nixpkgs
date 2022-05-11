@@ -5,10 +5,12 @@ let
     let
       derivation =
         { version, buildSystem, lib, stdenv, thrift, boost, libusb,
-          curl, bf-syslibs, bf-drivers, bf-utils, cmake }:
+          curl, bf-syslibs, bf-drivers, bf-utils, cmake, runCommand }:
 
         stdenv.mkDerivation ({
           pname = "bf-platforms-${baseboard}";
+          ## Note: src is the actual reference BSP archive, see
+          ## default.nix
           inherit version src;
           patches = patches.default or [];
 
@@ -19,19 +21,6 @@ let
 
           outputs = [ "out" "dev" ];
           enableParallelBuilding = true;
-
-          preConfigure = buildSystem.preConfigure {
-            package = "bf-platforms";
-            cmakeRules = ''
-              find_package(Thrift REQUIRED)
-              add_subdirectory(''${BF_PKG_DIR}/bf-platforms)
-            '';
-            alternativeCmds = ''
-              mkdir bf-platforms
-              tar -C bf-platforms -xf packages/bf-platforms* --strip-components 1
-              cd bf-platforms
-            '';
-          };
 
           configureFlags = lib.optional (! buildSystem.isCmake)
             (if model then
@@ -48,15 +37,12 @@ let
             python -m compileall $out/lib/${bf-drivers.pythonModule.libPrefix}/site-packages
           '';
         } // lib.optionalAttrs buildSystem.isCmake {
-          prePatch = ''
-            tar -xf packages/bf-platforms* --strip-components 1
-          '';
           cmakeFlags =
             (if model then
               [ "-DASIC=OFF" ]
              else
                [ "-DASIC=ON" ]) ++
-            [ "-DTHRIFT-DRIVER=ON" ];
+            [ "-DSTANDALONE=ON" ];
         });
     in callPackage derivation {};
 in lib.mapAttrs mkBaseboard {

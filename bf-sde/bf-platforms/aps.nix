@@ -27,6 +27,7 @@ let
           self = stdenv.mkDerivation {
             pname = "bf-platforms-${baseboard}";
             inherit version CFLAGS passthru;
+            ## This is the actual BSP archive, see default.nix.
             inherit (reference) src;
 
             buildInputs =
@@ -43,9 +44,6 @@ let
             preConfigure =
               ## Merge the APS BSP with the reference BSP
               ''
-                mkdir bf-platforms
-                tar -C bf-platforms -xf packages/bf-platforms* --strip-components 1
-                cd bf-platforms
                 if [ -n "$(shopt -s nullglob; echo ${src'}/bsp/${pattern}.zip)" ]; then
                   unzip ${src'}/bsp/${pattern}.zip
                 else
@@ -61,20 +59,12 @@ let
 
                 substituteInPlace platforms/apsn/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c \
                   --replace onie-syseeprom $out/bin/onie-syseeprom
-              '' + buildSystem.preConfigure {
-                package = "bf-platforms";
-                preCmds = ''
-                  substituteInPlace CMakeLists.txt --replace "PROJECT_SOURCE_DIR}" "PROJECT_SOURCE_DIR}/\''${BF_PKG_DIR}/bf-platforms"
-                  export SDE_INSTALL=$out
-                '';
-                cmakeRules = ''
-                  find_package(Thrift REQUIRED)
-                  add_subdirectory(''${BF_PKG_DIR}/bf-platforms)
-                '';
-              };
+              '' + lib.optionalString buildSystem.isCmake ''
+                export SDE_INSTALL=$out
+              '';
 
             cmakeFlags = [
-              "-DSTANDALONE=OFF"
+              "-DSTANDALONE=ON"
               "-DASIC=ON"
               "-DNEWPORT=OFF"
               "-DACCTON=OFF"
@@ -99,9 +89,10 @@ let
 
               ## Generate the gRPC python bindings for the SAL
               pushd ${src'}/APS-One-touch*/release/sal*
+              sitePath=$out/lib/${python.libPrefix}/site-packages
               ${python.pkgs.grpcio-tools}/lib/${python.libPrefix}/site-packages/grpc_tools/protoc.py -I ./proto \
-                --python_out=$out/lib/${python.libPrefix}/site-packages/ \
-                --grpc_python_out=$out/lib/${python.libPrefix}/site-packages/ \
+                --python_out=$sitePath/ \
+                --grpc_python_out=$sitePath/ \
                 proto/sal_services.proto
               popd
 
@@ -109,6 +100,8 @@ let
                 --subst-var-by PATH \
                   "${lib.strings.makeBinPath [ coreutils i2c-tools gawk xz utillinux mount umount cpio gnused ]}"
               chmod a+x $out/bin/onie-syseeprom
+            '' + lib.optionalString buildSystem.isCmake ''
+              python -m compileall $sitePath
             '';
           };
 

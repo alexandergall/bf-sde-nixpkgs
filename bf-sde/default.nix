@@ -26,7 +26,7 @@ let
       };
 
       SDE = lib.makeScope pkgs.newScope (self: sdePkgs // sdeSpec // {
-        buildSystem = callPackage ./build-system {
+        buildSystem = callPackage ./build-system.nix {
           inherit sdeSpec;
         };
       });
@@ -42,9 +42,9 @@ let
         ## bf-diags is currently not used
         bf-diags = SDE.callPackage ./bf-diags (mkSrc "bf-diags");
         bf-platforms = import ./bf-platforms {
-          inherit lib;
-          inherit (sdeSpec) bsps;
-          inherit (SDE) callPackage;
+          inherit lib runCommand;
+          inherit (sdeSpec) version bsps;
+          inherit (SDE) callPackage buildSystem;
         };
         p4c = SDE.callPackage ./p4c (mkSrc "p4-compilers");
         tofino-model = SDE.callPackage ./tofino-model (mkSrc "tofino-model");
@@ -338,9 +338,7 @@ let
         patches = {
           mainTools = [ sde/run_switchd.patch sde/run_bfshell-9.6.0.patch
                         sde/run_p4_tests-9.6.0.patch ];
-          bf-syslibs = [ bf-syslibs/bf-sal-CMakeLists.txt.patch ];
-          bf-drivers = [ bf-drivers/libpython-dependency.patch
-                         bf-drivers/bf_switchd_model.patch ];
+          bf-drivers = [ bf-drivers/bf_switchd_model.patch ];
           p4-examples = [];
         };
       };
@@ -373,8 +371,7 @@ let
           mainTools = [ sde/run_switchd-9.7.0.patch sde/run_bfshell-9.7.0.patch
                         sde/run_p4_tests-9.7.0.patch ];
           mainCMake = [ sde/P4Build.cmake.patch ];
-          bf-drivers = [ bf-drivers/libpython-dependency-9.7.0.patch
-                         bf-drivers/bf_switchd_model.patch ];
+          bf-drivers = [ bf-drivers/bf_switchd_model.patch ];
           p4-examples = [];
           ptf-modules = [ ptf-modules/run_ptf_tests.patch
                           ## The getmac module used by bf-pktpy
@@ -444,8 +441,7 @@ let
           mainTools = [ sde/run_switchd-9.7.0.patch sde/run_bfshell-9.7.0.patch
                         sde/run_p4_tests-9.7.0.patch ];
           mainCMake = [ sde/P4Build.cmake.patch ];
-          bf-drivers = [ bf-drivers/libpython-dependency-9.8.0.patch
-                         bf-drivers/bf_switchd_model.patch ];
+          bf-drivers = [ bf-drivers/bf_switchd_model.patch ];
           p4-examples = [];
           ptf-modules = [ ptf-modules/run_ptf_tests.patch
                           ## The getmac module used by bf-pktpy

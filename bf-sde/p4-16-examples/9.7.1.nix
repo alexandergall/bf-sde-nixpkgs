@@ -49,6 +49,9 @@
     tna_custom_hash = {
       pythonModules = [ "crcmod" ];
     };
+    tna_dyn_hashing = {
+      pythonModules = [ "crcmod" ];
+    };
     tna_proxy_hash = {
       pythonModules = [ "crcmod" ];
     };

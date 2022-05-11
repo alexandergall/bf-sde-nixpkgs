@@ -4,26 +4,25 @@
 
 let
   python = bf-drivers.pythonModule;
-in stdenv.mkDerivation rec {
+in stdenv.mkDerivation {
   pname = "ptf-utils" + lib.optionalString runtime "-runtime";
-  inherit version src patches;
+  inherit version patches;
+  src = buildSystem.cmakeFixupSrc {
+    inherit src;
+    cmakeRules = ''
+      add_subdirectory(ptf-utils)
+    '';
+  };
 
   buildInputs = [ python python.pkgs.wrapPython makeWrapper ]
                 ++ lib.optional (lib.versionAtLeast version "9.8.0") [ thrift ]
                 ++ lib.optional buildSystem.isCmake [ cmake ];
 
-  preConfigure = buildSystem.preConfigure rec {
-    package = "ptf-modules";
-    cmakeRules = ''
-      set(PTF_PKG_DIR "${package}")
-      add_subdirectory(''${BF_PKG_DIR}/''${PTF_PKG_DIR}/ptf-utils)
-    '';
-    alternativeCmds = ''
-      cd ptf-utils
-    '' + lib.optionalString (version == "9.1.1") ''
-      sed -i Makefile.in -e '/^ixia_utils.*$/d'
-    '';
-  };
+  preConfigure = lib.optionalString (! buildSystem.isCmake) ''
+    cd ptf-utils
+  '' + lib.optionalString (version == "9.1.1") ''
+    sed -i Makefile.in -e '/^ixia_utils.*$/d'
+  '';
 
   preBuild = lib.optionalString (! buildSystem.isCmake) ''
     substituteInPlace run_ptf_tests.py --replace six.print '#six.print'

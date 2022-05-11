@@ -2,8 +2,14 @@
   thrift, boost, libpcap, cmake, autoconf, automake, libtool, p4c,
   bf-syslibs, bf-utils, bf-drivers }:
 
-stdenv.mkDerivation ({
-  inherit pname version src patches;
+stdenv.mkDerivation {
+  inherit pname version patches;
+  src = buildSystem.cmakeFixupSrc {
+    inherit src;
+    cmakeRules = ''
+      find_package(Thrift REQUIRED)
+    '';
+  };
 
   buildInputs = [ thrift boost libpcap p4c bf-syslibs.dev bf-utils
                   bf-drivers.dev python3 ]
@@ -16,32 +22,26 @@ stdenv.mkDerivation ({
     "--with-libpcap=${libpcap}"
     "enable_thrift=yes"
   ];
+  cmakeFlags = [
+    "-DTOFINO=ON"
+    "-DTHRIFT-DRIVER=ON"
+    "-DP4C=${p4c}/bin/bf-p4c"
+    "-DPDGEN=${bf-drivers}/bin/generate_tofino_pd"
+    "-DPDGENCLI=${bf-drivers}/bin/gencli"
+    "-DPDSPLIT=${bf-drivers}/bin/split_pd_thrift.py"
+  ];
 
-  preConfigure = ''
-    substituteInPlace third-party/libcrafter/configure --replace withval/include/net/bpf.h withval/include/pcap.h
-  '';
-  postConfigure = lib.optionalString (lib.versionOlder version "9.6.0") ''
-    patchShebangs p4-build
-  '';
-} // lib.optionalAttrs (buildSystem.isCmake) {
-  preConfigure = buildSystem.preConfigure {
-    package = "bf-diags";
-    cmakeRules = ''
-      set(TOFINO ON)
-      set(THRIFT-DRIVER ON)
-      set(P4C ${p4c}/bin/bf-p4c)
-      set(PDGEN ${bf-drivers}/bin/generate_tofino_pd)
-      set(PDGENCLI ${bf-drivers}/bin/gencli)
-      set(PDSPLIT ${bf-drivers}/bin/split_pd_thrift.py)
-      if (THRIFT-DRIVER OR THRIFT-SWITCH OR THRIFT-DIAGS)
-        find_package(Thrift REQUIRED)
-      endif()
-      add_subdirectory(''${BF_PKG_DIR}/bf-diags)
-    '';
-    postCmds =
+  preConfigure =
+    if (! buildSystem.isCmake) then
+      ''
+        substituteInPlace third-party/libcrafter/configure --replace withval/include/net/bpf.h withval/include/pcap.h
+      ''
+    else
       ## Satisfy make dependencies
       ''
         touch bf-p4c driver
       '';
-  };
-})
+  postConfigure = lib.optionalString (lib.versionOlder version "9.6.0") ''
+    patchShebangs p4-build
+  '';
+}
