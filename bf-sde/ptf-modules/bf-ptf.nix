@@ -56,7 +56,9 @@ in if buildSystem.isCmake
        ## directory to follow propagated build inputs and nix-support
        ## is part of the "dev" output.
        pythonPath = [ bf-drivers.dev bf-pktpy ]
-                    ++ (with python.pkgs; [ thrift scapy-helper ]
+                    ## Note: the global thrift shadows that from "with
+                    ## python.pkgs", hence the full path below
+                    ++ (with python.pkgs; [ python.pkgs.thrift scapy-helper ]
                                           ++ lib.optional (lib.versionAtLeast version "9.7.0")
                                             [ getmac ]
                     );
