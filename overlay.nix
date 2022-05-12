@@ -108,7 +108,7 @@ let
           url = "https://archive.apache.org/dist/thrift/${version}/${name}.tar.gz";
           sha256 = "0a04v7dgm1qzgii7v0sisnljhxc9xpq2vxkka60scrdp6aahjdn3";
       };
-
+      doCheck = false;
     });
 
     thrift_0_13 = super.thrift.overrideAttrs (oldAttrs: rec {
@@ -119,7 +119,7 @@ let
           url = "https://archive.apache.org/dist/thrift/${version}/${name}.tar.gz";
           sha256 = "0yai9c3bdsrkkjshgim7zk0i7malwfprg00l9774dbrkh2w4ilvs";
       };
-
+      doCheck = false;
     });
 
     thrift_0_14 = super.thrift.overrideAttrs (oldAttrs: rec {
@@ -135,6 +135,7 @@ let
         "-DBUILD_JAVASCRIPT:BOOL=OFF"
         "-DBUILD_NODEJS:BOOL=OFF"
       ];
+      doCheck = false;
     });
 
     ## Used to patch the tofino-model binary
