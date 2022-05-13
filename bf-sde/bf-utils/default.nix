@@ -1,6 +1,6 @@
 { pname, version, src, patches, buildSystem, lib, stdenv, python3,
-  cmake, autoconf, automake, libtool, libffi, zlib, sqlite,
-  bf-drivers-src, bf-syslibs }:
+  cmake, autoconf, automake, libtool, libffi, zlib, sqlite, libedit,
+  expat, bf-drivers-src, bf-syslibs }:
 
 ## Note: creating a "dev" output for this package with the default
 ## method creates a dependency cycle between the "out" and "dev"
@@ -9,6 +9,7 @@ stdenv.mkDerivation ({
   inherit pname version patches;
   src = buildSystem.cmakeFixupSrc {
     inherit src;
+    bypass = lib.versionAtLeast version "9.9.0";
     cmakeRules = ''
       include_directories(include)
       include_directories(third-party/tommyds/include)
@@ -23,7 +24,12 @@ stdenv.mkDerivation ({
                   ([ cmake autoconf automake libtool ] ++
                    (lib.optional (lib.versionAtLeast version "9.7.0")
                      ## Needed to build the third-party cpython
-                     [ libffi libffi.dev zlib sqlite.out ]));
+                     [ libffi libffi.dev zlib sqlite.out ]) ++
+                   (lib.optional (lib.versionAtLeast version "9.9.0")
+                     ## No longer included as third-party, expat is
+                     ## a new dependency
+                     [ libedit.dev expat.dev ])
+                  );
 
   enableParallelBuilding = true;
   dontDisableStatic = true;
@@ -106,32 +112,36 @@ stdenv.mkDerivation ({
   ## for cmake builds only to avoid re-building of the autoconf-based
   ## packages. The empty attributes would not change the result of
   ## builds but cause the out paths to change.
-    cmakeFlags = [ "-DBF-PYTHON=ON" ];
+  cmakeFlags =
+    if (lib.versionOlder version "9.9.0") then
+      [ "-DBF-PYTHON=ON" ]
+    else
+      [ "-DCPYTHON=ON" ];
 
-    preConfigure =
-      if (lib.versionOlder version "9.7.0") then ''
-        patchShebangs third-party/bf-python
-      '' else
-        ## Starting with 9.7.0, the install procedure of the
-        ## bf_rt_python modules has been removed from
-        ## bf-utils.  However, our procedure still requires
-        ## those modules to be part of the bf-utils
-        ## package. The corresponding CMake rule is also
-        ## removed from the bf-drivers package.
-        ##
-        ## The other two lines set up the compiler flags needed by
-        ## third-party/cpython/setup.py to find the header files and
-        ## link libraries for libffi, libz and libsqlite3. By default,
-        ## it only searches in standard locations and the automatic Nix
-        ## magic doesn't work in this case.
-        ''
-          echo 'install(DIRECTORY ''${CMAKE_CURRENT_SOURCE_DIR}/bf_rt_python/ DESTINATION lib/python3.8)' >>CMakeLists.txt
-          NIX_CFLAGS_COMPILE="-lffi -lz -lsqlite3 $NIX_CFLAGS_COMPILE"
-          sed -i -e 's!LDFLAGS=\([^ ]*\)!"CPPFLAGS=-I${zlib.dev}/include -I${sqlite.dev}/include" "LDFLAGS=-L${zlib.static}/lib -L${sqlite.out}/lib \1"!' third-party/CMakeLists.txt
-        '';
+  preConfigure =
+    if (lib.versionOlder version "9.7.0") then ''
+      patchShebangs third-party/bf-python
+    '' else
+      ## Starting with 9.7.0, the install procedure of the
+      ## bf_rt_python modules has been removed from
+      ## bf-utils.  However, our procedure still requires
+      ## those modules to be part of the bf-utils
+      ## package. The corresponding CMake rule is also
+      ## removed from the bf-drivers package.
+      ##
+      ## The other two lines set up the compiler flags needed by
+      ## third-party/cpython/setup.py to find the header files and
+      ## link libraries for libffi, libz and libsqlite3. By default,
+      ## it only searches in standard locations and the automatic Nix
+      ## magic doesn't work in this case.
+      ''
+        echo 'install(DIRECTORY ''${CMAKE_CURRENT_SOURCE_DIR}/bf_rt_python/ DESTINATION lib/python3.8)' >>CMakeLists.txt
+        NIX_CFLAGS_COMPILE="-lffi -lz -lsqlite3 $NIX_CFLAGS_COMPILE"
+        sed -i -e 's!LDFLAGS=\([^ ]*\)!"CPPFLAGS=-I${zlib.dev}/include -I${sqlite.dev}/include" "LDFLAGS=-L${zlib.static}/lib -L${sqlite.out}/lib \1"!' third-party/CMakeLists.txt
+      '';
 
-    postInstall = lib.optionalString (lib.versionAtLeast version "9.7.0") ''
-      $out/bin/$(basename $out/lib/python*) -m compileall $out/lib/python*/bfrt*
-    '';
-  }
+  postInstall = lib.optionalString (lib.versionAtLeast version "9.7.0") ''
+    $out/bin/$(basename $out/lib/python*) -m compileall $out/lib/python*/bfrt*
+  '';
+}
 )

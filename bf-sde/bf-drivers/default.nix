@@ -1,6 +1,6 @@
 { pname, version, src, patches, buildSystem, stdenv, python, thrift,
   openssl, boost, pkg-config, grpc, protobuf, zlib, bf-syslibs,
-  bf-utils, lib, autoreconfHook, cmake, libedit,
+  bf-utils, bf-utils-tofino, lib, autoreconfHook, cmake, libedit,
 
 ## The runtime version of the package doesn't include the gencli and
 ## generate_tofino_pd components.  They are not used at runtime but,
@@ -58,6 +58,8 @@ let
         target_include_directories(bfshell_plugin_bf_rt_o PUBLIC ${bfUtilsPythonInclude})
         cmake_policy(SET CMP0079 NEW)
         target_link_libraries(bf_switchd edit)
+      '' + lib.optionalString (lib.versionAtLeast version "9.9.0") ''
+        target_include_directories(lld_o PUBLIC ${libedit.dev}/include)
       '';
     };
 
@@ -65,7 +67,8 @@ let
     buildInputs = [ thrift openssl boost pkg-config grpc protobuf zlib
                     bf-syslibs.dev bf-utils bf-utils.dev python.pkgs.wrapPython ]
                   ++ lib.optional (runtime && ! buildSystem.isCmake) autoreconfHook
-                  ++ lib.optional buildSystem.isCmake [ cmake libedit python ];
+                  ++ lib.optional buildSystem.isCmake [ cmake libedit python ]
+                  ++ lib.optional (lib.versionAtLeast version "9.9.0") [ bf-utils-tofino.dev ];
     outputs = [ "out" ] ++ lib.optional (! runtime) "dev";
     enableParallelBuilding = true;
 

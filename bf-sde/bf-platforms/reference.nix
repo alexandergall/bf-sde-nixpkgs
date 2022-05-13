@@ -5,7 +5,8 @@ let
     let
       derivation =
         { version, buildSystem, lib, stdenv, thrift, boost, libusb,
-          curl, bf-syslibs, bf-drivers, bf-utils, cmake, runCommand }:
+          curl, bf-syslibs, bf-drivers, bf-utils, bf-utils-tofino,
+          cmake, runCommand }:
 
         stdenv.mkDerivation ({
           pname = "bf-platforms-${baseboard}";
@@ -17,7 +18,9 @@ let
           buildInputs = [ bf-drivers.pythonModule thrift boost libusb
                           curl bf-syslibs.dev bf-drivers.dev bf-utils
                           ] ++ lib.optional buildSystem.isCmake [
-                          cmake ];
+                            cmake ] ++
+                          lib.optional (lib.versionAtLeast version "9.9.0")
+                            [ bf-utils-tofino.dev ];
 
           outputs = [ "out" "dev" ];
           enableParallelBuilding = true;

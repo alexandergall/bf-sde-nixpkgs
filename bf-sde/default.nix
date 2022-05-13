@@ -35,6 +35,8 @@ let
         bf-utils = SDE.callPackage ./bf-utils (mkSrc "bf-utils" // {
           bf-drivers-src = extractSource "bf-drivers";
         });
+        ## Dummy to satisfy callPackage for versions prior to 9.9.0
+        bf-utils-tofino = {};
         bf-drivers = SDE.callPackage ./bf-drivers (mkSrc "bf-drivers"// {
           python = sdeSpec.python_bf_drivers;
         });
@@ -72,6 +74,22 @@ let
         ## it.  We don't replicate this behaviour.
         ptf-modules = SDE.callPackage ./ptf-modules/bf-ptf.nix (mkSrc "ptf-modules");
         bf-pktpy = SDE.callPackage ./ptf-modules/bf-pktpy.nix (mkSrc "ptf-modules");
+      }) // (lib.optionalAttrs (lib.strings.versionAtLeast sdeSpec.version "9.9.0") {
+
+        ## bf-syslibs was renamed to target-syslibs. We keep bf-syslibs
+        ## as the name of the package for simplicity.
+        bf-syslibs = SDE.callPackage ./bf-syslibs (mkSrc "target-syslibs");
+
+        ## bf-utils was split up into two separate components. The new
+        ## bf-utils only contains Tofino-specific
+        ## libraries. Everything else is now called target-utils. For
+        ## the same reason as for bf-syslibs, we keep the name
+        ## bf-utils for target-utils and use a new package
+        ## bf-utils-tofino for the rest.
+        bf-utils = SDE.callPackage ./bf-utils (mkSrc "target-utils" // {
+          bf-drivers-src = extractSource "bf-drivers";
+        });
+        bf-utils-tofino = SDE.callPackage ./bf-utils/tofino.nix (mkSrc "bf-utils");
       });
 
       passthru = {
@@ -462,6 +480,36 @@ let
       libcli = libcli1_10;
       python_bf_drivers = python3;
     };
+    v9_9_0 = rec {
+      version = "9.9.0";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "c4314e76140a9a6f5d644176e0e3b0ca88f0df606b735c2c47c7cf5575d46257";
+        patches = {
+          mainTools = [ sde/run_switchd-9.7.0.patch sde/run_bfshell-9.7.0.patch
+                        sde/run_p4_tests-9.7.0.patch ];
+          mainCMake = [ sde/P4Build.cmake.patch ];
+          bf-drivers = [];
+          p4-examples = [];
+          ptf-modules = [ ptf-modules/run_ptf_tests.patch
+                          ## The getmac module used by bf-pktpy
+                          ## returns None as MAC address if run in a
+                          ## VM. This patch sets a static address in
+                          ## this case.
+                          ptf-modules/getmac.patch ];
+        };
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "f73aecac5eef505a56573c6c9c1d32e0fa6ee00218bc08e936fff966f8d2f87a";
+        };
+      };
+      stdenv = gcc8Stdenv;
+      thrift = thrift_0_14;
+      libcli = libcli1_10;
+      python_bf_drivers = python3;
+    };
   };
 
-in bf-sde // { latest = bf-sde.v9_8_0; }
+in bf-sde // { latest = bf-sde.v9_9_0; }
