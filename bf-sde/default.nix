@@ -207,7 +207,6 @@ let
     sde = {
       patches = {
         mainTools = [ sde/run_switchd.patch sde/run_bfshell.patch sde/run_p4_tests.patch ];
-        bf-drivers = [ bf-drivers/bf_switchd_model.patch ];
         p4-examples = [ ./p4-16-examples/ptf.patch ];
       };
     };
@@ -249,8 +248,7 @@ let
         name = "bf-sde-${version}.tgz";
         outputHash = "566994d074ba93908307890761f8d14b4e22fb8759085da3d71c7a2f820fe2ec";
         patches = {
-          bf-drivers = [ ./bf-drivers/9.3.0-bfrtTable.py.patch
-                         bf-drivers/bf_switchd_model.patch ];
+          bf-drivers = [ ./bf-drivers/9.3.0-bfrtTable.py.patch ];
         };
       };
       bsps = {
@@ -356,7 +354,6 @@ let
         patches = {
           mainTools = [ sde/run_switchd.patch sde/run_bfshell-9.6.0.patch
                         sde/run_p4_tests-9.6.0.patch ];
-          bf-drivers = [ bf-drivers/bf_switchd_model.patch ];
           p4-examples = [];
         };
       };
@@ -389,7 +386,6 @@ let
           mainTools = [ sde/run_switchd-9.7.0.patch sde/run_bfshell-9.7.0.patch
                         sde/run_p4_tests-9.7.0.patch ];
           mainCMake = [ sde/P4Build.cmake.patch ];
-          bf-drivers = [ bf-drivers/bf_switchd_model.patch ];
           p4-examples = [];
           ptf-modules = [ ptf-modules/run_ptf_tests.patch
                           ## The getmac module used by bf-pktpy
@@ -459,7 +455,6 @@ let
           mainTools = [ sde/run_switchd-9.7.0.patch sde/run_bfshell-9.7.0.patch
                         sde/run_p4_tests-9.7.0.patch ];
           mainCMake = [ sde/P4Build.cmake.patch ];
-          bf-drivers = [ bf-drivers/bf_switchd_model.patch ];
           p4-examples = [];
           ptf-modules = [ ptf-modules/run_ptf_tests.patch
                           ## The getmac module used by bf-pktpy
@@ -489,7 +484,6 @@ let
           mainTools = [ sde/run_switchd-9.7.0.patch sde/run_bfshell-9.7.0.patch
                         sde/run_p4_tests-9.7.0.patch ];
           mainCMake = [ sde/P4Build.cmake.patch ];
-          bf-drivers = [];
           p4-examples = [];
           ptf-modules = [ ptf-modules/run_ptf_tests.patch
                           ## The getmac module used by bf-pktpy

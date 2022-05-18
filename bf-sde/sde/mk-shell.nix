@@ -27,6 +27,25 @@ let
   };
   pythonEnv = python.withPackages (ps: [ bf-drivers ]
                                        ++ inputs.cpModules);
+  greetings = {
+    asic = ''
+      Load/unload kernel modules: $ sudo \$(type -p bf_{kdrv,kpkt,knet}_mod_{load,unload})
+
+      Compile: $ p4_build.sh <p4name>.p4
+      Run:     $ run_switchd.sh -p <p4name>
+    '';
+    model = ''
+      Compile: $ p4_build.sh <p4name>.p4
+      Run:     $ run_switchd.sh -p <p4name>
+      Run Tofino model:
+               $ sudo \$(type -p veth_setup.sh)
+               $ run_tofino_model.sh -p <p4name>
+               $ run_switchd.sh -p <p4name>
+               $ sudo \$(type -p veth_teardown.sh)
+      Run PTF tests: run the Tofino model, then
+               $ run_p4_tests.sh -p <p4name> -t <path-to-dir-with-test-scripts>
+    '';
+  };
 in pkgs.mkShell {
   buildInputs = [ sde pythonEnv ] ++ inputs.pkgs ++ kernelModules
                 ++ (pkgs.lib.optional (baseboard == "aps_bf2556")
@@ -47,24 +66,12 @@ in pkgs.mkShell {
 
     cat <<EOF
 
-    Barefoot SDE ${sde.version} on platform "${platform}"
+    Intel Tofino SDE ${sde.version} on platform "${platform}"
 
-    Load/unload kernel modules: $ sudo \$(type -p bf_{kdrv,kpkt,knet}_mod_{load,unload})
-
-    Compile: $ p4_build.sh <p4name>.p4
-    Run:     $ run_switchd.sh -p <p4name>
-    Run Tofino model:
-             $ sudo \$(type -p veth_setup.sh)
-             $ run_tofino_model.sh -p <p4name>
-             $ run_switchd.sh -p <p4name> -- --model
-             $ sudo \$(type -p veth_teardown.sh)
-    Run PTF tests: run the Tofino model, then
-             $ run_p4_tests.sh -p <p4name> -t <path-to-dir-with-test-scripts>
-
+    ${greetings.${platform} or greetings.asic}
     Build artifacts and logs are stored in $P4_INSTALL
 
     Use "exit" or CTRL-D to exit this shell.
-
     EOF
     PS1="\n\[\033[1;32m\][nix-shell(\[\033[31m\]SDE-${sde.version}\[\033[1;32m\]):\w]\$\[\033[0m\] "
   '';

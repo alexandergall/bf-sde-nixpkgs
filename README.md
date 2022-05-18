@@ -383,41 +383,33 @@ quickly and it does not yet build the actual SDE. That will happen
 only when the `sde-env-9.7.0` command is executed for the first time.
 The reason for this is that only at that time is it known to the
 system for which platform and possibly kernel it needs to build. This
-process takes, of course, place only once.
+process takes place only when the command is run for the first time.
 
 After the build has finished, the user is greeted by the SDE shell
 
 ```
 $ sde-env-9.7.0
 [... lots of build output ...]
-Can't determine platform from /etc/machine.conf, using Tofino model
 
-Barefoot SDE 9.7.0 on platform "model"
+Intel Tofino SDE 9.7.0 on platform "accton_wedge100bf_32x"
 
-Load/unload kernel modules: $ sudo $(type -p bf_{kdrv,kpkt,knet}_mod_{load,unload})
+Load/unload kernel modules: $ sudo $(type -p
+bf_{kdrv,kpkt,knet}_mod_{load,unload})
 
 Compile: $ p4_build.sh <p4name>.p4
 Run:     $ run_switchd.sh -p <p4name>
-Run Tofino model:
-         $ sudo $(type -p veth_setup.sh)
-         $ run_tofino_model.sh -p <p4name>
-         $ run_switchd.sh -p <p4name> -- --model
-         $ sudo $(type -p veth_teardown.sh)
-Run PTF tests: run the Tofino model, then
-         $ run_p4_tests.sh -p <p4name> -t <path-to-dir-with-test-scripts>
 
-Build artifacts and logs are stored in /home/nixos/.bf-sde/9.7.0
+Build artifacts and logs are stored in /home/gall/.bf-sde/9.7.0
 
 Use "exit" or CTRL-D to exit this shell.
-
 
 [nix-shell(SDE-9.7.0):~]$
 ```
 
 The first line after the output of the build process informs the user
-that the hardware platform could not be identified and the SDE is
-configured to support only the Tofino software emulation.  The command
-uses the following method to determine the platform:
+that the hardware platform was identified to be
+`accton_wedge100bf_32x`. The command uses the following method to
+determine the platform:
 
    * Use the value passed with the `--platform` option
    * If `--platform` is not supplied, extract the `onie_machine` identifier
@@ -591,6 +583,31 @@ using a register-accurate software emulation called the _Tofino
 model_.  This option is available on all systems, including those
 having an actual ASIC.
 
+To use the Tofino model, the shell must be started with
+`--platform=model`:
+
+```
+gall@spare-PB1:~/bf-sde-nixpkgs$ sde-env-9.7.0 --platform=model
+
+Intel Tofino SDE 9.7.0 on platform "model"
+
+Compile: $ p4_build.sh <p4name>.p4
+Run:     $ run_switchd.sh -p <p4name>
+Run Tofino model:
+         $ sudo $(type -p veth_setup.sh)
+         $ run_tofino_model.sh -p <p4name>
+         $ run_switchd.sh -p <p4name>
+         $ sudo $(type -p veth_teardown.sh)
+Run PTF tests: run the Tofino model, then
+         $ run_p4_tests.sh -p  <p4name> -t <path-to-dir-with-test-scripts>
+
+Build artifacts and logs are stored in /home/gall/.bf-sde/9.7.0
+
+Use "exit" or CTRL-D to exit this shell.
+
+[nix-shell(SDE-9.7.0):~]$
+```
+
 The model uses `veth` interfaces to connect to the emulated ports.
 These interfaces are set up with the script `veth_setup.sh`. It
 requires root privileges and needs to be called with `sudo`
@@ -627,25 +644,10 @@ then the invocation is exactly the same as for the ASIC:
 $ run_switchd.sh -p <program_name>
 ```
 
-If the shell has been started with hardware support enabled for a
-particular platform (as described in the [introduction](#sdeShell)},
-an additional parameter `-- --model` is required:
-
-```
-$ run_switchd.sh -p <program_name> -- --model
-```
-
-The `--` tells `run_switchd.sh` to pass the following option
-(`--model`) on to the `bf_switchd` process.  Note that the `--model`
-option is a feature of the SDE Nix package and is not available on
-systems using the traditional build method of the SDE provided by
-Intel (those systems use the presence or absence of a particular
-shared object as an indicator whether the system is running on the
-ASIC or the model).  The patch that implements this feature is
-currently not complete and causes `bf_switchd` to terminate with a
-`SIGSEGV` if any of the kernel modules is loaded when `--model` is
-used. Therefore, **it is required that all `bf_*` kernel modules are
-unloaded before using the `--model` option**.
+Note that the `bf_switchd` process crashes if one of the kernel
+modules is loaded when running on the Tofino model (this behaviour is
+present at least up to version 9.9.0). In this case, simply unload the
+module and restart `run_switchd.sh`.
 
 ### <a name="runPTF"></a>Run PTF Tests
 
