@@ -1248,7 +1248,7 @@ build_p4_prog "$@"
 # Replace relative paths with absolute paths to the install directory to
 # support build artefacts outside of SDE_INSTALL
 for file in $(find $P4_INSTALL/share/p4 -name ${P4_NAME}.conf); do
-    sed -e "s,share/tofinopd,$P4_INSTALL/share/tofinopd,g" $file > $file.tmp && mv $file.tmp $file
+    sed -E -i -e "s,\"share/tofino([0-9]*)pd,\"$P4_INSTALL/share/tofino\1pd,g" $file
 done
 
 #
