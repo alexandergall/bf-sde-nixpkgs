@@ -1,6 +1,10 @@
 { stdenv, callPackage, procps, kmod, lib, buildEnv, coreutils, gnused,
   gnugrep, bash, bf-sde }:
 
+let
+  platforms = import ../bf-platforms/properties.nix;
+in
+
 { pname,
   version,
 # The name of the p4 program to compile without the ".p4" extension
@@ -20,8 +24,12 @@
 # of bf_kdrv, bf_kpkt, bf_knet. Used by the makeModuleWrapper
 # support function to load the module before executing bf_switchd.
   requiredKernelModule ? null,
-# Build target
-  target ? "tofino",
+# Target to compile for, defaults to the platform's intrinsic
+# target. The build_p4.sh script for SDEs older than 9.7.0 don't
+# support building for any other target than tofino.
+  target ?
+  assert lib.assertOneOf "platform" platform (builtins.attrNames platforms);
+  platforms.${platform}.target,
 # The flags passed to the p4_build.sh script
   buildFlags ? [],
   src,
@@ -38,15 +46,17 @@
 assert requiredKernelModule != null -> lib.assertOneOf "kernel module"
   requiredKernelModule [ "bf_kdrv" "bf_kpkt" "bf_knet" ];
 
-assert lib.assertOneOf "platform" platform (builtins.attrNames (import
-  ../bf-platforms/properties.nix));
+assert target != null -> lib.assertOneOf "target" target [ "tofino" "tofino2" "tofino3" ];
 
-assert lib.assertOneOf "target" target [ "tofino" "tofino2" ];
+assert lib.versionOlder bf-sde.version "9.7.0" ->
+       lib.assertMsg (target == "tofino")
+         "Target \"${target}\" not supported in SDEs prior to 9.7.0";
 
 let
   targetFlag = {
     tofino = "-DTOFINO=ON";
     tofino2 = "-DTOFINO2=ON";
+    tofino3 = "-DTOFINO3=ON";
   }.${target};
 
   runtimeEnv = bf-sde.runtimeEnv' platform;

@@ -1159,7 +1159,13 @@ definition of this function can be found in
      i.e. `p4Name`)
 
    * `target`: optional target for which to compile. Must be one of
-     `tofino` or `tofino2`. The default is `tofino`.
+     `tofino`, `tofino2` or `tofino3`. The default is the intrinsic
+     target for the selected `platform`. Overriding the default only
+     makes sense for the `model` pseudo-platform, which supports all
+     targets (and defaults to `tofino`). Note that while the P4
+     compiler has been supporting `tofino2` for some time, the
+     standard build script `p4_build.sh` supports `tofino2` and
+     `tofino3` only for SDE 9.7.0 and later.
 
    * `buildFlags`: optional list of strings of options to be passed to
      the `p4_build.sh` build script, for example a list of
