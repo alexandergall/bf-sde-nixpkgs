@@ -57,6 +57,35 @@ let
           bf-drivers-src = extractSource "bf-drivers";
           inherit (SDE) callPackage;
           inherit pkgs;
+          ## Originally, the kernel-modules packages contained only
+          ## the modules from the bf-drivers component. Starting with
+          ## the reference BSP for the Newport (Tofino2) baseboard,
+          ## other components generate kernel modules as well. The
+          ## idea is to collect them all in a single (per-kernel
+          ## version) package. We currently use the following
+          ## approach.
+          ##
+          ## The derivation that contains the new module is designed
+          ## to take an argument "kernelSpec" with the default null.
+          ## In that case, the derivation creates the package
+          ## *without* the module. The derivation can then be
+          ## overridden with kernelSpec holding the specification of
+          ## the kernel for which to build the module. In that case,
+          ## the derivation's output only contains the module and
+          ## nothing else.
+          ##
+          ## The following list contains all of those derivations. It
+          ## is passed to kernels/build-modules.nix which first builds
+          ## the regular derivation for the modules from bf-drivers
+          ## and then creates an environment that merges it with all
+          ## of these additional derivations after their kernelSpec
+          ## argument was overridden.
+          ##
+          ## The result is an environment that contains all kernel
+          ## modules for the SDE.
+          drvsWithKernelModules = [
+            sdePkgs.bf-platforms.newport
+          ];
         };
       } // (lib.optionalAttrs (lib.strings.versionAtLeast sdeSpec.version "9.5.0") {
 
@@ -468,6 +497,16 @@ let
         reference = fetchFromStore {
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "975fa33e37abffa81ff01c1142043907f05726e31efcce0475adec0f1a80f919";
+          ## This patch eliminates undefined symbols in the Newport
+          ## platform library. The undefined symbols are not actually
+          ## referenced at runtime and there should not be any errors
+          ## due to lazy binding. However, the linker from stdenv
+          ## seems to force immediate bindings and throws an error
+          ## when dlopen() is called. This should be investigated
+          ## more.
+          patches = {
+            default = [ bf-platforms/newport.patch ];
+          };
         };
       };
       stdenv = gcc8Stdenv;
@@ -497,6 +536,9 @@ let
         reference = fetchFromStore {
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "f73aecac5eef505a56573c6c9c1d32e0fa6ee00218bc08e936fff966f8d2f87a";
+          patches = {
+            default = [ bf-platforms/newport.patch ];
+          };
         };
       };
       stdenv = gcc8Stdenv;

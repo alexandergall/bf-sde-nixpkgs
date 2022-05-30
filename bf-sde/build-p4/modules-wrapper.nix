@@ -25,6 +25,12 @@
         /usr/bin/sudo ${modules}/bin/${requiredKernelModule}_mod_load
     fi
 
+  '' + lib.optionalString (self.baseboard == "newport") ''
+     if ! mod_exists bf_fpga; then
+       echo "Loading bf_fpga for Newport baseboard"
+       /usr/bin/sudo ${modules}/bin/bf_fpga_mod_load
+     fi
+  '' + ''
     exec ${self}/bin/${execName} "$@"
   ''
    else ''

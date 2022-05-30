@@ -28,6 +28,7 @@ in {
   accton_wedge100bf_32qs = accton;
   accton_wedge100bf_65x = accton;
   accton_as9516_32d = accton // {
+    baseboard = "newport";
     target = "tofino2";
     mgmtEthPciAddr = "0000:08:00.0";
   };

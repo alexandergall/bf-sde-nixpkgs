@@ -69,7 +69,8 @@ let
   };
 
   passthru = {
-    inherit p4Name target;
+    inherit p4Name platform target;
+    baseboard = bf-sde.baseboardForPlatform platform;
 
     ## Build a shell script to load the required kernel module for a given
     ## kernel before executing the program.

@@ -27,12 +27,15 @@ let
   };
   pythonEnv = python.withPackages (ps: [ bf-drivers ]
                                        ++ inputs.cpModules);
-  greetings = {
+  greetings = rec {
     asic = ''
       Load/unload kernel modules: $ sudo \$(type -p bf_{kdrv,kpkt,knet}_mod_{load,unload})
 
       Compile: $ p4_build.sh <p4name>.p4
       Run:     $ run_switchd.sh -p <p4name>
+    '';
+    accton_as9516_32d = asic + ''
+      Load/unload FPGA I2C kernel module: $ sudo \$(type -p bf_fpga_mod_{load,unload})
     '';
     model = ''
       Compile: $ p4_build.sh <p4name>.p4
@@ -74,5 +77,10 @@ in pkgs.mkShell {
     Use "exit" or CTRL-D to exit this shell.
     EOF
     PS1="\n\[\033[1;32m\][nix-shell(\[\033[31m\]SDE-${sde.version}\[\033[1;32m\]):\w]\$\[\033[0m\] "
+  '' + pkgs.lib.optionalString (baseboard == "newport") ''
+    echo
+    echo "(Re-)Loading bf_fpga kernel module for ${platform}"
+    sudo rmmod bf_fpga 2>/dev/null || true
+    sudo $(type -p bf_fpga_mod_load)
   '';
 }

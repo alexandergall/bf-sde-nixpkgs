@@ -31,7 +31,7 @@
 ##     An optional attribute set of overrides for the derivation
 ##     returned by ./build-modules.nix.
 
-{ bf-drivers-src, pkgs, callPackage }:
+{ bf-drivers-src, pkgs, callPackage, drvsWithKernelModules }:
 
 with pkgs;
 
@@ -55,7 +55,7 @@ let
       };
       spec = defaults // spec';
     in (callPackage ./build-modules.nix {
-      inherit kernelID spec;
+      inherit kernelID spec drvsWithKernelModules;
       src = bf-drivers-src;
     }).override spec.buildModulesOverrides;
 

@@ -1,0 +1,25 @@
+diff -Naur bf-platforms-9.8.0-orig/CMakeLists.txt bf-platforms-9.8.0/CMakeLists.txt
+--- bf-platforms-9.8.0-orig/CMakeLists.txt      2022-01-19 08:14:25.000000000 +0100
++++ bf-platforms-9.8.0/CMakeLists.txt   2022-05-20 08:52:29.144796286 +0200
+@@ -177,6 +177,7 @@
+      ${NEWPORT_PLTFM_SRCS}
+      ${NEWPORT_QSFP_SRCS}
+      ${ACCTONBF_CHSS_MGMT_SRCS}
++     ${ACCTONBF_CP2112_SRCS}
+     )
+     add_library(newport_driver SHARED $<TARGET_OBJECTS:newport_driver_o>)
+     target_link_libraries(newport_driver bfsys curl usb-1.0)
+diff -Naur bf-platforms-9.8.0-orig/platforms/newport/src/platform_mgr/platform_stub.c bf-platforms-9.8.0/platforms/newport/src/platform_mgr/platform_stub.c
+--- bf-platforms-9.8.0-orig/platforms/newport/src/platform_mgr/platform_stub.c  2022-01-19 08:14:32.000000000 +0100
++++ bf-platforms-9.8.0/platforms/newport/src/platform_mgr/platform_stub.c       2022-05-20 08:53:00.520795965 +0200
+@@ -67,3 +67,10 @@
+   (void)prbs_mode;
+   return BF_PLTFM_SUCCESS;
+ }
++
++bf_pltfm_status_t bf_pltfm_ext_phy_lane_reset(bf_pltfm_port_info_t *port_info,
++                             uint32_t num_lanes) {
++  (void)port_info;
++  (void)num_lanes;
++  return BF_PLTFM_SUCCESS;
++}

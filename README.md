@@ -207,10 +207,12 @@ baseboard.
 
 The BSP is usually provided by the vendor of the device and has to be
 obtained separately.  An exception to this is the reference BSP
-implementation provided by Intel, which supports the Tofino-based
-WEDGE series of devices manufactured by EdgeCore (which is a
-subsidiary of Accton).  This BSP is required to build the SDE while
-all other BSPs are optional.
+implementation provided by Intel, which supports the Tofino1-based
+WEDGE series of devices and the Tofino2-based AS9516-32D manufactured
+by EdgeCore (which is a subsidiary of Accton).  The baseboard for the
+Tofino1 devices is called "accton", the one for the Tofino2 device
+"newport".  This BSP is required to build the SDE while all other BSPs
+are optional.
 
 The reference BSP is available from Intel, subject to the same NDA as
 for the SDE. The BSPs for other platforms must be obtained from the
@@ -230,8 +232,8 @@ Support](#baseboardPlatform))
 | `accton` `model`  | Intel | `bf-reference-bsp-9.7.0.tgz` | 9.7.0 | `87f91540c0947edff2694cea9beeca78f95062b0aaca812a81c238ff39343e46` |
 | `accton` `model`  | Intel | `bf-reference-bsp-9.7.1.tgz` | 9.7.1 | `78aa14c5ec463cd4025b241e898e812c980bcd5e4d039213e397fcb6abb61c66` |
 | `accton` `model`  | Intel | `bf-reference-bsp-9.7.2.tgz` | 9.7.2 | `d578438c44a19d2162079d9e4a4a5363a1503a64d7b05e96ceca96dc216f2380` |
-| `accton` `model`  | Intel | `bf-reference-bsp-9.8.0.tgz` | 9.8.0 | `975fa33e37abffa81ff01c1142043907f05726e31efcce0475adec0f1a80f919` |
-| `accton` `model`  | Intel | `bf-reference-bsp-9.9.0.tgz` | 9.9.0 | `f73aecac5eef505a56573c6c9c1d32e0fa6ee00218bc08e936fff966f8d2f87a` |
+| `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.8.0.tgz` | 9.8.0 | `975fa33e37abffa81ff01c1142043907f05726e31efcce0475adec0f1a80f919` |
+| `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.9.0.tgz` | 9.9.0 | `f73aecac5eef505a56573c6c9c1d32e0fa6ee00218bc08e936fff966f8d2f87a` |
 | `aps_bf2556` `aps_bf6064` | APS Networks | `9.5.0_AOT1.5.1_SAL1.3.2.zip` | 9.4.0 | `2e56f51233c0eef1289ee219582ea0ec6d7455c3f78cac900aeb2b8214df0544`|
 | `aps_bf2556` `aps_bf6064` | APS Networks | `9.5.0_AOT1.5.4_SAL1.3.4.zip` | 9.5.0 | `510e5e18a91203fe6c4c0aabd807eb69ad53224500f7cb755f7c5b09c8e4525d`|
 | `aps_bf2556` `aps_bf6064` | APS Networks | `9.7.0_AOT1.6.1_SAL1.3.5_2.zip` | 9.7.0 9.7.1 9.7.2 | `4941987c4489d592de9b3676c79cb2011a22fe329425e8876fa8ae026fc959ad`|
@@ -341,6 +343,7 @@ https://github.com/alexandergall/bf-sde-nixpkgs/tree/master/bf-sde/bf-platforms/
 | `accton_wedge100bf_32x`  | EdegCore     | `accton`     |
 | `accton_wedge100bf_32qs` | EdegCore     | `accton`     |
 | `accton_wedge100bf_65x`  | EdegCore     | `accton`     |
+| `accton_as9516_32d`      | EdegCore     | `newport`     |
 | `stordis_bf2556x_1t`     | APS Netwokrs | `aps_bf2556` |
 | `stordis_bf6064x_t`      | APS Netwokrs | `aps_bf6064` |
 | `inventec_d5264q28b`     | Inventec     | `inventec`   |
