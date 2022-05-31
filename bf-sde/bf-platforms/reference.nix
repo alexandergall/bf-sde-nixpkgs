@@ -1,4 +1,4 @@
-{ lib, callPackage, src, patches, ... }:
+{ version, lib, callPackage, src, patches, ... }:
 
 let
   mkBaseboard = baseboard: { model ? false, newport ? false }:
@@ -79,13 +79,14 @@ let
             ];
         });
     in callPackage derivation {};
-in lib.mapAttrs mkBaseboard {
+in lib.mapAttrs mkBaseboard ({
   accton = {
-  };
-  newport = {
-    newport = true;
   };
   model = {
     model = true;
   };
-}
+} // lib.optionalAttrs (lib.versionAtLeast version "9.8.0") {
+  newport = {
+    newport = true;
+  };
+})

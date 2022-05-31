@@ -1,4 +1,4 @@
-{ lib, callPackage, src, patches, reference }:
+{ lib, callPackage, src, patches, reference, ... }:
 
 let
   ## This derivation uses the reference BSP as source and merges the

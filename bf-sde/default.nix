@@ -83,9 +83,10 @@ let
           ##
           ## The result is an environment that contains all kernel
           ## modules for the SDE.
-          drvsWithKernelModules = [
-            sdePkgs.bf-platforms.newport
-          ];
+          drvsWithKernelModules =
+            lib.optionals (lib.versionAtLeast sdeSpec.version "9.8.0") [
+              sdePkgs.bf-platforms.newport
+            ];
         };
       } // (lib.optionalAttrs (lib.strings.versionAtLeast sdeSpec.version "9.5.0") {
 
