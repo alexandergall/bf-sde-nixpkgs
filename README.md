@@ -229,9 +229,9 @@ Support](#baseboardPlatform))
 | `accton` `model`  | Intel | `bf-reference-bsp-9.4.0.tgz` | 9.4.0 | `269eecaf3186d7c9a061f6b66ce3d1c85d8f2022ce3be81ee9e532d136552fa4` |
 | `accton` `model`  | Intel | `bf-reference-bsp-9.5.0.tgz` | 9.5.0 | `b6a293c8e2694d7ea8d7b12c24b1d63c08b0eca3783eeb7d54e8ecffb4494c9f` |
 | `accton` `model`  | Intel | `bf-reference-bsp-9.6.0.tgz` | 9.6.0 | `88cb4b0978f23c28499faff75098f939374d9071859593353a18c2235e0be461` |
-| `accton` `model`  | Intel | `bf-reference-bsp-9.7.0.tgz` | 9.7.0 | `87f91540c0947edff2694cea9beeca78f95062b0aaca812a81c238ff39343e46` |
-| `accton` `model`  | Intel | `bf-reference-bsp-9.7.1.tgz` | 9.7.1 | `78aa14c5ec463cd4025b241e898e812c980bcd5e4d039213e397fcb6abb61c66` |
-| `accton` `model`  | Intel | `bf-reference-bsp-9.7.2.tgz` | 9.7.2 | `d578438c44a19d2162079d9e4a4a5363a1503a64d7b05e96ceca96dc216f2380` |
+| `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.7.0.tgz` | 9.7.0 | `87f91540c0947edff2694cea9beeca78f95062b0aaca812a81c238ff39343e46` |
+| `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.7.1.tgz` | 9.7.1 | `78aa14c5ec463cd4025b241e898e812c980bcd5e4d039213e397fcb6abb61c66` |
+| `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.7.2.tgz` | 9.7.2 | `d578438c44a19d2162079d9e4a4a5363a1503a64d7b05e96ceca96dc216f2380` |
 | `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.8.0.tgz` | 9.8.0 | `975fa33e37abffa81ff01c1142043907f05726e31efcce0475adec0f1a80f919` |
 | `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.9.0.tgz` | 9.9.0 | `f73aecac5eef505a56573c6c9c1d32e0fa6ee00218bc08e936fff966f8d2f87a` |
 | `aps_bf2556` `aps_bf6064` | APS Networks | `9.5.0_AOT1.5.1_SAL1.3.2.zip` | 9.4.0 | `2e56f51233c0eef1289ee219582ea0ec6d7455c3f78cac900aeb2b8214df0544`|
