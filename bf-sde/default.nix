@@ -84,7 +84,7 @@ let
           ## The result is an environment that contains all kernel
           ## modules for the SDE.
           drvsWithKernelModules =
-            lib.optionals (lib.versionAtLeast sdeSpec.version "9.8.0") [
+            lib.optionals (lib.versionAtLeast sdeSpec.version "9.7.0") [
               sdePkgs.bf-platforms.newport
             ];
         };
@@ -430,7 +430,9 @@ let
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "87f91540c0947edff2694cea9beeca78f95062b0aaca812a81c238ff39343e46";
           patches = {
-            default = [ bf-platforms/reference-get-media-type.patch ];
+            default = [ bf-platforms/reference-get-media-type.patch
+                        bf-platforms/newport.patch
+                        bf-platforms/newport-eth-compliance.patch ];
           };
         };
         aps = fetchFromStore {

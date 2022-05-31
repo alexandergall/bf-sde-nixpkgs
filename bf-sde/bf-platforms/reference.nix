@@ -85,7 +85,7 @@ in lib.mapAttrs mkBaseboard ({
   model = {
     model = true;
   };
-} // lib.optionalAttrs (lib.versionAtLeast version "9.8.0") {
+} // lib.optionalAttrs (lib.versionAtLeast version "9.7.0") {
   newport = {
     newport = true;
   };
