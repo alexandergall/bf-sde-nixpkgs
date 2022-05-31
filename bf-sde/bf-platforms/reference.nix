@@ -33,7 +33,7 @@ let
           ## the derivation will *only* contain the module where as
           ## for the non-kernel build, the derivation will not contain
           ## the module or any part related to it.
-          preConfigure = lib.optionalString (kernelSpec == null) ''
+          preConfigure = lib.optionalString (baseboard == "newport" && kernelSpec == null) ''
             sed -i -e '/bf_fpga/d' CMakeLists.txt
           '';
 
