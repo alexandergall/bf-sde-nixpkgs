@@ -505,7 +505,8 @@ let
           ## when dlopen() is called. This should be investigated
           ## more.
           patches = {
-            default = [ bf-platforms/newport.patch ];
+            default = [ bf-platforms/newport.patch
+                        bf-platforms/newport-eth-compliance.patch ];
           };
         };
       };
@@ -537,7 +538,8 @@ let
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "f73aecac5eef505a56573c6c9c1d32e0fa6ee00218bc08e936fff966f8d2f87a";
           patches = {
-            default = [ bf-platforms/newport.patch ];
+            default = [ bf-platforms/newport.patch
+                        bf-platforms/newport-eth-compliance.patch ];
           };
         };
       };

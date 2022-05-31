@@ -1,0 +1,31 @@
+diff -Naur bf-platforms-9.9.0.orig/drivers/src/bf_qsfp/bf_qsfp_comm.c bf-platforms-9.9.0/drivers/src/bf_qsfp/bf_qsfp_comm.c
+--- bf-platforms-9.9.0.orig/drivers/src/bf_qsfp/bf_qsfp_comm.c	2022-04-20 16:13:08.000000000 +0200
++++ bf-platforms-9.9.0/drivers/src/bf_qsfp/bf_qsfp_comm.c	2022-05-31 15:51:23.348178970 +0200
+@@ -526,6 +526,7 @@
+     {0, BF_SPEED_NONE, "Undefined"},
+     {1, BF_SPEED_1G, "1000BASE-CX      1 x 1.25Gbd NRZ"},
+     //  {2, BF_SPEED_???,     "XAUI             4 x 3.125Gbd NRZ"},
++    {4, BF_SPEED_10G, "SFI              1 x 9.95-11.18Gbd NRZ"},
+     {5, BF_SPEED_25G, "25GAUI           1 x 25.78125Gbd NRZ"},
+     {6, BF_SPEED_40G, "XLAUI            4 X 10.3125Gbd NRZ"},  // typ CFP
+     {7, BF_SPEED_40G, "XLPPI            4 X 10.3125Gbd NRZ"},  // typ QSFP
+@@ -3266,9 +3267,9 @@
+   }
+ 
+   if ((eth_comp >> 4) & 0x1) {  // 10GBASE-SR - assume breakout x4
+-    qsfp_sff8636_add_app(port, 0x1, 7, 2, 1, 1, 0xF, 0xF);
++    qsfp_sff8636_add_app(port, 0x1, 4, 2, 1, 1, 0xF, 0xF);
+   } else if ((eth_comp >> 5) & 0x1) {  // 10GBASE-LR - assume breakout x4
+-    qsfp_sff8636_add_app(port, 0x2, 7, 4, 1, 1, 0xF, 0xF);
++    qsfp_sff8636_add_app(port, 0x2, 4, 4, 1, 1, 0xF, 0xF);
+   }
+ 
+   switch (eth_ext_comp) {
+@@ -3288,6 +3289,7 @@
+       // read the Pg 0 Byte 113 to see
+       // the cable construction
+       qsfp_sff8636_add_app(port, 0x4, 5, 2, 1, 1, 0xF, 0xF);
++      qsfp_sff8636_add_app(port, 0x4, 4, 2, 1, 1, 0xF, 0xF);
+       break;
+     case SR4_100GBASE:  // 100GBASE-SR4 or 25GBASE-SR
+       qsfp_sff8636_add_app(port, 0x1, 11, 9, 4, 4, 0x1, 0x1);
