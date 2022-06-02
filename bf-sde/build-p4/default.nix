@@ -1,10 +1,6 @@
 { stdenv, callPackage, procps, kmod, lib, buildEnv, coreutils, gnused,
   gnugrep, bash, bf-sde }:
 
-let
-  platforms = import ../bf-platforms/properties.nix;
-in
-
 { pname,
   version,
 # The name of the p4 program to compile without the ".p4" extension
@@ -28,8 +24,8 @@ in
 # target. The build_p4.sh script for SDEs older than 9.7.0 don't
 # support building for any other target than tofino.
   target ?
-  assert lib.assertOneOf "platform" platform (builtins.attrNames platforms);
-  platforms.${platform}.target,
+  assert lib.assertOneOf "platform" platform (builtins.attrNames bf-sde.platforms);
+  bf-sde.platforms.${platform}.target,
 # The flags passed to the p4_build.sh script
   buildFlags ? [],
   src,

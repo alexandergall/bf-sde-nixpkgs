@@ -1099,6 +1099,8 @@ be accessed with the "attribute path" `bf-sde.<version>.<attribute>`.
    * `pkgs`, type: attribute set of derivations (see previous section)
    * `buildP4Program`, type: function
    * `modulesForKernel`, type: function
+   * `allPlatforms`, type: attribute set
+   * `platforms`, type: attribute set
    * `runtimeEnv`, type: function
    * `runtimeEnv'`, type: function
    * `runtimeEnvNoBsp`, type: derivation
@@ -1310,6 +1312,15 @@ three possible results:
       options.  In this case, the user must disambiguate the choice
       by setting the `SDE_KERNEL_ID` environment variable to the
       desired kernel ID.
+
+#### <a name="allPlatforms"></a>`allPlatforms`
+
+This is an attribute set that contains one attribute for each known
+platform as defined in `bf-sde/bf-platforms/properties.nix`.
+
+#### <a name="platforms"></a>`platforms`
+
+The subset of `allPlatforms` that is supported by this SDE.
 
 #### <a name="runtimeEnv"></a>`runtimeEnv`
 

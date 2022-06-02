@@ -152,10 +152,15 @@ let
         };
 
         baseboardForPlatform = platform:
-          let
-            properties = import bf-platforms/properties.nix;
-          in assert lib.assertOneOf "platform" platform (builtins.attrNames properties);
-            properties.${platform}.baseboard;
+          assert lib.assertOneOf "platform" platform (builtins.attrNames self.allPlatforms);
+          self.allPlatforms.${platform}.baseboard;
+
+        ## The set of all known platforms
+        allPlatforms = import bf-platforms/properties.nix;
+        ## The set of platforms supported by this SDE
+        platforms = lib.filterAttrs (_: prop:
+          builtins.hasAttr prop.baseboard sdePkgs.bf-platforms)
+          self.allPlatforms;
 
         runtimeEnv = baseboard:
           self.override {
