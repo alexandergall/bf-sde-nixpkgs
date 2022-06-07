@@ -1,0 +1,42 @@
+diff -Naur bf-drivers-9.7.2.orig/src/bf_rt/bf_rt_port/bf_rt_port_table_data_impl.cpp bf-drivers-9.7.2/src/bf_rt/bf_rt_port/bf_rt_port_table_data_impl.cpp
+--- bf-drivers-9.7.2.orig/src/bf_rt/bf_rt_port/bf_rt_port_table_data_impl.cpp	2022-03-21 23:57:55.000000000 +0100
++++ bf-drivers-9.7.2/src/bf_rt/bf_rt_port/bf_rt_port_table_data_impl.cpp	2022-06-07 18:05:25.831969139 +0200
+@@ -243,16 +243,21 @@
+     return sts;
+   }
+ 
+-  sts = utils::BfRtTableFieldUtils::boundsCheck(
++  size_t field_size = tableDataField->getSize();
++  bool workaround = (field_id == 17 || field_id == 19) &&
++    (field_size < 64 && value > (1ULL << field_size) - 1);
++  if (not workaround) {
++    sts = utils::BfRtTableFieldUtils::boundsCheck(
+       *this->table_, *tableDataField, value, value_ptr, s);
+-  if (sts != BF_SUCCESS) {
+-    LOG_ERROR(
++    if (sts != BF_SUCCESS) {
++      LOG_ERROR(
+         "ERROR: %s:%d %s : Input Param bounds check failed for field id %d ",
+         __func__,
+         __LINE__,
+         this->table_->table_name_get().c_str(),
+         tableDataField->getId());
+-    return sts;
++      return sts;
++    }
+   }
+   if (!checkFieldActive(field_id, DataType::UINT64)) {
+     LOG_ERROR("ERROR: %s:%d Set inactive field id %d for table %s",
+@@ -269,7 +274,11 @@
+   } else {
+     val = value;
+   }
+-  u32FieldData[field_id] = val;
++  if (workaround) {
++    u32FieldData[field_id] = 0;
++  } else {
++    u32FieldData[field_id] = val;
++  }
+   return BF_SUCCESS;
+ }
+ 

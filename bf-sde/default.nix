@@ -421,6 +421,17 @@ let
           mainTools = [ sde/run_switchd-9.7.0.patch sde/run_bfshell-9.7.0.patch
                         sde/run_p4_tests-9.7.0.patch ];
           mainCMake = [ sde/P4Build.cmake.patch ];
+          ## This patch is a simple workaround for a bug that affects
+          ## the Tofino2 driver. The bug causes several (harmless)
+          ## error messages about out-of-bound values getting logged
+          ## whenever the $PORT pseudo-table is queried via BFRT. The
+          ## workaround simply sets these values to zero to make the
+          ## bounds check succeed (the affected values are for the
+          ## $SDS_TX_{PRE,POST} fields in the table, I don't know what
+          ## these are but they seem to be irrelevant for typical
+          ## use-cases). The issue is tracked as Intel JIRA issue
+          ## DRV-6313.
+          bf-drivers = [ bf-drivers/port-table-field-size-workaround.patch ];
           p4-examples = [];
           ptf-modules = [ ptf-modules/run_ptf_tests.patch
                           ## The getmac module used by bf-pktpy
