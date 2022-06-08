@@ -76,7 +76,7 @@ in rec {
   isCmake = lib.strings.versionAtLeast version "9.6.0";
   cmakeFixupSrc = { src, preambleOverride ? false, cmakeRules ? "",
                     postCmakeRules ? "", bypass ? false }:
-    if (isCmake || bypass) then
+    if (isCmake && ! bypass) then
       stdenv.mkDerivation {
         name = "cmake-fixup-src.tar";
         inherit src preambleOverride;
