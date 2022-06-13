@@ -20,7 +20,7 @@ let
          match "result.*" basename != null ||
          match ".*~" basename != null);
   src =
-    assert lib.assertMsg (! isDirty) "This build must be run from a clean Git repository";
+    #assert lib.assertMsg (! isDirty) "This build must be run from a clean Git repository";
     builtins.filterSource filter ../../..;
 in stdenv.mkDerivation {
   pname = "sde-env";

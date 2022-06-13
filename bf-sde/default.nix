@@ -29,6 +29,11 @@ let
         buildSystem = callPackage ./build-system.nix {
           inherit sdeSpec;
         };
+        isModel = platform:
+          if builtins.match "^model.*" platform == null then
+            false
+          else
+            true;
       });
       sdePkgs = {
         bf-syslibs = SDE.callPackage ./bf-syslibs (mkSrc "bf-syslibs");
@@ -184,6 +189,7 @@ let
         mkShell = import sde/mk-shell.nix {
           bf-sde = self;
           inherit pkgs;
+          inherit (SDE) isModel;
         };
 
         envCommand = SDE.callPackage sde/env {};

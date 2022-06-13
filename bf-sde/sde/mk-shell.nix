@@ -1,4 +1,4 @@
-{ bf-sde, pkgs }:
+{ bf-sde, pkgs, isModel }:
 
 { inputFn ? { pkgs, pythonPkgs }: {}, kernelID ? null,
   kernelRelease ? null, platform ? "model" }:
@@ -8,7 +8,7 @@ let
   sde = bf-sde.override {
     inherit baseboard;
   };
-  kernelModules = pkgs.lib.optional (platform != "model")
+  kernelModules = pkgs.lib.optional (! isModel platform)
     (assert kernelID != null -> kernelRelease == null;
       if kernelID != null then
         sde.pkgs.kernel-modules.${kernelID}
@@ -48,6 +48,8 @@ let
       Run PTF tests: run the Tofino model, then
                $ run_p4_tests.sh -p <p4name> -t <path-to-dir-with-test-scripts>
     '';
+    modelT2 = model;
+    modelT3 = model;
   };
 in pkgs.mkShell {
   buildInputs = [ sde pythonEnv ] ++ inputs.pkgs ++ kernelModules

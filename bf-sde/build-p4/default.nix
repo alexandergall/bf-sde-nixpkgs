@@ -1,5 +1,5 @@
 { stdenv, callPackage, procps, kmod, lib, buildEnv, coreutils, gnused,
-  gnugrep, bash, bf-sde }:
+  gnugrep, bash, bf-sde, isModel }:
 
 { pname,
   version,
@@ -74,7 +74,7 @@ let
       callPackage ./modules-wrapper.nix {
         inherit execName modules self;
         requiredKernelModule =
-          if platform == "model" then
+          if isModel platform then
             null
           else
             requiredKernelModule;
@@ -153,7 +153,7 @@ let
       BUILD=${build}
       RUNTIME_ENV=${runtimeEnv}
     '' +
-    ({
+    (rec {
       model = ''
         substitute ${./run-model.sh} $out/bin/$EXEC_NAME \
           --subst-var BUILD \
@@ -166,6 +166,8 @@ let
           --subst-var-by sleep ${coreutils}/bin/sleep
         chmod a+x $out/bin/$EXEC_NAME
       '';
+      modelT2 = model;
+      modelT3 = model;
       stordis_bf2556x_1t = ''
         RUNTIME_ENV_WITH_ARTIFACTS=${runtimeEnvWithArtifacts}
         APS_SAL_REFAPP=${bf-sde.pkgs.bf-platforms.aps_bf2556.salRefApp}

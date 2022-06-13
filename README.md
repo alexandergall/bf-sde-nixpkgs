@@ -348,11 +348,19 @@ https://github.com/alexandergall/bf-sde-nixpkgs/tree/master/bf-sde/bf-platforms/
 | `stordis_bf6064x_t`      | APS Netwokrs | `aps_bf6064` |
 | `inventec_d5264q28b`     | Inventec     | `inventec`   |
 | `model`                  |              | `model`      |
+| `modelT2`                |              | `model`      |
+| `modelT3`                |              | `model`      |
 
 The `model` platform is a pseudo-platform that exists in order to
 support the Tofino ASIC emulator in a consistent manner. The `model`
 baseboard uses the same BSP as `reference` configured to provide stubs
-for the platform-independent API of the SDE.
+for the platform-independent API of the SDE. The `modelT2` and
+`modelT3` pseudo-platforms are identical to `model`, but their
+intrinsic target type is set to `tofino2` and `tofino3`,
+respectively. The purpose of this is that one can call the
+`buildP4Program` function for these platforms and have the target
+selected automatically, rather than using the `model` platform and
+overriding the `target` paramete.
 
 References to platforms and baseboards throughout this document refer
 to the table above.
@@ -1167,10 +1175,11 @@ definition of this function can be found in
      `tofino`, `tofino2` or `tofino3`. The default is the intrinsic
      target for the selected `platform`. Overriding the default only
      makes sense for the `model` pseudo-platform, which supports all
-     targets (and defaults to `tofino`). Note that while the P4
-     compiler has been supporting `tofino2` for some time, the
-     standard build script `p4_build.sh` supports `tofino2` and
-     `tofino3` only for SDE 9.7.0 and later.
+     targets (and defaults to `tofino`). To avoid this override, use
+     the pseudo-platforms `modelT2` and `modelT3` instead. Note that
+     while the P4 compiler has been supporting `tofino2` for some
+     time, the standard build script `p4_build.sh` supports `tofino2`
+     and `tofino3` only for SDE 9.7.0 and later.
 
    * `buildFlags`: optional list of strings of options to be passed to
      the `p4_build.sh` build script, for example a list of

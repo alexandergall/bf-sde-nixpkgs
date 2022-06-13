@@ -106,7 +106,7 @@ INPUT_FN="{ pkgs, pythonPkgs }: { \
              pkgs = with pkgs; [ ${pkgs[@]} ]; \
              cpModules = with pythonPkgs; [ ${pythonModules[@]} ]; \
              ptfModules = with pythonPkgs; [ ${pythonPtfModules[@]} ]; }"
-if [ $platform != "model" ]; then
+if [[ ! $platform =~ ^model.* ]]; then
     kernelArg="--argstr kernelRelease $(uname -r)"
 fi
 PATH=$origPath
