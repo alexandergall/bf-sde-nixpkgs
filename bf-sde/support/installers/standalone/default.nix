@@ -12,13 +12,11 @@ let
       [ slice.sliceFile closure ] ++ rootPaths);
   sliceInfos = builtins.map sliceInfo (builtins.attrValues release);
   ID = "${version}:${gitTag}";
-in runCommand "${component}-standalone-installer" {
-  inherit sliceInfos;
-} ''
+in runCommand "${component}-standalone-installer" {} ''
   mkdir tmp
   cd tmp
   storePaths=
-  for info in $sliceInfos; do
+  for info in ${builtins.concatStringsSep " " sliceInfos}; do
     read sliceFile closureInfo rootPaths < <(echo $info | tr ':' ' ')
     read kernelID kernelRelease platform < <(cat $sliceFile/slice | tr ':' ' ')
     dest=$kernelRelease/$kernelID/$platform
