@@ -206,7 +206,7 @@ kernel_release=${KERNEL_RELEASE:-$(uname -r)}
 platform=$onie_machine
 [ -z "$platform" ] && ERROR "Can't determine platform (check onie_machine in /etc/machine.conf)"
 
-if [[ "$platform" =~ ^model.* ]; then
+if [[ "$platform" =~ ^model.* ]]; then
     ## The model does not depend on the kernel.  The
     ## modulesForKernel() support function of the SDE package accepts
     ## an unsupported kernel and creates special load/unload scripts
