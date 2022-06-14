@@ -54,8 +54,8 @@ in {
     baseboard = "inventec";
     target = "tofino";
     serialDevice = "ttyS0";
-    serialSettings = "115200n8";
-    ## mgmtEthPciAddr TBD
+    serialSettings = "57600n8";
+    mgmtEthPciAddr = "0000:02:00.0";
   };
   stordis_bf2556x_1t = {
     baseboard = "aps_bf2556";
