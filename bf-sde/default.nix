@@ -464,6 +464,10 @@ let
             aps_bf2556 = [ bf-platforms/aps/bf_pltfm_smb-9.7.0.patch ];
           };
         };
+        inventec = fetchFromStore {
+          name = "bf-platform_SRC_9.7.0.2.1.tgz";
+          outputHash = "8391d5e791ae8b453711a79ed6f6d4372bd9ed6076b3ff54c649b69775b8d9c9";
+        };
       };
       stdenv = gcc8Stdenv;
       thrift = thrift_0_13;

@@ -50,6 +50,13 @@ in {
     serialSettings = "115200n8";
     ## mgmtEthPciAddr TBD
   };
+  inventec_d10064 = {
+    baseboard = "inventec";
+    target = "tofino";
+    serialDevice = "ttyS0";
+    serialSettings = "115200n8";
+    ## mgmtEthPciAddr TBD
+  };
   stordis_bf2556x_1t = {
     baseboard = "aps_bf2556";
     target = "tofino";

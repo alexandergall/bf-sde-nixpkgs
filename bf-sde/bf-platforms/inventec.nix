@@ -1,11 +1,12 @@
-{ lib, callPackage, src, patches, ... }:
+{ lib, callPackage, version, src, patches, ... }:
 
 let
   mkBaseboard = baseboard: {}:
     let
+      versionOlder9_7 = lib.versionOlder version "9.7.0";
       derivation =
         { version, stdenv, thrift, boost, libusb, curl,
-          bf-syslibs, bf-drivers, bf-utils }:
+          bf-syslibs, bf-drivers, bf-utils, cmake }:
 
         stdenv.mkDerivation {
           pname = "bf-platforms-${baseboard}";
@@ -14,24 +15,37 @@ let
 
           buildInputs = [ bf-drivers.pythonModule thrift boost libusb
                           curl bf-syslibs.dev bf-drivers.dev bf-utils
-                          ];
+                        ] ++ lib.optional (! versionOlder9_7) cmake;
           outputs = [ "out" "dev" ];
           enableParallelBuilding = true;
 
-          preConfigure = ''
+          unpackPhase = lib.optionalString (! versionOlder9_7) ''
+            mkdir inventec
+            cd inventec
+            tar -xf ${src}
+          '';
+          preConfigure = if versionOlder9_7 then ''
             cd bf-platforms
+          '' else ''
+            sed -i -e '/bf_fpga/d' CMakeLists.txt
           '';
 
-          configureFlags = [
+          configureFlags = lib.optionals versionOlder9_7 [
             "--with-tofino"
             "enable_thrift=yes"
           ];
 
-          CFLAGS = [
+          CFLAGS = lib.optionals versionOlder9_7 [
             "-Wno-error=unused-result"
             "-Wno-error=sizeof-pointer-memaccess"
           ];
+          cmakeFlags = lib.optionals (! versionOlder9_7) [
+            "-DSTANDALONE=ON"
+            "-DASIC=ON"
+            "-DINVENTEC=ON"
+          ];
         };
+
     in callPackage derivation {};
 in lib.mapAttrs mkBaseboard {
   inventec = {};
