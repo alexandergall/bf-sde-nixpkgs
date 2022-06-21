@@ -2,7 +2,8 @@
   programs = [
     "bri_handle"
     "bri_with_pdfixed_thrift"
-    "tna_32q_2pipe"
+    ## Requires a "custom config file", TBD
+    # "tna_32q_2pipe"
     "tna_action_profile"
     "tna_action_selector"
     "tna_bridged_md"
@@ -12,7 +13,7 @@
     "tna_digest"
     "tna_dkm"
     "tna_dyn_hashing"
-    ## Either hangs or takes too long to complete
+    ## Takes too long to complete
     # "tna_exact_match"
     "tna_field_slice"
     "tna_idletimeout"

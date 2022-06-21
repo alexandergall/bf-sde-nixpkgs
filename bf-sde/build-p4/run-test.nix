@@ -23,7 +23,7 @@ let
   ptfModules = map (mod: python.pkgs.${mod}) pythonModules;
 in vmTools.runInLinuxVM (
   runCommand "bf-sde-${bf-sde.version}-test-case-${p4Name}" {
-    memSize = 6*1024;
+    memSize = 4*1024;
     postVM = ''
       mv xchg/*.log $out
       if [ $(cat xchg/test.status) -eq 0 ]; then
@@ -51,6 +51,7 @@ in vmTools.runInLinuxVM (
     echo "Running tests for P4 program ${p4Name}"
     echo "============================================="
     echo "Starting model and bf_switchd"
+    export P4_EXAMPLES=${src}
     ${self}/bin/${p4Name} 1>/tmp/xchg/switch.log 2>&1 3>/tmp/xchg/model.log 4>&3 &
 
     ## Avoid a race with the test script"

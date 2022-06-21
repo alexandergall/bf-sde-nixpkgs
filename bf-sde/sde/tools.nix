@@ -38,7 +38,10 @@ stdenv.mkDerivation {
 
     substitute run_tofino_model.sh $out/bin/run_tofino_model.sh \
       --replace sudo /usr/bin/sudo \
-      --replace /usr/local/lib: ""
+      --replace /usr/local/lib: "" \
+      --replace "find \$SDE" "find \''${P4_EXAMPLES:-\$SDE}" \
+      --replace "*p4-examples" "" \
+      --replace /pkgsrc ""
     wrap $out/bin/run_tofino_model.sh \
       "${lib.strings.makeBinPath [ coreutils utillinux findutils ]}:/usr/bin"
 

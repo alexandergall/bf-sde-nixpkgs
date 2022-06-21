@@ -6,7 +6,8 @@
     "tna_pktgen"
     "tna_range_match"
     "tna_timestamp"
-    "tna_32q_2pipe"
+    ## Requires a "custom config file", TBD
+    # "tna_32q_2pipe"
     "tna_custom_hash"
     "tna_lpm_match"
     "tna_port_metadata"
@@ -27,7 +28,7 @@
     "tna_proxy_hash"
     "tna_snapshot"
     "tna_bridged_md"
-    ## Either hangs or takes too long to complete
+    ## Takes too long to complete
     # "tna_exact_match"
     "tna_multicast"
     "tna_pvs"

@@ -1,13 +1,14 @@
 {
   programs = [
     "tna_checksum"
-    ## Hangs
-    #"tna_exact_match"
+    ## Takes too long to complete
+    # "tna_exact_match"
     "tna_mirror"
     "tna_ports"
     "tna_resubmit"
     "bri_with_pdfixed_thrift"
-    "tna_32q_2pipe"
+    ## Requires a "custom config file", TBD
+    # "tna_32q_2pipe"
     "tna_counter"
     "tna_field_slice"
     "tna_multicast"
