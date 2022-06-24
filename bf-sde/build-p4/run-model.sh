@@ -28,13 +28,13 @@ cleanup () {
     wait
     @sleep@ 2
     echo "Deleting veth interfaces..."
-    /usr/bin/sudo @bash@ -e @RUNTIME_ENV@/bin/veth_teardown.sh
+    /usr/bin/sudo --preserve-env=TOFINO_MODEL_PORTINFO @bash@ -e @RUNTIME_ENV@/bin/veth_teardown.sh
 }
 
 trap cleanup EXIT INT TERM
 
 echo "Creating veth interfaces..."
-/usr/bin/sudo @bash@ -e @RUNTIME_ENV@/bin/veth_setup.sh
+/usr/bin/sudo --preserve-env=TOFINO_MODEL_PORTINFO @bash@ -e @RUNTIME_ENV@/bin/veth_setup.sh
 
 ## bf_switchd segfaults if run in MODEL mode and a kernel module is
 ## loaded
@@ -44,8 +44,11 @@ done
 
 export P4_INSTALL=@BUILD@
 echo "Starting Tofino model..."
+if [ -r "$TOFINO_MODEL_PORTINFO" ]; then
+    portinfo_option="-f $TOFINO_MODEL_PORTINFO"
+fi
 redirect save
-@RUNTIME_ENV@/bin/run_tofino_model.sh -p @EXEC_NAME@ --arch=@ARCH@ &
+@RUNTIME_ENV@/bin/run_tofino_model.sh -p @EXEC_NAME@ --arch=@ARCH@ $portinfo_option &
 redirect restore
 
 @RUNTIME_ENV@/bin/run_switchd.sh -p @EXEC_NAME@ --arch=@ARCH@

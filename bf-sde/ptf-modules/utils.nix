@@ -1,6 +1,7 @@
 { runtime ? false, pname, version, buildSystem, src, patches, lib,
   stdenv, bf-drivers, makeWrapper, bridge-utils, inetutils, gnugrep,
-  coreutils, ethtool, iproute, procps, cmake, thrift }:
+  coreutils, utillinux, ethtool, iproute, procps, jq, cmake, thrift
+  }:
 
 let
   python = bf-drivers.pythonModule;
@@ -63,20 +64,33 @@ in stdenv.mkDerivation {
             rm -f $utilsPath/{traffic_streams.py,traffic_utils.py}
           '' + ''
             python -m compileall $utilsPath
-            substituteInPlace $out/bin/veth_setup.sh --replace /sbin/ethtool ethtool
-            wrapProgram $out/bin/veth_setup.sh \
+            mv $out/bin/veth_setup.sh $out/bin/veth_setup_orig.sh
+            substituteInPlace $out/bin/veth_setup_orig.sh --replace /sbin/ethtool ethtool
+            wrapProgram $out/bin/veth_setup_orig.sh \
               --set PATH "${lib.strings.makeBinPath [ coreutils ethtool iproute gnugrep procps ]}"
-            wrapProgram $out/bin/veth_teardown.sh \
+            mv $out/bin/veth_teardown.sh $out/bin/veth_teardown_orig.sh
+            wrapProgram $out/bin/veth_teardown_orig.sh \
               --set PATH "${lib.strings.makeBinPath [ coreutils iproute ]}"
           ''
         else ''
-          substitute veth_setup.sh $out/bin/veth_setup.sh --replace /sbin/ethtool ethtool
-          wrapProgram $out/bin/veth_setup.sh \
+          substitute veth_setup.sh $out/bin/veth_setup_orig.sh --replace /sbin/ethtool ethtool
+          chmod a+x $out/bin/veth_setup_orig.sh
+          wrapProgram $out/bin/veth_setup_orig.sh \
             --set PATH "${lib.strings.makeBinPath [ coreutils ethtool iproute gnugrep procps ]}"
-          cp veth_teardown.sh $out/bin
-          wrapProgram $out/bin/veth_teardown.sh \
+          cp veth_teardown.sh $out/bin/veth_teardown_orig.sh
+          wrapProgram $out/bin/veth_teardown_orig.sh \
             --set PATH "${lib.strings.makeBinPath [ coreutils iproute ]}"
-        '');
+        '') + ''
+          cp ${./veth_from_portinfo} $out/bin/veth_from_portinfo
+          wrapProgram $out/bin/veth_from_portinfo \
+            --set PATH "${lib.strings.makeBinPath [ coreutils utillinux ethtool iproute gnugrep procps jq ]}"
+          substitute ${./veth_setup.sh} $out/bin/veth_setup.sh \
+            --subst-var-by PTF_UTILS $out
+          chmod a+x $out/bin/veth_setup.sh
+          substitute ${./veth_teardown.sh} $out/bin/veth_teardown.sh \
+            --subst-var-by PTF_UTILS $out
+          chmod a+x $out/bin/veth_teardown.sh
+        '';
 
   pythonPath = with python.pkgs; [ six ];
   postFixup = ''

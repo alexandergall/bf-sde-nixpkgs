@@ -1,0 +1,81 @@
+#!/bin/bash
+
+set -e
+
+self=$(basename $0)
+
+usage () {
+    echo "usage: $self [--teardown] <portinfo-file>"
+    exit 0
+}
+
+opts=$(getopt -l teardown \
+	      -l help \
+              -o "" \
+              -n $self \
+              -- "$@")
+[ $? -eq 0 ] || usage
+[ $# -eq 0 ] && usage
+eval set -- $opts
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --teardown)
+            teardown=1
+            shift
+            ;;
+        --help)
+            usage
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+[ $# -eq 2 ] || usage
+
+portinfo=$2
+[ -r $portinfo ] || {
+    echo "File $portinfo does not exist or is not readable"
+    exit 1
+}
+
+for spec in $(cat $portinfo | jq -c 'select(.PortToVeth).PortToVeth[]'); do
+    read dev veth1 veth2 < <(echo "$spec" | jq '(.device_port, .veth1, .veth2)' | tr '[\n]' '[ ]') || true
+
+    if [ "$veth1" == "null" -o "$veth2" == "null" ]; then
+	echo "Skipping invalid entry: veth1=$veth1 veth2=$veth2"
+	continue
+    fi
+    intf0=veth$veth1
+    intf1=veth$veth2
+    if [ -z "$teardown" ]; then
+	echo "Creating veth pair $veth1/$veth2 for device port $dev"
+
+	## Copied from the original veth_setup.sh
+	if ! ip link show $intf0 &> /dev/null; then
+	    ip link add name $intf0 type veth peer name $intf1
+	fi
+	ip link set dev $intf0 mtu 10240 up
+	ip link set dev $intf1 mtu 10240 up
+	in_docker=$(cat /proc/1/cgroup| egrep -i docker || true)
+
+	if [ -z "$in_docker" ]; then
+            TOE_OPTIONS="rx tx sg tso ufo gso gro lro rxvlan txvlan rxhash"
+            for TOE_OPTION in $TOE_OPTIONS; do
+		ethtool --offload $intf0 "$TOE_OPTION" off &> /dev/null
+		ethtool --offload $intf1 "$TOE_OPTION" off &> /dev/null
+            done
+	fi
+	# do not fail if ipv6 is disabled system-wide
+	sysctl net.ipv6.conf.$intf0.disable_ipv6=1 &> /dev/null || true
+	sysctl net.ipv6.conf.$intf1.disable_ipv6=1 &> /dev/null || true
+    else
+	echo "Deleting veth pair $veth1/$veth2"
+	for intf in $intf0 $intf1; do
+	    if ip link show $intf &> /dev/null; then
+		ip link delete $intf type veth
+	    fi
+	done
+    fi
+done

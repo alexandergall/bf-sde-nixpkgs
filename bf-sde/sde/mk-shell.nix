@@ -45,6 +45,11 @@ let
                $ run_tofino_model.sh -p <p4name>
                $ run_switchd.sh -p <p4name>
                $ sudo \$(type -p veth_teardown.sh)
+      Run Tofino model with custom portinfo file:
+               $ sudo \$(type -p veth_from_portinfo) <portinfo-file>
+               $ run_tofino_model.sh -p <p4name> -f <portinfo-file>
+               $ run_switchd.sh -p <p4name>
+               $ sudo \$(type -p veth_from_portinfo) --teardown <portinfo-file>
       Run PTF tests: run the Tofino model, then
                $ run_p4_tests.sh -p <p4name> -t <path-to-dir-with-test-scripts>
     '';

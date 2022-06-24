@@ -609,6 +609,11 @@ Run Tofino model:
          $ run_tofino_model.sh -p <p4name>
          $ run_switchd.sh -p <p4name>
          $ sudo $(type -p veth_teardown.sh)
+Run Tofino model with custom portinfo file:
+         $ sudo $(type -p veth_from_portinfo) <portinfo-file>
+         $ run_tofino_model.sh -p <p4name> -f <portinfo-file>
+         $ run_switchd.sh -p <p4name>
+         $ sudo $(type -p veth_from_portinfo) --teardown <portinfo-file>
 Run PTF tests: run the Tofino model, then
          $ run_p4_tests.sh -p  <p4name> -t <path-to-dir-with-test-scripts>
 
@@ -619,9 +624,10 @@ Use "exit" or CTRL-D to exit this shell.
 [nix-shell(SDE-9.7.0):~]$
 ```
 
-The model uses `veth` interfaces to connect to the emulated ports.
-These interfaces are set up with the script `veth_setup.sh`. It
-requires root privileges and needs to be called with `sudo`
+By default, the model uses `veth` interfaces to connect to the
+emulated ports.  These interfaces are set up with the script
+`veth_setup.sh`. It requires root privileges and needs to be called
+with `sudo`
 
 ```
 $ sudo $(type -p veth_setup.sh)
@@ -641,15 +647,7 @@ $ run_tofino_model.sh -p <program_name>
 ```
 
 The model then waits for a connection from a `bf_switchd`
-process. There are two ways in which the process can be invoked to
-connect to the model.  If the shell was started in `model` mode,
-e.g. with
-
-```
-$ sde-env-<version> --platform=model
-```
-
-then the invocation is exactly the same as for the ASIC:
+process, which can be started exactly as for the ASIC:
 
 ```
 $ run_switchd.sh -p <program_name>
@@ -659,6 +657,88 @@ Note that the `bf_switchd` process crashes if one of the kernel
 modules is loaded when running on the Tofino model (this behaviour is
 present at least up to version 9.9.0). In this case, simply unload the
 module and restart `run_switchd.sh`.
+
+The default mapping of emulated ports to `veth` interfaces can be
+overriden by passing a _portinfo_ file to the model binary. This file
+is in JSON and can contain two types of objects:
+
+```
+{
+  "PortToVeth": [
+    {
+      "device_port": <dev_port>,
+      "veth1": <n1>,
+      "veth2": <n2>
+    },
+    {
+      "device_port": <dev_port>,
+       "veth1": <n1>,
+	   "veth2": <n2>
+    },
+    ...
+  ],
+  "PortToIf": [
+    {
+	  "device_port": <dev_port>,
+	  "if": <intf>
+	},
+    {
+	  "device_port": <dev_port>,
+	  "if": <intf>
+	},
+	...
+  ]
+}
+```
+
+The `PortToVeth` object maps a specific device port `<dev_port>` to a
+pair of `veth` interfaces with the names `veth<n1>` and `veth<n2>`,
+where the device port is connected to `veth<n1>`. The `veth` pair must
+exist exist when the model is started.
+
+The `PortToIf` object maps a specific device port `<dev_port>` to the
+interface named `intf`. The interface named `intf` must exist when the
+model is started.
+
+As a convenience, scripts are provided to create the `veth` pairs
+requried by the `PortToVeth` object. The `veth_{setup,teardown}.sh`
+scripts create/remove the `veth` pairs required by the default
+portinfo file built into the model binary. The default for the Tofino
+target maps device ports 0-16 to the `veth` pairs `veth0/veth1`
+through `veth31/veth32` and device port 64 to `veth250/veth251` as the
+CPU port. For the Tofino2 target, the default is to map device ports
+8-24 and port 2 as the CPU port to the same `veth` pairs.
+
+These scripts are part of the standard SDE tooling. The Nix SDE
+package provides an additional script `veth_from_portinfo` which takes
+a portinfo file as input. When called without any options, the script
+generates the `veth` pairs provided by the `PortToVeth` list in the
+file (the `PortToIf` object is ignored). When called with the
+`--teardown` option, the `veth` pairs are removed:
+
+```
+$ cat ports.json
+{
+    "PortToVeth": [
+        {
+            "device_port":0,
+            "veth1":0,
+            "veth2":1
+        }
+    ]
+}
+$ sudo $(type -p veth_from_portinfo) ports.json
+Creating veth pair 0/1 for device port 0
+$ sudo $(type -p veth_from_portinfo) --teardown /tmp/ports.json
+Deleting veth pair 0/1
+```
+
+The portinfo file must also be supplied to the `run_tofino_model.sh`
+script:
+
+```
+$ run_tofino_model -p <program> -f <portinfo_file>
+```
 
 ### <a name="runPTF"></a>Run PTF Tests
 
@@ -1255,16 +1335,17 @@ contains just enough components of the full SDE to start the
 given platform. The `bin/<name>` executable is just a shell script
 which invokes `run_switchd.sh`.
 
-If `platform` is `model`, the runtime environment includes the Tofino
-model binary and the `run_tofino_model.sh` utility script. The
-`bin/<name>` executable, in addition to calling `run_switchd.sh`, also
-starts `run_tofino_model.sh` in the background and calls
-`veth_setup.sh` to create the `veth` virtual interfaces that connect
-to the emulated ports of the model. By default, the output of the
-`tofino-model` and `bf_switchd` programs are both sent to `stdout` and
-`stderr`.  If the script is called with open file descriptors 3 and/or
-4, the model will write its `stdout` and `stderr` to descriptors 3 and
-4, respectively.  For example, calling the script with
+If `platform` is one of the model platform (`model`, `modelT2` etc.),
+the runtime environment includes the Tofino model binary and the
+`run_tofino_model.sh` utility script. The `bin/<name>` executable, in
+addition to calling `run_switchd.sh`, also starts
+`run_tofino_model.sh` in the background and calls `veth_setup.sh` to
+create the `veth` virtual interfaces that connect to the emulated
+ports of the model. By default, the output of the `tofino-model` and
+`bf_switchd` programs are both sent to `stdout` and `stderr`.  If the
+script is called with open file descriptors 3 and/or 4, the model will
+write its `stdout` and `stderr` to descriptors 3 and 4, respectively.
+For example, calling the script with
 
 ```
 $ /nix/store/.../bin/<name> >switch.log 2>&1 3>model.log 3>&4
@@ -1272,6 +1353,13 @@ $ /nix/store/.../bin/<name> >switch.log 2>&1 3>model.log 3>&4
 
 will collect all output of `bf_switchd` in `switch.log` and all output
 of `tofino-model` in `model.log`.
+
+By default, the model will use a built-in file for mapping ports to
+local interfaces.  To use a custom mapping file, assign the absolute
+path to the file to the environment variable `TOFINO_MODEL_PORTINFO`
+before running the `bin/<name>` script. See the section about [running
+the Tofino model](#runOnModel) for details about the portinfo
+mechanism.
 
 <a name="p4SupportFunctions"></a>The resulting package has additional
 attributes just like the `bf-sde.<version>` packages:
