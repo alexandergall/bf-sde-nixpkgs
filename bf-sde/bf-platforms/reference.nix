@@ -15,17 +15,21 @@ let
           ## Note: src is the actual reference BSP archive, see
           ## default.nix
           inherit version src;
-          patches = patches.default or [];
+          patches = (patches.default or []) ++ (patches.${baseboard} or []);
 
           buildInputs = [ bf-drivers.pythonModule thrift boost libusb
                           curl bf-syslibs.dev bf-drivers.dev bf-utils
                           ] ++ lib.optional buildSystem.isCmake [
                             cmake ] ++
-                          lib.optional (lib.versionAtLeast version "9.9.0")
+                          lib.optionals (lib.versionAtLeast version "9.9.0")
                             [ bf-utils-tofino.dev ];
 
           outputs = [ "out" "dev" ];
           enableParallelBuilding = true;
+          ## The Newport platform libraries have unresolved references
+          ## on (unused) functions, which is incompatible with the
+          ## default immediate bindings used by mkDerivation.
+          hardeningDisable = lib.optional newport "bindnow";
 
           ## Newport requires a kernel module to drive the FPGA I2C
           ## controller. The module is created only when we are called

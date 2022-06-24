@@ -452,9 +452,8 @@ let
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "87f91540c0947edff2694cea9beeca78f95062b0aaca812a81c238ff39343e46";
           patches = {
-            default = [ bf-platforms/reference-get-media-type.patch
-                        bf-platforms/newport.patch
-                        bf-platforms/newport-eth-compliance.patch ];
+            default = [ bf-platforms/reference-get-media-type.patch ];
+            newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
         };
         aps = fetchFromStore {
@@ -526,16 +525,8 @@ let
         reference = fetchFromStore {
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "975fa33e37abffa81ff01c1142043907f05726e31efcce0475adec0f1a80f919";
-          ## This patch eliminates undefined symbols in the Newport
-          ## platform library. The undefined symbols are not actually
-          ## referenced at runtime and there should not be any errors
-          ## due to lazy binding. However, the linker from stdenv
-          ## seems to force immediate bindings and throws an error
-          ## when dlopen() is called. This should be investigated
-          ## more.
           patches = {
-            default = [ bf-platforms/newport.patch
-                        bf-platforms/newport-eth-compliance.patch ];
+            newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
         };
       };
@@ -567,8 +558,7 @@ let
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "f73aecac5eef505a56573c6c9c1d32e0fa6ee00218bc08e936fff966f8d2f87a";
           patches = {
-            default = [ bf-platforms/newport.patch
-                        bf-platforms/newport-eth-compliance.patch ];
+            newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
         };
       };
