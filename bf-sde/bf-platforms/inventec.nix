@@ -18,6 +18,10 @@ let
                         ] ++ lib.optional (! versionOlder9_7) cmake;
           outputs = [ "out" "dev" ];
           enableParallelBuilding = true;
+          ## The platform libraries have unresolved references on
+          ## (unused) functions, which is incompatible with the
+          ## default immediate bindings used by mkDerivation.
+          hardeningDisable = lib.optional (! versionOlder9_7) "bindnow";
 
           unpackPhase = lib.optionalString (! versionOlder9_7) ''
             mkdir inventec
