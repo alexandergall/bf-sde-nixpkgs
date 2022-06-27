@@ -100,6 +100,9 @@ let
             newport = lib.optionals (lib.versionAtLeast sdeSpec.version "9.7.0") [
               sdePkgs.bf-platforms.newport
             ];
+            inventec = lib.optionals (lib.versionAtLeast sdeSpec.version "9.7.0") [
+              (SDE.callPackage (import bf-platforms/inventec/onl-modules.nix) {})
+            ];
           };
         };
       } // (lib.optionalAttrs (lib.strings.versionAtLeast sdeSpec.version "9.5.0") {

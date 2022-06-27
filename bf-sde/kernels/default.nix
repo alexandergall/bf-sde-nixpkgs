@@ -258,6 +258,22 @@ let
           "9.3.1" = patch;
           "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
         };
+      additionalModules = {
+        inventec = [
+          {
+            directory = "drivers/i2c/muxes";
+            makeFlags = [
+              "CONFIG_I2C_MUX_PCA954x=m"
+            ];
+          }
+          {
+            directory = "drivers/gpio";
+            makeFlags = [
+              "CONFIG_GPIO_ICH=m"
+            ];
+          }
+        ];
+      };
     };
     Debian11_3 = {
       kernelRelease = "5.10.0-13-amd64";
@@ -293,6 +309,22 @@ let
           "9.3.1" = patch;
           "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
         };
+      additionalModules = {
+        inventec = [
+          {
+            directory = "drivers/i2c/muxes";
+            makeFlags = [
+              "CONFIG_I2C_MUX_PCA954x=m"
+            ];
+          }
+          {
+            directory = "drivers/gpio";
+            makeFlags = [
+              "CONFIG_GPIO_ICH=m"
+            ];
+          }
+        ];
+      };
     };
   };
 in
