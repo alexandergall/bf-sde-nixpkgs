@@ -30,6 +30,19 @@
        echo "Loading bf_fpga for Newport baseboard"
        /usr/bin/sudo ${modules}/bin/bf_fpga_mod_load
      fi
+  '' + lib.optionalString (self.baseboard == "inventec") ''
+    mdir=${modules}/lib/modules/${modules.kernelRelease}
+    if [ -e $mdir/.inventec-unsupported ]; then
+      echo "Kernel ${modules.kernelRelease} is not supported for the Inventec baseboard"
+      exit 1
+    fi
+    echo "Loading additional kernel modules"
+    /usr/bin/sudo modprobe i2c-mux
+    for mod in i2c-mux-pca954x gpio-ich inv_cpld inv_eeprom  inv_psoc vpd inv_platform swps; do
+      file=$mdir/$mod.ko
+      echo $file
+      /usr/bin/sudo insmod $file || true
+    done
   '' + ''
     exec ${self}/bin/${execName} "$@"
   ''
