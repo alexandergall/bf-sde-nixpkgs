@@ -377,7 +377,7 @@ _install () {
     dir=$1
     gitTag=$2
     switch=$3
-    nix-env -f $dir -p $PROFILE -r -i -A install \
+    nix-env -j auto -f $dir -p $PROFILE -r -i -A install \
             --argstr gitTag $gitTag \
             --argstr kernelRelease $kernel_release \
             --argstr platform $platform
