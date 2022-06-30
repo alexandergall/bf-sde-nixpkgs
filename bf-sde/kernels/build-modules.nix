@@ -79,9 +79,35 @@ let
       runHook postInstall
     '';
   });
-in buildEnv {
-  name = "bf-sde-${version}-combined-kernel-modules-${spec.kernelRelease}";
-  paths = [ driverModules ] ++
-          map (drv: drv.override { kernelSpec = spec; }) drvsWithKernelModules;
-  inherit (driverModules) passthru;
-}
+in
+if kernelID == "none" then
+  ## Create a dummy modules package which exits with an error when
+  ## attempting to load a module.
+  stdenv.mkDerivation {
+    name = "bf-sde-unsupported-kernel";
+    passthru = {
+      inherit kernelID;
+      inherit (spec) kernelRelease;
+    };
+    phases = [ "installPhase" ];
+    installPhase = ''
+      mkdir -p $out/bin
+      for mod in kpkt kdrv knet; do
+        load_cmd=$out/bin/bf_''${mod}_mod_load
+        cat <<"EOF" >$load_cmd
+      #!${runtimeShell}
+      echo "No modules available for this kernel"
+      exit 1
+      EOF
+      chmod a+x $load_cmd
+      cp $load_cmd $out/bin/bf_''${mod}_mod_unload
+      done
+    '';
+  }
+else
+  buildEnv {
+    name = "bf-sde-${version}-combined-kernel-modules-${spec.kernelRelease}";
+    paths = [ driverModules ] ++
+            map (drv: drv.override { kernelSpec = spec; }) drvsWithKernelModules;
+    inherit (driverModules) passthru;
+  }

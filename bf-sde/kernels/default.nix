@@ -60,6 +60,20 @@ let
     }).override spec.buildModulesOverrides;
 
   kernels = {
+    ## This pseudo-kernel can be selected to have ./build-modules.nix
+    ## create a dummy package that will cause a runtime error when an
+    ## attempt is made to load one of the kernel modules from the
+    ## module wrapper. It is intended primarily to allow the model
+    ## platforms to be included in standalone installers just like any
+    ## other platform. In that case, the dummy package is not used
+    ## since building a P4 program for the model platforms does not
+    ## generate a module wrapper at all. However, the release slice
+    ## for the model is still expected to contain a kernel module
+    ## derivation.
+    none = {
+      kernelRelease = "none";
+      buildTree = builtins.throw "Can't build modules for the \"none\" pseudo-kernel";
+    };
     ## Mion stores the kernel build artifacts in
     ## build/tmp-glibc/work-shared/<machine>/kernel-build-artifacts, but
     ## it also requires access to the full kernel sources.  The former

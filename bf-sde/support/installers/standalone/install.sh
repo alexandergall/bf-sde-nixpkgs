@@ -28,6 +28,10 @@ platform=${PLATFORM:-$onie_machine}
     ERROR "Can't determine platform, either from \"onie_machine\"" \
           "in /etc/machine.conf or the PLATFORM environment variable"
 
+if [[ "$platform" =~ ^model.* ]]; then
+    kernelRelease="none"
+fi
+
 ## Rely on the self-extractor to export PATH. If we set PATH here, Nix
 ## won't find it during its scan for runtime dependencies because this
 ## file is compressed.
@@ -61,7 +65,7 @@ INFO "Installing @COMPONENT@ release $version (Id: $partialID)"\
      "for kernel $kernelRelease on platform $platform in $PROFILE"
 [ $(id -u) == 0 ] || ERROR "Please run this command as root"
 
-[ -d $kernelRelease ] || ERROR "Unsupported kernel"
+[ -d $kernelRelease ] || ERROR "Unsupported kernel: $kernelRelease"
 kernelIDs=$kernelRelease/*
 if [ $(echo $kernelIDs | wc -w) -gt 1 ]; then
     INFO "Modules for $kernelRelease are provided by multiple packages:"
