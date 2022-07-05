@@ -571,6 +571,14 @@ let
             newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
         };
+        aps = fetchFromStore {
+          name = "apsn-bsp-${version}-1629ccd.tgz";
+          outputHash = "7b008f62b88db3351cc6e694fe621a53030e66491872ca4dd8228a96cf3dc2b5";
+          patches = {
+            default = [ bf-platforms/aps/cmake-9.9.0.patch
+                        bf-platforms/aps/temp-alarm-range.patch ];
+          };
+        };
       };
       stdenv = gcc8Stdenv;
       thrift = thrift_0_14;

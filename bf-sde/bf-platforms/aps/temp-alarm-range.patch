@@ -1,0 +1,28 @@
+diff -Naur bf-platforms-9.9.0.orig/platforms/bf2556x-1t/src/health/health_monitor.c bf-platforms-9.9.0/platforms/bf2556x-1t/src/health/health_monitor.c
+--- bf-platforms-9.9.0.orig/platforms/bf2556x-1t/src/health/health_monitor.c    2022-06-21 21:35:17.000000000 +0200
++++ bf-platforms-9.9.0/platforms/bf2556x-1t/src/health/health_monitor.c 2022-07-11 21:37:11.302388540 +0200
+@@ -18,7 +18,7 @@
+ #define MUTEX_NO_ATTR NULL
+ #define THREAD_NO_ATTR NULL
+ #define THREAD_NO_ARGS NULL
+-#define CHASSIS_TMP_ALARM_RANGE 60
++#define CHASSIS_TMP_ALARM_RANGE 80
+ #define TOFINO_TEMP_ALARM (105 * 1000)
+ #define ARRAY_LEN(arr) sizeof(arr)/sizeof(arr[0])
+ 
+@@ -81,7 +81,7 @@
+         float value)
+ {
+     if (value > CHASSIS_TMP_ALARM_RANGE) {
+-        LOG_ERROR("Sensor %s is above acceptable limts!", name);
++        LOG_ERROR("Sensor %s, value %f is above acceptable limts %f!", name, value, (float)CHASSIS_TMP_ALARM_RANGE);
+         return HEALTH_ALARM;
+     }
+     return HEALTH_OK;
+@@ -182,4 +182,4 @@
+         running = false;
+         pthread_join(health_thread, NULL);
+     }   
+-}
+\ No newline at end of file
++}

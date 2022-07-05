@@ -1,0 +1,22 @@
+diff -Naur bf-platforms-9.9.0.orig/CMakeLists.txt bf-platforms-9.9.0/CMakeLists.txt
+--- bf-platforms-9.9.0.orig/CMakeLists.txt	2022-06-21 21:35:17.000000000 +0200
++++ bf-platforms-9.9.0/CMakeLists.txt	2022-07-04 17:38:21.100719108 +0200
+@@ -25,11 +25,6 @@
+ 
+     option(PLATFORM "Name of APS Networks platform to build" "")
+ 
+-    set(SDE_INSTALL "" CACHE FILEPATH "Path to SDE install location")
+-    if (SDE_INSTALL STREQUAL "")
+-        message(FATAL_ERROR "SDE_INSTALL is not set")
+-    endif()
+-
+     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror")
+ 
+     link_directories(AFTER ${CMAKE_INSTALL_PREFIX}/lib)
+diff -Naur bf-platforms-9.9.0.orig/platforms/common/CMakeLists.txt bf-platforms-9.9.0/platforms/common/CMakeLists.txt
+--- bf-platforms-9.9.0.orig/platforms/common/CMakeLists.txt	2022-06-21 21:35:17.000000000 +0200
++++ bf-platforms-9.9.0/platforms/common/CMakeLists.txt	2022-07-04 17:45:17.052714855 +0200
+@@ -1,2 +1 @@
+ add_subdirectory(src)
+-add_subdirectory(test)
+\ No newline at end of file

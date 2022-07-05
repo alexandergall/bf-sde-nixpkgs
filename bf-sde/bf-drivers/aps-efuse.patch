@@ -1,0 +1,67 @@
+--- bf-drivers-9.9.0/src/lld/lld_efuse_tof.c	2022-04-20 16:04:05.000000000 +0200
++++ bf-drivers-9.7.2/src/lld/lld_efuse_tof.c	2022-03-22 00:00:25.000000000 +0100
+@@ -1,21 +1,26 @@
+ /*******************************************************************************
+- *  INTEL CONFIDENTIAL
++ * BAREFOOT NETWORKS CONFIDENTIAL & PROPRIETARY
+  *
+- *  Copyright (c) 2021 Intel Corporation
+- *  All Rights Reserved.
++ * Copyright (c) 2015-2019 Barefoot Networks, Inc.
++
++ * All Rights Reserved.
++ *
++ * NOTICE: All information contained herein is, and remains the property of
++ * Barefoot Networks, Inc. and its suppliers, if any. The intellectual and
++ * technical concepts contained herein are proprietary to Barefoot Networks,
++ * Inc.
++ * and its suppliers and may be covered by U.S. and Foreign Patents, patents in
++ * process, and are protected by trade secret or copyright law.
++ * Dissemination of this information or reproduction of this material is
++ * strictly forbidden unless prior written permission is obtained from
++ * Barefoot Networks, Inc.
+  *
+- *  This software and the related documents are Intel copyrighted materials,
+- *  and your use of them is governed by the express license under which they
+- *  were provided to you ("License"). Unless the License provides otherwise,
+- *  you may not use, modify, copy, publish, distribute, disclose or transmit
+- *  this software or the related documents without Intel's prior written
+- *  permission.
++ * No warranty, explicit or implicit is provided, unless granted under a
++ * written agreement with Barefoot Networks, Inc.
++ *
++ * $Id: $
+  *
+- *  This software and the related documents are provided as is, with no express
+- *  or implied warranties, other than those that are expressly stated in the
+- *  License.
+  ******************************************************************************/
+-
+ #ifndef __KERNEL__
+ #include <inttypes.h>  // for PRIx64
+ #else
+@@ -117,17 +122,13 @@
+   dev_p->efuse_data.voltage_scaling =
+       extract_bit_fld_128(hi64, lo64, (245 - 128), (243 - 128));
+ 
+-  if (dev_p->efuse_data.chip_part_number == BFN_PART_NBR_BFNT10032D) {
+-    // T-3.2-Half
+-    uint64_t p = dev_p->efuse_data.port_disable_map_lo;
+-    uint32_t n_bits = 0;
+-    for (; p != 0; p >>= 1)
+-      if (p & 1) ++n_bits;
+-
+-    if (n_bits == 46)
+-      dev_p->efuse_data.chip_part_number = BFN_PART_NBR_BFNT10032D_018;
+-    else if (n_bits == 44)
+-      dev_p->efuse_data.chip_part_number = BFN_PART_NBR_BFNT10032D_020;
++  /* If either pipes or ports are disabled in efuse we'll pretend
++   * this is a tofin-small */
++  if ((dev_p->efuse_data.pipe_disable != 0) ||
++      (dev_p->efuse_data.port_disable_map_lo != 0)) {
++    /* This is a temporary hack since some of the Tofino lite chip dont have
++       have the chip part number burned correctly in the efuse */
++    dev_p->efuse_data.chip_part_number = BFN_PART_NBR_BFNT10032D;  // T-3.2-Half
+   }
+   return 0;
+ }
