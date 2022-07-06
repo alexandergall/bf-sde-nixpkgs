@@ -164,7 +164,8 @@ let
         allPlatforms = import bf-platforms/properties.nix;
         ## The set of platforms supported by this SDE
         platforms = lib.filterAttrs (_: prop:
-          builtins.hasAttr prop.baseboard sdePkgs.bf-platforms)
+          ## BSP-less platforms are supported in all SDEs
+          prop.baseboard == null || builtins.hasAttr prop.baseboard sdePkgs.bf-platforms)
           self.allPlatforms;
 
         runtimeEnv = baseboard:

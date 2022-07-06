@@ -6,4 +6,5 @@ if [ -n "$1" ]; then
 fi
 
 export P4_INSTALL=@BUILD@
+echo -e "@BANNER@"
 exec @RUNTIME_ENV@/bin/run_switchd.sh -p @EXEC_NAME@ --arch=@ARCH@

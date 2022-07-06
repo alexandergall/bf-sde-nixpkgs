@@ -1,5 +1,5 @@
 { stdenv, callPackage, procps, kmod, lib, buildEnv, coreutils, gnused,
-  gnugrep, bash, bf-sde, isModel }:
+  gnugrep, bash, jq, bf-sde, isModel }:
 
 { pname,
   version,
@@ -107,7 +107,7 @@ let
   ## Create a separate derivation for the P4 artifacts that does not
   ## depend on the runtime environment (i.e. on the platform).
   build = stdenv.mkDerivation {
-    buildInputs = [ bf-sde ];
+    buildInputs = [ bf-sde jq ];
     pname = "${execName}-artifacts";
     inherit version src p4Name patches buildFlags;
 
@@ -139,6 +139,17 @@ let
     );
 
     installPhase = ''true'';
+    postFixup =
+      let
+        portMap = bf-sde.platforms.${platform}.portMap;
+      in
+        assert lib.assertMsg (passthru.baseboard == null -> target == "tofino")
+          "${platform}/${target}: bspless mode only supported for tofino target";
+        lib.optionalString (passthru.baseboard == null) ''
+          conf=$out/share/p4/targets/${target}/${execName}.conf
+          jq '.p4_devices[0].p4_programs[0] += {"board-port-map": "${portMap}"}' $conf >$conf.tmp
+          mv $conf.tmp $conf
+        '';
   };
 
   self = stdenv.mkDerivation {
@@ -182,13 +193,28 @@ let
           --subst-var _LD_LIBRARY_PATH
         chmod a+x $out/bin/$EXEC_NAME
       '';
-    }.${platform} or ''
+    }.${platform} or (
+      lib.optionalString (passthru.baseboard == null) ''
+        BANNER=\
+        '=============================================================\n'\
+        'NOTE: This platform is supported in \"BSP-less\" mode only.\n'\
+        'There is no access to any platform-specific information, e.g.\n'\
+        '   * Transceiver modules\n'\
+        '   * LEDs\n'\
+        '   * Sensors\n'\
+        '   * Power supplies/Fan modules\n'\
+        'Some transceivers may not work at all. You have been warned.\n'\
+        '=============================================================\n'
+      '' + ''
+      : ''${BANNER:=}
       substitute ${./run.sh} $out/bin/$EXEC_NAME \
         --subst-var BUILD \
         --subst-var RUNTIME_ENV \
         --subst-var EXEC_NAME \
-        --subst-var ARCH
+        --subst-var ARCH \
+        --subst-var BANNER
         chmod a+x $out/bin/$EXEC_NAME
-    '');
+    '')
+    );
   };
 in self
