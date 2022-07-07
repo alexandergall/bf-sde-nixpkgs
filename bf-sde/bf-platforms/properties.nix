@@ -72,9 +72,8 @@ in {
     ## mgmtEthPciAddr TBD
   };
   netberg_aurora_710 = {
-    baseboard = null;
+    baseboard = "netberg_7xx";
     target = "tofino";
-    portMap = port-maps/netberg_aurora_710.json;
     serialDevice = "ttyS0";
     serialSettings = "115200n8";
     ## mgmtEthPciAddr = "TBD";

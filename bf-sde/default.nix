@@ -480,6 +480,10 @@ let
           name = "bf-platform_SRC_9.7.0.2.1.tgz";
           outputHash = "8391d5e791ae8b453711a79ed6f6d4372bd9ed6076b3ff54c649b69775b8d9c9";
         };
+        netberg = fetchFromStore {
+          name = "bf-platforms-netberg-7xx-bsp-9.7.0-220210.tgz";
+          outputHash = "ad140a11fd39f7fbd835d6774d9b855f2ba693fd1d2e61b45a94aa30ed08a4f1";
+        };
       };
       stdenv = gcc8Stdenv;
       thrift = thrift_0_13;
