@@ -62,6 +62,7 @@ let
           bf-drivers-src = extractSource "bf-drivers";
           inherit (SDE) callPackage;
           inherit pkgs;
+
           ## Originally, the kernel-modules packages contained only
           ## the modules from the bf-drivers component. Starting with
           ## the reference BSP for the Newport (Tofino2) baseboard,
@@ -79,7 +80,7 @@ let
           ## the derivation's output only contains the module and
           ## nothing else.
           ##
-          ## The following list contains all of those derivations. It
+          ## The following set contains all of those derivations. It
           ## is passed to kernels/build-modules.nix which first builds
           ## the regular derivation for the modules from bf-drivers
           ## and then creates an environment that merges it with all
@@ -88,10 +89,18 @@ let
           ##
           ## The result is an environment that contains all kernel
           ## modules for the SDE.
-          drvsWithKernelModules =
-            lib.optionals (lib.versionAtLeast sdeSpec.version "9.7.0") [
+          ##
+          ## The list specified by the "default" attribute is applied
+          ## unconditionally.  All other attributes are interpreted as
+          ## the names of baseboards. This is used by
+          ## build-p4/modules-wrapper.nix to include modules specific
+          ## to a platform's baseboard.
+          drvsWithKernelModules = {
+            default = [];
+            newport = lib.optionals (lib.versionAtLeast sdeSpec.version "9.7.0") [
               sdePkgs.bf-platforms.newport
             ];
+          };
         };
       } // (lib.optionalAttrs (lib.strings.versionAtLeast sdeSpec.version "9.5.0") {
 

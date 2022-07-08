@@ -64,15 +64,16 @@ let
     paths = [ runtimeEnv build ];
   };
 
+  baseboard = bf-sde.baseboardForPlatform platform;
   passthru = {
-    inherit p4Name platform target;
-    baseboard = bf-sde.baseboardForPlatform platform;
+    inherit p4Name platform target baseboard;
 
     ## Build a shell script to load the required kernel module for a given
     ## kernel before executing the program.
     moduleWrapper' = modules:
       callPackage ./modules-wrapper.nix {
-        inherit execName modules self;
+        inherit execName self;
+        modules = modules.override { inherit baseboard; };
         requiredKernelModule =
           if isModel platform then
             null
@@ -143,9 +144,9 @@ let
       let
         portMap = bf-sde.platforms.${platform}.portMap;
       in
-        assert lib.assertMsg (passthru.baseboard == null -> target == "tofino")
+        assert lib.assertMsg (baseboard == null -> target == "tofino")
           "${platform}/${target}: bspless mode only supported for tofino target";
-        lib.optionalString (passthru.baseboard == null) ''
+        lib.optionalString (baseboard == null) ''
           conf=$out/share/p4/targets/${target}/${execName}.conf
           jq '.p4_devices[0].p4_programs[0] += {"board-port-map": "${portMap}"}' $conf >$conf.tmp
           mv $conf.tmp $conf
@@ -194,7 +195,7 @@ let
         chmod a+x $out/bin/$EXEC_NAME
       '';
     }.${platform} or (
-      lib.optionalString (passthru.baseboard == null) ''
+      lib.optionalString (baseboard == null) ''
         BANNER=\
         '=============================================================\n'\
         'NOTE: This platform is supported in \"BSP-less\" mode only.\n'\

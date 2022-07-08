@@ -2,7 +2,7 @@
 
 { lib, stdenv, buildEnv, python2, runtimeShell, kmod, coreutils,
   version, buildSystem, src, kernelID, spec, bf-syslibs, cmake,
-  drvsWithKernelModules }:
+  drvsWithKernelModules, baseboard ? null }:
 
 let
   driverModules = stdenv.mkDerivation ({
@@ -105,9 +105,14 @@ if kernelID == "none" then
     '';
   }
 else
+  let
+    baseboard' = if baseboard == null then "" else baseboard;
+  in
   buildEnv {
     name = "bf-sde-${version}-combined-kernel-modules-${spec.kernelRelease}";
     paths = [ driverModules ] ++
-            map (drv: drv.override { kernelSpec = spec; }) drvsWithKernelModules;
+            map (drv: drv.override { kernelSpec = spec; })
+              ((drvsWithKernelModules.default or []) ++
+               (drvsWithKernelModules.${baseboard'} or []));
     inherit (driverModules) passthru;
   }
