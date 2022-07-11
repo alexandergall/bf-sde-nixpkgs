@@ -16,9 +16,8 @@ if envKernelID != "" then
             "ist set to \"${envKernelID}\" but matches no supported kernel"))
 else
   if nMatches == 0 then
-    throw "Unsupported kernel: ${kernelRelease}"
-    #builtins.trace "Kernel ${kernelRelease} is not supported, bf_switchd on TNA not available"
-    #  kernel-modules.none
+    builtins.trace "Unsupported kernel ${kernelRelease}, bf_switchd on TNA not available"
+      kernel-modules.none
   else
     if nMatches == 1 then
       kernel-modules.${builtins.head ids}
