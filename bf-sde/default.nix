@@ -572,11 +572,10 @@ let
           };
         };
         aps = fetchFromStore {
-          name = "apsn-bsp-${version}-1629ccd.tgz";
-          outputHash = "7b008f62b88db3351cc6e694fe621a53030e66491872ca4dd8228a96cf3dc2b5";
+          name = "apsn-bsp-${version}-ae89bee.tgz";
+          outputHash = "32865ca5c5d28523fc5a25a367cc0bfe493134cbdffb4ee34c6f9429bd91bb33";
           patches = {
-            default = [ bf-platforms/aps/cmake-9.9.0.patch
-                        bf-platforms/aps/temp-alarm-range.patch ];
+            default = [ bf-platforms/aps/cmake-9.9.0.patch ];
           };
         };
       };
