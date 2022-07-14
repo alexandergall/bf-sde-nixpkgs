@@ -157,6 +157,10 @@ let
             name = "linux-kbuild-4.19_4.19.181-1_amd64.deb";
             sha256 = "01ygxscag9r6pqs1vfydprglqd2g5pa9c49ja5na68bpw3vnzdzv";
           };
+          source = {
+            name = "linux-source-4.19_4.19.181-1_all.deb";
+            sha256 = "0x6z841l996dqhmz3wx5f80rrb9qpw31glsd5cblfbcnn4d0m39a";
+          };
         };
         patchelfInputs = [ openssl_1_1.out elfutils ];
       };
@@ -180,6 +184,10 @@ let
           kbuild = {
             name = "linux-kbuild-4.19_4.19.181-1_amd64.deb";
             sha256 = "01ygxscag9r6pqs1vfydprglqd2g5pa9c49ja5na68bpw3vnzdzv";
+          };
+          source = {
+            name = "linux-source-4.19_4.19.181-1_all.deb";
+            sha256 = "0x6z841l996dqhmz3wx5f80rrb9qpw31glsd5cblfbcnn4d0m39a";
           };
         };
         patchelfInputs = [ openssl_1_1.out elfutils ];
@@ -205,6 +213,10 @@ let
             name = "linux-kbuild-4.19_4.19.194-1_amd64.deb";
             sha256 = "0vf44ks0naqbnbkm8ydlh591nr934k83dkq53jm53nk8acdbbdji";
           };
+          source = {
+            name = "linux-source-4.19_4.19.194-1_all.deb";
+            sha256 = "00y8wkqywsbafgs6s802px7bi6chpsj68m6ks8l4k9vg1i310k55";
+          };
         };
         patchelfInputs = [ openssl_1_1.out elfutils ];
       };
@@ -228,6 +240,10 @@ let
           kbuild = {
             name = "linux-kbuild-5.10_5.10.46-4_amd64.deb";
             sha256 = "1ihg819bmgn3934xwnjnbclmvki1cb562a3gwa3dnykrqp7wcm3f";
+          };
+          source = {
+            name = "linux-source-5.10_5.10.46-4_all.deb";
+            sha256 = "18qmhr93k2fbghb103grvfswmqqgfi2f7bbs2z2b36h37hi8wsrs";
           };
         };
         patchelfInputs = [ openssl_1_1.out elfutils ];
@@ -259,6 +275,10 @@ let
           kbuild = {
             name = "linux-kbuild-5.10_5.10.106-1_amd64.deb";
             sha256 = "0pzzx5qjnkgcxdpl7rx9zpkqnp1d6mnqw73d8w3nqanjn8cgwsmh";
+          };
+          source = {
+            name = "linux-source-5.10_5.10.106-1_all.deb";
+            sha256 = "1vgn7dd4j7m884slm56dqllb36c0b4bq0mbdbrr6a0gbm5h9ra9f";
           };
         };
         patchelfInputs = [ openssl_1_1.out elfutils ];
