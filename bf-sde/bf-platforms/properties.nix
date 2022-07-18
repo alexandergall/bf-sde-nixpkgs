@@ -75,8 +75,8 @@ in {
     baseboard = null;
     target = "tofino";
     portMap = port-maps/netberg_aurora_710.json;
-    ## serialDevice = "TBD";
-    ## serialSettings = "TBD";
+    serialDevice = "ttyS0";
+    serialSettings = "115200n8";
     ## mgmtEthPciAddr = "TBD";
   };
 }
