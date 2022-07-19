@@ -479,6 +479,9 @@ let
         inventec = fetchFromStore {
           name = "bf-platform_SRC_9.7.0.2.1.tgz";
           outputHash = "8391d5e791ae8b453711a79ed6f6d4372bd9ed6076b3ff54c649b69775b8d9c9";
+          patches = {
+            default = [ bf-platforms/inventec/qsfp.patch ];
+          };
         };
       };
       stdenv = gcc8Stdenv;

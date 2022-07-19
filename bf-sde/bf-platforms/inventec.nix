@@ -6,16 +6,20 @@ let
       versionOlder9_7 = lib.versionOlder version "9.7.0";
       derivation =
         { version, stdenv, thrift, boost, libusb, curl,
-          bf-syslibs, bf-drivers, bf-utils, cmake }:
+          bf-syslibs, bf-drivers, bf-utils, cmake, i2c-tools }:
 
-        stdenv.mkDerivation {
+        let
+          i2c-tools' = i2c-tools.overrideAttrs (_: {
+            postInstall = "";
+          });      
+        in stdenv.mkDerivation {
           pname = "bf-platforms-${baseboard}";
           inherit version src;
           patches = patches.default or [];
 
           buildInputs = [ bf-drivers.pythonModule thrift boost libusb
                           curl bf-syslibs.dev bf-drivers.dev bf-utils
-                        ] ++ lib.optional (! versionOlder9_7) cmake;
+                        ] ++ lib.optionals (! versionOlder9_7) [ cmake i2c-tools' ];
           outputs = [ "out" "dev" ];
           enableParallelBuilding = true;
           ## The platform libraries have unresolved references on

@@ -1,0 +1,414 @@
+diff -Naur inventec.orig/CMakeLists.txt inventec/CMakeLists.txt
+--- inventec.orig/CMakeLists.txt	2021-12-17 03:32:18.000000000 +0100
++++ inventec/CMakeLists.txt	2022-07-19 17:24:39.663475987 +0200
+@@ -183,6 +183,7 @@
+    platforms/inventec-bf/src/bf_pltfm_led/bf_pltfm_forest_led_ucli.c
+    platforms/inventec-bf/src/bf_pltfm_spi/bf_pltfm_spi.c
+    platforms/inventec-bf/src/bf_pltfm_sysfs/bf_pltfm_sysfs.c
++   platforms/inventec-bf/src/bf_pltfm_qsfp/qsfp.c
+    )
+   set(INVENTECBF_QSFP_SRCS
+   #  platforms/inventec-bf/src/qsfp/bf_forest_qsfp_module.c
+diff -Naur inventec.orig/platforms/inventec-bf/src/bf_pltfm_qsfp/qsfp.c inventec/platforms/inventec-bf/src/bf_pltfm_qsfp/qsfp.c
+--- inventec.orig/platforms/inventec-bf/src/bf_pltfm_qsfp/qsfp.c	1970-01-01 01:00:00.000000000 +0100
++++ inventec/platforms/inventec-bf/src/bf_pltfm_qsfp/qsfp.c	2022-07-19 17:56:47.867456271 +0200
+@@ -0,0 +1,365 @@
++/*******************************************************************************
++ * Copyright (c) 2015-2020 Barefoot Networks, Inc.
++ * SPDX-License-Identifier: BSD-3-Clause
++ *
++ * $Id: $
++ *
++ ******************************************************************************/
++
++#ifndef _BF_PLTFM_QSFP_H
++#define _BF_PLTFM_QSFP_H
++
++#include <stdint.h>
++#include <stdbool.h>
++#include <stdio.h>
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <sys/ioctl.h>
++#include <fcntl.h>
++#include <unistd.h>
++#include <linux/i2c.h>
++#include <linux/i2c-dev.h>
++#include <i2c/smbus.h>
++
++#include <bf_types/bf_types.h>
++#include <bf_qsfp/bf_qsfp.h>
++#include <bf_pltfm_bd_cfg.h>
++
++static int port_fds [65];
++
++struct inv_port_layout_s {
++    int port_id;
++    int chan_id;
++    int ioexp_id;
++    int ioexp_offset;
++    int transvr_type;
++    int chipset_type;
++    int lane_id[8];
++};
++#define TRANSVR_TYPE_QSFP_28 0
++#define CHIP_TYPE_LAVENDER 0
++struct inv_port_layout_s lavender_port_layout[] = {
++    /* Port_ID / Chan_ID / IOEXP_ID / IOEXP_VIRT_OFFSET / TRANSCEIVER_TYPE / CHIP_TYPE / LANE_ID */
++    { 0,  17,  0,  0, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {188, 189, 190, 191} },
++    { 1,  18,  0,  1, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {184, 185, 186, 187} },
++    { 2,  19,  0,  2, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {180, 181, 182, 183} },
++    { 3,  20,  0,  3, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {176, 177, 178, 179} },
++    { 4,  21,  0,  4, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {172, 173, 174, 175} },
++    { 5,  22,  0,  5, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {168, 169, 170, 171} },
++    { 6,  23,  0,  6, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {164, 165, 166, 167} },
++    { 7,  24,  0,  7, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {160, 161, 162, 163} },
++    { 8,  25,  1,  0, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {156, 157, 158, 159} },
++    { 9,  26,  1,  1, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {152, 153, 154, 155} },
++    {10,  27,  1,  2, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {148, 149, 150, 151} },
++    {11,  28,  1,  3, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {144, 145, 146, 147} },
++    {12,  29,  1,  4, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {140, 141, 142, 143} },
++    {13,  30,  1,  5, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {136, 137, 138, 139} },
++    {14,  31,  1,  6, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {132, 133, 134, 135} },
++    {15,  32,  1,  7, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {128, 129, 130, 131} },
++    {16,  33,  2,  0, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {  0,   1,   2,   3} },
++    {17,  34,  2,  1, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {  4,   5,   6,   7} },
++    {18,  35,  2,  2, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {  8,   9,  10,  11} },
++    {19,  36,  2,  3, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, { 12,  13,  14,  15} },
++    {20,  37,  2,  4, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, { 16,  17,  18,  19} },
++    {21,  38,  2,  5, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, { 20,  21,  22,  23} },
++    {22,  39,  2,  6, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, { 24,  25,  26,  27} },
++    {23,  40,  2,  7, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, { 28,  29,  30,  31} },
++    {24,  41,  3,  0, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, { 32,  33,  34,  35} },
++    {25,  42,  3,  1, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, { 36,  37,  38,  39} },
++    {26,  43,  3,  2, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, { 40,  41,  42,  43} },
++    {27,  44,  3,  3, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, { 44,  45,  46,  47} },
++    {28,  45,  3,  4, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, { 48,  49,  50,  51} },
++    {29,  46,  3,  5, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, { 52,  53,  54,  55} },
++    {30,  47,  3,  6, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, { 56,  57,  58,  59} },
++    {31,  48,  3,  7, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, { 60,  61,  62,  63} },
++    {32,  49,  4,  0, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {256, 257, 258, 259} },
++    {33,  50,  4,  1, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {260, 261, 262, 263} },
++    {34,  51,  4,  2, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {264, 265, 266, 267} },
++    {35,  52,  4,  3, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {268, 269, 270, 271} },
++    {36,  53,  4,  4, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {272, 273, 274, 275} },
++    {37,  54,  4,  5, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {276, 277, 278, 279} },
++    {38,  55,  4,  6, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {280, 281, 282, 283} },
++    {39,  56,  4,  7, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {284, 285, 286, 287} },
++    {40,  57,  5,  0, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {288, 289, 290, 291} },
++    {41,  58,  5,  1, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {292, 293, 294, 295} },
++    {42,  59,  5,  2, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {296, 297, 298, 299} },
++    {43,  60,  5,  3, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {300, 301, 302, 303} },
++    {44,  61,  5,  4, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {304, 305, 306, 307} },
++    {45,  62,  5,  5, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {308, 309, 310, 311} },
++    {46,  63,  5,  6, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {312, 313, 314, 315} },
++    {47,  64,  5,  7, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {316, 317, 318, 319} },
++    {48,  65,  6,  0, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {444, 445, 446, 447} },
++    {49,  66,  6,  1, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {440, 441, 442, 443} },
++    {50,  67,  6,  2, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {436, 437, 438, 439} },
++    {51,  68,  6,  3, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {432, 433, 434, 435} },
++    {52,  69,  6,  4, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {428, 429, 430, 431} },
++    {53,  70,  6,  5, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {424, 425, 426, 427} },
++    {54,  71,  6,  6, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {420, 421, 422, 423} },
++    {55,  72,  6,  7, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {416, 417, 418, 419} },
++    {56,  73,  7,  0, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {412, 413, 414, 415} },
++    {57,  74,  7,  1, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {408, 409, 410, 411} },
++    {58,  75,  7,  2, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {404, 405, 406, 407} },
++    {59,  76,  7,  3, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {400, 401, 402, 403} },
++    {60,  77,  7,  4, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {396, 397, 398, 399} },
++    {61,  78,  7,  5, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {392, 393, 394, 395} },
++    {62,  79,  7,  6, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {388, 389, 390, 391} },
++    {63,  80,  7,  7, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, {384, 385, 386, 387} },
++    {64,   5,  8,  0, TRANSVR_TYPE_QSFP_28, CHIP_TYPE_LAVENDER, { 64,  65,  66,  67} },
++};
++
++int open_i2c_device(int channel) {
++  int fd, len;
++  char name[16];
++
++  len = snprintf(name, sizeof(name), "/dev/i2c-%d", channel);
++  if (len >= (int)sizeof(name)) {
++    return -1;
++  }
++  if ((fd = open(name, O_RDWR)) < 0) {
++      return -1;
++  }
++  if (ioctl(fd, I2C_SLAVE, 0x50) < 0) {
++    close(fd);
++    return -1;
++  }
++  return fd;
++}
++
++/* QSFP platforms specific intialization */
++  
++/* initialize the entire qsfp subsystem
++ * it is presently invoked with arg = NULL
++ * @return
++ *   0 on success and -1 on error
++ */
++int bf_pltfm_qsfp_init(void *arg) {
++  int num_ports, i;
++
++  num_ports = platform_num_ports_get();
++  bf_qsfp_set_num(num_ports);
++
++  for (i = 0; i < num_ports; i++) {
++    if ((port_fds[i] = open_i2c_device(lavender_port_layout[i].chan_id)) < 0) {
++      /* cleanup */
++      return -1;
++    }
++  }
++  
++  return 0;
++}
++
++/** detect a qsfp module by attempting to read its memory offste zero
++ *
++ *  @param module
++ *   module (1 based)
++ *  @return
++ *   true if present and false if not present
++ */
++bool bf_pltfm_detect_qsfp(unsigned int module) {
++  int res, fd = port_fds[module-1];
++
++  if ((res = i2c_smbus_read_byte_data(fd, 0)) < 0) {
++    return true;
++  } else {
++    return false;
++  }
++}
++
++/** read a qsfp module memory
++ *
++ *  @param module
++ *   module (1 based)
++ *  @param offset
++ *   offset into qsfp memory space
++ *  @param len
++ *   len num of bytes to read
++ *  @param buf
++ *   buf to read into
++ *  @return
++ *   0 on success and -1 in error
++ */
++int bf_pltfm_qsfp_read_module(unsigned int module,
++                              int offset,
++                              int len,
++                              uint8_t *buf) {
++  int i, value, fd = port_fds[module-1];
++
++  for (i = 0; i < len; i++) {
++    if ((value = i2c_smbus_read_byte_data(fd, offset + i)) < 0) {
++      return -1;
++    }
++    buf[i] = value;
++  }
++  return 0;
++}
++
++/** write a qsfp module memory
++ *
++ *  @param module
++ *   module (1 based)
++ *  @param offset
++ *   offset into qsfp memory space
++ *  @param len
++ *   len num of bytes to write
++ *  @param buf
++ *   buf to read from
++ *  @return
++ *   0 on success and -1 in error
++ */
++int bf_pltfm_qsfp_write_module(unsigned int module,
++                               int offset,
++                               int len,
++                               uint8_t *buf) {
++  int i, fd = port_fds[module-1];
++
++  for (i = 0; i < len; i++) {
++    if ((i2c_smbus_write_byte_data(fd, offset + i, buf[i])) < 0) {
++      return -1;
++    }
++  }
++  return 0;
++}
++
++/* read a qsfp  module register
++ *  @param module
++ *   module (1 based)
++ *  @param page
++ *   page that the register belongs to
++ *  @param offset
++ *   offset into qsfp memory space
++ *  @param val
++ *   val to read into
++ *  @return
++ *   0 on success and -1 in error
++ */
++int bf_pltfm_qsfp_read_reg(unsigned int module,
++                           uint8_t page,
++                           int offset,
++                           uint8_t *val) {
++  int ret, fd = port_fds[module-1];
++  uint8_t curr_page = i2c_smbus_read_byte_data(fd, 127);
++
++  if (page != curr_page) {
++    if ((i2c_smbus_write_byte_data(fd, 127, page)) < 0) {
++      return -1;
++    }
++  }
++  if ((ret = i2c_smbus_read_byte_data(fd, offset)) < 0) {
++    return -1;
++  }
++  *val = ret;
++  return 0;
++}
++
++/* write a qsfp  module register
++ *  @param module
++ *   module (1 based)
++ *  @param page
++ *   page that the register belongs to
++ *  @param offset
++ *   offset into qsfp memory space
++ *  @param val
++ *   val to write
++ *  @return
++ *   0 on success and -1 in error
++ */
++int bf_pltfm_qsfp_write_reg(unsigned int module,
++                            uint8_t page,
++                            int offset,
++                            uint8_t val) {
++  int fd = port_fds[module-1];
++  uint8_t curr_page = i2c_smbus_read_byte_data(fd, 127);
++
++  if (page != curr_page) {
++    if ((i2c_smbus_write_byte_data(fd, 127, page)) < 0) {
++      return -1;
++    }
++  }
++  if ((i2c_smbus_write_byte_data(fd, offset, val)) < 0) {
++    return -1;
++  }
++  return 0;
++  
++}
++
++/** get qsfp presence mask status
++ *
++ *  @param port_1_32_pres
++ *   mask for lower 32 ports (1-32) 0: present, 1:not-present
++ *  @param port_32_64_pres
++ *   mask for upper 32 ports (33-64) 0: present, 1:not-present
++ *  @param port_cpu_pres
++ *   mask for cu port presence
++ *  @return
++ *   0 on success and -1 in error
++ */
++int bf_pltfm_qsfp_get_presence_mask(uint32_t *port_1_32_pres,
++                                    uint32_t *port_32_64_pres,
++                                    uint32_t *port_cpu_pres) {
++  return -1;
++}
++
++/** get qsfp interrupt status
++ *
++ *  @param port_1_32_ints
++ *   interrupt from lower 32 ports (1-32) 0: int-present, 1:not-present
++ *  @param port_32_64_ints
++ *   interrupt from upper 32 ports (33-64) 0: int-present, 1:not-present
++ *  @param port_cpu_ints
++ *   mask for cpu port interrupt
++ */
++void bf_pltfm_qsfp_get_int_mask(uint32_t *port_1_32_ints,
++                                uint32_t *port_32_64_ints,
++                                uint32_t *port_cpu_ints) {
++}
++
++/** get qsfp lpmode status
++ *
++ *  @param port_1_32_lpmode_
++ *   lpmode of lower 32 ports (1-32) 0: no-lpmod 1: lpmode
++ *  @param port_32_64_ints
++ *   lpmode of upper 32 ports (33-64) 0: no-lpmod 1: lpmode
++ *  @param port_cpu_ints
++ *   lpmode of cpu port
++ *  @return
++ *   0 on success and -1 in error
++ */
++int bf_pltfm_qsfp_get_lpmode_mask(uint32_t *port_1_32_ints,
++                                  uint32_t *port_32_64_ints,
++                                  uint32_t *port_cpu_ints) {
++  return -1;
++}
++
++/** set qsfp lpmode (hardware pins)
++ *
++ *  @param port
++ *   port
++ *  @param lpmode
++ *   true : set lpmode, false : set no-lpmode
++ *  @return
++ *   0: success, -1: failure
++ */
++int bf_pltfm_qsfp_set_lpmode(int port, bool lpmode) {
++  return -1;
++}
++
++/** reset qsfp module (hardware pins)
++ *
++ *  @param module
++ *   module (1 based)
++ *  @param reg
++ *   syscpld register to write
++ *  @param val
++ *   value to write
++ *  @return
++ *   0 on success and -1 in error
++ */
++int bf_pltfm_qsfp_module_reset(int module, bool reset) {
++  return -1;
++}
++
++#ifdef __cplusplus
++}
++#endif /* C++ */
++
++#endif /* _BF_PLTFM_QSFP_H */
+diff -Naur inventec.orig/platforms/inventec-bf/src/platform_mgr/platform.c inventec/platforms/inventec-bf/src/platform_mgr/platform.c
+--- inventec.orig/platforms/inventec-bf/src/platform_mgr/platform.c	2021-12-17 03:32:18.000000000 +0100
++++ inventec/platforms/inventec-bf/src/platform_mgr/platform.c	2022-07-19 17:28:45.603473473 +0200
+@@ -228,7 +228,7 @@
+   bf_bd_cfg_ucli_node_create(n);
+   bf_pltfm_chss_mgmt_ucli_node_create(n);
+   bf_pltfm_led_ucli_node_create(n);
+-  //bf_qsfp_ucli_node_create(n);
++  bf_qsfp_ucli_node_create(n);
+   bf_pltfm_spi_ucli_node_create(n);
+   pltfm_mgrs_ucli_node_create(n);
+ 
+@@ -263,15 +263,18 @@
+     return -1;
+   }
+ 
+-  // Bernie: Need to move this function to bf_pltfm_qsfp_init()
+-  bf_qsfp_set_num(platform_num_ports_get());
+-  
+   /* Register spi module */
+   if (bf_pltfm_spi_init(NULL)) {
+     LOG_ERROR("Error in spi init \n");
+     return -1;
+   }
+ 
++  /* Register qsfp module */
++  if (bf_pltfm_qsfp_init(NULL)) {
++    LOG_ERROR("Error in qsfp init \n");
++    return -1;
++  }
++  
+   /* Start Health Monitor */
+   pltfm_mgr_start_health_mntr();
+ 
