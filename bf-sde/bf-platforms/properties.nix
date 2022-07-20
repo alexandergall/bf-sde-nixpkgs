@@ -76,6 +76,6 @@ in {
     target = "tofino";
     serialDevice = "ttyS0";
     serialSettings = "115200n8";
-    ## mgmtEthPciAddr = "TBD";
+    mgmtEthPciAddr = "0000:08:00.0";
   };
 }
