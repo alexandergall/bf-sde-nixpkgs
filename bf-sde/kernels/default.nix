@@ -224,6 +224,34 @@ let
         "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
       };
     };
+    Debian10_12 = {
+      kernelRelease = "4.19.0-20-amd64";
+      buildTree = mkDebian {
+        spec = {
+          snapshotTimestamp = "20220720T092049Z";
+          arch = {
+            name = "linux-headers-4.19.0-20-amd64_4.19.235-1_amd64.deb";
+            sha256 = "111rh15agph7wn3iz071l1l4ld9hxfr563cv2f5bqglyqfxbnxk2";
+          };
+          common = {
+            name = "linux-headers-4.19.0-20-common_4.19.235-1_all.deb";
+            sha256 = "0bmcjjnpkzbc9x1wmiqaagia7zb37zr23rq49kvcibcix2n3m211";
+          };
+          kbuild = {
+            name = "linux-kbuild-4.19_4.19.235-1_amd64.deb";
+            sha256 = "11cgprkrnc01s0wh4x16fp311hn0yq887q6x8g801r2x799c6901";
+          };
+          source = {
+            name = "linux-source-4.19_4.19.235-1_all.deb";
+            sha256 = "1r7z0rr5jvr2smj3sr00hm6gjrzm6z74fp09im8zgvcnjfv6w8ms";
+          };
+        };
+        patchelfInputs = [ openssl_1_1.out elfutils ];
+      };
+      patches = {
+        "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+      };
+    };
     Debian11_0 = {
       kernelRelease = "5.10.0-8-amd64";
       buildTree = mkDebian {
