@@ -103,6 +103,11 @@ let
             inventec = lib.optionals (lib.versionAtLeast sdeSpec.version "9.7.0") [
               (SDE.callPackage (import bf-platforms/inventec/onl-modules.nix) {})
             ];
+            netberg_710 = lib.optionals (lib.versionAtLeast sdeSpec.version "9.7.0") [
+              ## This doesn't contain any modules but a script that needs to
+              ## have access to modules.
+              (SDE.callPackage (import bf-platforms/netberg/i2c-utils.nix) {})
+            ];
           };
         };
       } // (lib.optionalAttrs (lib.strings.versionAtLeast sdeSpec.version "9.5.0") {

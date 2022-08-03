@@ -72,7 +72,7 @@ in {
     ## mgmtEthPciAddr TBD
   };
   netberg_aurora_710 = {
-    baseboard = "netberg_7xx";
+    baseboard = "netberg_710";
     target = "tofino";
     serialDevice = "ttyS0";
     serialSettings = "115200n8";

@@ -59,6 +59,45 @@ let
       src = bf-drivers-src;
     }).override spec.buildModulesOverrides;
 
+  ## Additional modules for Debian 11 kernels
+  additionalModulesDebian11 = {
+    inventec = [
+      {
+        directory = "drivers/i2c/muxes";
+        makeFlags = [
+          "CONFIG_I2C_MUX_PCA954x=m"
+        ];
+      }
+      {
+        directory = "drivers/gpio";
+        makeFlags = [
+          "CONFIG_GPIO_ICH=m"
+        ];
+      }
+    ];
+    netberg_710 = [
+      {
+        directory = "drivers/i2c/muxes";
+        makeFlags = [
+          "CONFIG_I2C_MUX_PCA954x=m"
+        ];
+      }
+      {
+        directory = "drivers/gpio";
+        makeFlags = [
+          "CONFIG_GPIO_ICH=m"
+          "CONFIG_GPIO_PCA953X=m"
+        ];
+      }
+      {
+        directory = "drivers/hwmon/pmbus";
+        makeFlags = [
+          "CONFIG_PMBUS=m"
+          "CONFIG_SENSORS_PMBUS=m"
+        ];
+      }
+    ];
+  };
   kernels = {
     ## This pseudo-kernel can be selected to have ./build-modules.nix
     ## create a dummy package that will cause a runtime error when an
@@ -224,34 +263,7 @@ let
         "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
       };
     };
-    Debian10_12 = {
-      kernelRelease = "4.19.0-20-amd64";
-      buildTree = mkDebian {
-        spec = {
-          snapshotTimestamp = "20220720T092049Z";
-          arch = {
-            name = "linux-headers-4.19.0-20-amd64_4.19.235-1_amd64.deb";
-            sha256 = "111rh15agph7wn3iz071l1l4ld9hxfr563cv2f5bqglyqfxbnxk2";
-          };
-          common = {
-            name = "linux-headers-4.19.0-20-common_4.19.235-1_all.deb";
-            sha256 = "0bmcjjnpkzbc9x1wmiqaagia7zb37zr23rq49kvcibcix2n3m211";
-          };
-          kbuild = {
-            name = "linux-kbuild-4.19_4.19.235-1_amd64.deb";
-            sha256 = "11cgprkrnc01s0wh4x16fp311hn0yq887q6x8g801r2x799c6901";
-          };
-          source = {
-            name = "linux-source-4.19_4.19.235-1_all.deb";
-            sha256 = "1r7z0rr5jvr2smj3sr00hm6gjrzm6z74fp09im8zgvcnjfv6w8ms";
-          };
-        };
-        patchelfInputs = [ openssl_1_1.out elfutils ];
-      };
-      patches = {
-        "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
-      };
-    };
+
     Debian11_0 = {
       kernelRelease = "5.10.0-8-amd64";
       buildTree = mkDebian {
@@ -286,22 +298,7 @@ let
           "9.3.1" = patch;
           "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
         };
-      additionalModules = {
-        inventec = [
-          {
-            directory = "drivers/i2c/muxes";
-            makeFlags = [
-              "CONFIG_I2C_MUX_PCA954x=m"
-            ];
-          }
-          {
-            directory = "drivers/gpio";
-            makeFlags = [
-              "CONFIG_GPIO_ICH=m"
-            ];
-          }
-        ];
-      };
+      additionalModules = additionalModulesDebian11;
     };
     Debian11_3 = {
       kernelRelease = "5.10.0-13-amd64";
@@ -337,22 +334,7 @@ let
           "9.3.1" = patch;
           "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
         };
-      additionalModules = {
-        inventec = [
-          {
-            directory = "drivers/i2c/muxes";
-            makeFlags = [
-              "CONFIG_I2C_MUX_PCA954x=m"
-            ];
-          }
-          {
-            directory = "drivers/gpio";
-            makeFlags = [
-              "CONFIG_GPIO_ICH=m"
-            ];
-          }
-        ];
-      };
+      additionalModules = additionalModulesDebian11;
     };
     Debian11_4 = {
       kernelRelease = "5.10.0-16-amd64";
@@ -388,22 +370,7 @@ let
           "9.3.1" = patch;
           "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
         };
-      additionalModules = {
-        inventec = [
-          {
-            directory = "drivers/i2c/muxes";
-            makeFlags = [
-              "CONFIG_I2C_MUX_PCA954x=m"
-            ];
-          }
-          {
-            directory = "drivers/gpio";
-            makeFlags = [
-              "CONFIG_GPIO_ICH=m"
-            ];
-          }
-        ];
-      };
+      additionalModules = additionalModulesDebian11;
     };
   };
 in

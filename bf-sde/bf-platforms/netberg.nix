@@ -3,8 +3,8 @@
 let
   mkBaseboard = baseboard: {}:
     let
-      derivation = { stdenv, cmake, buildSystem, thrift, boost,
-                     libusb, curl, bf-syslibs, bf-drivers, bf-utils }:
+      derivation = { stdenv, cmake, thrift, boost, libusb,
+                     curl, bf-syslibs, bf-drivers, bf-utils }:
 
         stdenv.mkDerivation {
           pname = "bf-platforms-${baseboard}";
@@ -15,14 +15,17 @@ let
                           bf-drivers bf-utils ];
           cmakeFlags = [
             "-DSTANDALONE=ON"
+            "-DASIC=ON"
           ];
           preConfigure = ''
             tar xf bf-platforms*
-          '';
+           substituteInPlace platforms/netberg-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c \
+             --replace eth0 mgmt0
+           '';
         };
     in callPackage derivation {};
 
 in lib.mapAttrs mkBaseboard {
-  netberg_7xx = {
+  netberg_710 = {
   };
 }
