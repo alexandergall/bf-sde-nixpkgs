@@ -263,7 +263,6 @@ let
         "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
       };
     };
-
     Debian11_0 = {
       kernelRelease = "5.10.0-8-amd64";
       buildTree = mkDebian {
