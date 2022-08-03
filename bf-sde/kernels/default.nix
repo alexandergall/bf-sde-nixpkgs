@@ -354,6 +354,57 @@ let
         ];
       };
     };
+    Debian11_4 = {
+      kernelRelease = "5.10.0-16-amd64";
+      buildTree = mkDebian {
+        spec = {
+          snapshotTimestamp = "20220728T033224Z";
+          arch = {
+            name = "linux-headers-5.10.0-16-amd64_5.10.127-2_amd64.deb";
+            sha256 = "100sivslj7fljf29s3nvdnp8xn7533n3x09vrxqgcmgh5rffcsmc";
+          };
+          common = {
+            name = "linux-headers-5.10.0-16-common_5.10.127-2_all.deb";
+            sha256 = "0dn5kif58wq3rjnqvk0rdfpx5rmwzqhjd8197ak0nj3fsfrf2fld";
+          };
+          kbuild = {
+            name = "linux-kbuild-5.10_5.10.127-2_amd64.deb";
+            sha256 = "10ywdrr89hhyzzyw4dn8iy0ggwrpb9x94s6pnz52wipckq13q99k";
+          };
+          source = {
+            name = "linux-source-5.10_5.10.127-2_all.deb";
+            sha256 = "15ajv2i1mjlr8ljnyxbxjwjbl20hsgrcq2cx4a44635jx84b39ak";
+          };
+        };
+        patchelfInputs = [ openssl_1_1.out elfutils ];
+      };
+      patches =
+        let
+          patch = [ ./bf-drivers-kernel-5.8.patch ];
+        in {
+          "9.1.1" = patch ++ [ ./bf-drivers-9.1.1.patch ];
+          "9.2.0" = patch;
+          "9.3.0" = patch;
+          "9.3.1" = patch;
+          "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+        };
+      additionalModules = {
+        inventec = [
+          {
+            directory = "drivers/i2c/muxes";
+            makeFlags = [
+              "CONFIG_I2C_MUX_PCA954x=m"
+            ];
+          }
+          {
+            directory = "drivers/gpio";
+            makeFlags = [
+              "CONFIG_GPIO_ICH=m"
+            ];
+          }
+        ];
+      };
+    };
   };
 in
   builtins.mapAttrs mkModules kernels
