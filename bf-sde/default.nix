@@ -534,6 +534,7 @@ let
           mainTools = [ sde/run_switchd-9.7.0.patch sde/run_bfshell-9.7.0.patch
                         sde/run_p4_tests-9.7.0.patch ];
           mainCMake = [ sde/P4Build.cmake.patch ];
+          bf-drivers = [ bf-drivers/port-table-field-size-workaround.patch ];
           p4-examples = [];
           ptf-modules = [ ptf-modules/run_ptf_tests.patch
                           ## The getmac module used by bf-pktpy
@@ -566,6 +567,7 @@ let
           mainTools = [ sde/run_switchd-9.7.0.patch sde/run_bfshell-9.7.0.patch
                         sde/run_p4_tests-9.7.0.patch ];
           mainCMake = [ sde/P4Build.cmake.patch ];
+          bf-drivers = [ bf-drivers/port-table-field-size-workaround.patch ];
           p4-examples = [];
           ptf-modules = [ ptf-modules/run_ptf_tests.patch
                           ## The getmac module used by bf-pktpy
