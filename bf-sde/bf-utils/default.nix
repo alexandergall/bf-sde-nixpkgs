@@ -2,6 +2,19 @@
   cmake, autoconf, automake, libtool, libffi, zlib, sqlite, libedit,
   expat, bf-drivers-src, bf-syslibs }:
 
+let
+  ## The version of the embedded Python interpreter as it appears in
+  ## the package's include and lib directories. It is used by
+  ## bf-drivers to build the parts that need to be linked against
+  ## that specific Python version from bf-utils.
+  pythonLibPrefix =
+    if lib.versionOlder version "9.7.0" then
+      "python3.4m"
+    else if lib.versionOlder version "9.9.1" then
+      "python3.8"
+    else
+      "python3.10";
+in
 ## Note: creating a "dev" output for this package with the default
 ## method creates a dependency cycle between the "out" and "dev"
 ## outputs.  This should be investigated at some point.
@@ -37,17 +50,7 @@ stdenv.mkDerivation ({
   outputs = [ "out" "dev" ];
 
   passthru = {
-    ## The version of the embedded Python interpreter as it appears in
-    ## the package's include and lib directories. It is used by
-    ## bf-drivers to build the parts that need to be linked against
-    ## that specific Python version from bf-utils.
-    pythonLibPrefix =
-      if lib.versionOlder version "9.7.0" then
-        "python3.4m"
-      else if lib.versionOlder version "9.9.1" then
-        "python3.8"
-      else
-        "python3.10";
+    inherit pythonLibPrefix;
   };
 
   ## bf-python requires a bit of trickery starting with 9.3.0.
@@ -137,7 +140,7 @@ stdenv.mkDerivation ({
       ## it only searches in standard locations and the automatic Nix
       ## magic doesn't work in this case.
       ''
-        echo 'install(DIRECTORY ''${CMAKE_CURRENT_SOURCE_DIR}/bf_rt_python/ DESTINATION lib/python3.8)' >>CMakeLists.txt
+        echo 'install(DIRECTORY ''${CMAKE_CURRENT_SOURCE_DIR}/bf_rt_python/ DESTINATION lib/${pythonLibPrefix})' >>CMakeLists.txt
         NIX_CFLAGS_COMPILE="-lffi -lz -lsqlite3 $NIX_CFLAGS_COMPILE"
         sed -i -e 's!LDFLAGS=\([^ ]*\)!"CPPFLAGS=-I${zlib.dev}/include -I${sqlite.dev}/include" "LDFLAGS=-L${zlib.static}/lib -L${sqlite.out}/lib \1"!' third-party/CMakeLists.txt
       '';
