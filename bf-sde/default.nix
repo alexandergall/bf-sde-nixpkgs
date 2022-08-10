@@ -606,6 +606,38 @@ let
         };
       };
     };
+    v9_10_0 = rec {
+      version = "9.10.0";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "e0e423b92dd7c046594db8b435c7a5d292d3d1f3242fd4b3a43ad0af2abafdb1";
+        patches = {
+          mainTools = [ sde/run_switchd-9.7.0.patch sde/run_bfshell-9.7.0.patch
+                        sde/run_p4_tests-9.7.0.patch ];
+          mainCMake = [ sde/P4Build.cmake.patch ];
+          p4-examples = [];
+          ptf-modules = [ ptf-modules/run_ptf_tests.patch
+                          ## The getmac module used by bf-pktpy
+                          ## returns None as MAC address if run in a
+                          ## VM. This patch sets a static address in
+                          ## this case.
+                          ptf-modules/getmac.patch ];
+        };
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "d222007fa6eee4e3a0441f09ed86b3b6f46df4c7d830b82b08bf6df7f88c4268";
+          patches = {
+            newport = [ bf-platforms/newport-eth-compliance.patch ];
+          };
+        };
+      };
+      stdenv = gcc10Stdenv;
+      thrift = thrift_0_14;
+      libcli = libcli1_10;
+      python_bf_drivers = python3;
+    };
   };
 
-in bf-sde // { latest = bf-sde.v9_9_1; }
+in bf-sde // { latest = bf-sde.v9_10_0; }

@@ -19,6 +19,10 @@ in stdenv.mkDerivation {
                 ++ lib.optional (lib.versionAtLeast version "9.8.0") [ thrift ]
                 ++ lib.optional buildSystem.isCmake [ cmake ];
 
+  cmakeFlags = lib.optionals (lib.versionAtLeast version "9.10.0") [
+    "-DSTANDALONE=ON"
+  ];
+
   preConfigure = lib.optionalString (! buildSystem.isCmake) ''
     cd ptf-utils
   '' + lib.optionalString (version == "9.1.1") ''
