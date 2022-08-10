@@ -1,4 +1,5 @@
-{ pname, version, src, patches, buildSystem, stdenv, cmake, bf-syslibs }:
+{ pname, version, src, patches, buildSystem, lib, stdenv, cmake,
+  bf-syslibs, autoconf, automake, libtool }:
 
 stdenv.mkDerivation {
   inherit pname version patches;
@@ -9,7 +10,9 @@ stdenv.mkDerivation {
     '';
   };
 
-  buildInputs = [ cmake bf-syslibs.dev ];
+  buildInputs = [ cmake bf-syslibs.dev ]
+                ++ lib.optionals (lib.versionAtLeast version "9.9.1")
+                  [ autoconf automake libtool ];
   outputs = [ "out" "dev" ];
   installPhase = "true";
 }

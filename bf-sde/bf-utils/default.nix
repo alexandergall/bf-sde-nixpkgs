@@ -44,8 +44,10 @@ stdenv.mkDerivation ({
     pythonLibPrefix =
       if lib.versionOlder version "9.7.0" then
         "python3.4m"
+      else if lib.versionOlder version "9.9.1" then
+        "python3.8"
       else
-        "python3.8";
+        "python3.10";
   };
 
   ## bf-python requires a bit of trickery starting with 9.3.0.

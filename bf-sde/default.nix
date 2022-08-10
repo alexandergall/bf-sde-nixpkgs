@@ -591,6 +591,21 @@ let
       libcli = libcli1_10;
       python_bf_drivers = python3;
     };
+    v9_9_1 = lib.recursiveUpdate v9_9_0 rec {
+      version = "9.9.1";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "34f23716b38dd19cb34f701583b569b3006c5bbda184490bd70d5e5261e993a3";
+        inherit (v9_9_0.sde) patches;
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "481a2c5e6937f73ff9e9157fb4f313a4d72c0868b3eac94111ee79340c565309";
+          inherit (v9_9_0.bsps.reference) patches;
+        };
+      };
+    };
   };
 
 in bf-sde // { latest = bf-sde.v9_9_0; }
