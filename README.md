@@ -242,6 +242,8 @@ Support](#baseboardPlatform))
 | `aps_bf2556` `aps_bf6064` | APS Networks | `9.5.0_AOT1.5.4_SAL1.3.4.zip` | 9.5.0 | `510e5e18a91203fe6c4c0aabd807eb69ad53224500f7cb755f7c5b09c8e4525d`|
 | `aps_bf2556` `aps_bf6064` | APS Networks | `9.7.0_AOT1.6.1_SAL1.3.5_2.zip` | 9.7.0 9.7.1 9.7.2 | `4941987c4489d592de9b3676c79cb2011a22fe329425e8876fa8ae026fc959ad`|
 | `inventec`   | Inventec     | `bf-inventec-bsp93.tgz`                   | 9.3.0 9.3.1 9.4.0 9.5.0 9.6.0 | `fd1e4852d0b7543dd5d2b81ab8e0150644a0f24ca87d59f1369216f1a6e796ad`|
+| `inventec`   | Inventec     | `bf-platform_SRC_9.7.0.2.1.tgz`           | 9.7.0 9.7.1 9.7.2 | `8391d5e791ae8b453711a79ed6f6d4372bd9ed6076b3ff54c649b69775b8d9c9`|
+| `netberg`    | Netberg      | `bf-platforms-netberg-7xx-bsp-9.7.0-220210.tgz` | 9.7.0 9.7.1 9.7.2 | `ad140a11fd39f7fbd835d6774d9b855f2ba693fd1d2e61b45a94aa30ed08a4f1`|
 
 ### <a name="addArchives"></a>Add archives to the Nix store
 
@@ -351,6 +353,8 @@ https://github.com/alexandergall/bf-sde-nixpkgs/tree/master/bf-sde/bf-platforms/
 | `stordis_bf2556x_1t`     | APS Netwokrs | `aps_bf2556` |
 | `stordis_bf6064x_t`      | APS Netwokrs | `aps_bf6064` |
 | `inventec_d5264q28b`     | Inventec     | `inventec`   |
+| `inventec_d10064   `     | Inventec     | `inventec`   |
+| `netberg_aurora_710'     | Netberg      | `netberg`    |
 | `model`                  |              | `model`      |
 | `modelT2`                |              | `model`      |
 | `modelT3`                |              | `model`      |
