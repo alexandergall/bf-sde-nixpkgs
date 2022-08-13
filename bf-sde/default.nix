@@ -270,7 +270,12 @@ let
       };
     };
   };
-  bf-sde = with pkgs; with lib; mapAttrs (_: sdeSpec: mkSDE (recursiveUpdate common sdeSpec)) rec {
+  notPlainAttrs = path: lhs: rhs:
+    let
+      plainAttrs = s:
+        builtins.isAttrs s && ! lib.isDerivation s;
+    in ! (plainAttrs lhs && plainAttrs rhs);
+  bf-sde = with lib; mapAttrs (_: sdeSpec: mkSDE (recursiveUpdateUntil notPlainAttrs common sdeSpec)) rec {
     v9_1_1 = rec {
       version = "9.1.1";
       sde = fetchFromStore {
