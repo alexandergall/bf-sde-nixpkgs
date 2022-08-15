@@ -423,7 +423,7 @@ let
       stdenv = gcc8Stdenv;
       thrift = thrift_0_13;
     };
-    v9_5_1 = lib.recursiveUpdate v9_5_0 rec {
+    v9_5_1 = lib.recursiveUpdate (lib.filterAttrsRecursive (n: v: n != "aps") v9_5_0) rec {
       version = "9.5.1";
       sde = fetchFromStore {
         name = "bf-sde-${version}.tgz";
@@ -436,7 +436,7 @@ let
         };
       };
     };
-    v9_5_2 = lib.recursiveUpdate v9_5_0 rec {
+    v9_5_2 = lib.recursiveUpdate v9_5_1 rec {
       version = "9.5.2";
       sde = fetchFromStore {
         name = "bf-sde-${version}.tgz";
@@ -449,7 +449,7 @@ let
         };
       };
     };
-    v9_5_3 = lib.recursiveUpdate v9_5_0 rec {
+    v9_5_3 = lib.recursiveUpdate v9_5_1 rec {
       version = "9.5.3";
       sde = fetchFromStore {
         name = "bf-sde-${version}.tgz";
@@ -462,7 +462,7 @@ let
         };
       };
     };
-    v9_5_4 = lib.recursiveUpdate v9_5_0 rec {
+    v9_5_4 = lib.recursiveUpdate v9_5_1 rec {
       version = "9.5.4";
       sde = fetchFromStore {
         name = "bf-sde-${version}.tgz";
