@@ -333,6 +333,9 @@ let
       sde = fetchFromStore {
         name = "bf-sde-${version}.tgz";
         outputHash = "71db320fa7d12757127c7da1c16ea98453f4c88ecca7853c73b2bd4dccd1d891";
+        patches = {
+          bf-drivers = [];
+        };
       };
       bsps = {
         reference = fetchFromStore {
