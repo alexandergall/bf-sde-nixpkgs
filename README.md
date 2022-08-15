@@ -188,12 +188,18 @@ the `sha256` sums are as follows
 | bf-sde-9.2.0.tar           | `94cf6acf8a69928aaca4043e9ba2c665cc37d72b904dcadb797d5d520fb0dd26` |
 | bf-sde-9.3.0.tgz           | `566994d074ba93908307890761f8d14b4e22fb8759085da3d71c7a2f820fe2ec` |
 | bf-sde-9.3.1.tgz           | `71db320fa7d12757127c7da1c16ea98453f4c88ecca7853c73b2bd4dccd1d891` |
+| bf-sde-9.3.2.tgz           | `8c637d07b788491b7a81896584be5998feadb7014b3ff42dc37d3cafd5fb56f8` |
 | bf-sde-9.4.0.tgz           | `daec162c2a857ae0175e57ab670b59341d39f3ac2ecd5ba99ec36afa15566c4e` |
 | bf-sde-9.5.0.tgz           | `61d55a06fa6f80fc1f859a80ab8897eeca43f06831d793d7ec7f6f56e6529ed7` |
+| bf-sde-9.5.1.tgz           | `472d10360c30b21ba217eb3bc3dddc4f54182f325c7a5f7ae03e0db3cceba1b0` |
+| bf-sde-9.5.2.tgz           | `60f366438c979f0b03d62ab997922e90e2aac447f3937930e3bd1af98c05d48a` |
+| bf-sde-9.5.3.tgz           | `fd146282ec80c7fb2aea6f06db9cc871e00ffe3fed5d1de91ce27abdfc8c661a` |
+| bf-sde-9.5.4.tgz           | `3971b6b8400920529f0634de6d6211e709ec6e8797f66716d6c8bd31c4f030cb` |
 | bf-sde-9.6.0.tgz           | `0e73fd8e7fe22c62cafe7dc4415649f0e66c04607c0056bd08adc1c7710fd193` |
 | bf-sde-9.7.0.tgz           | `a4ca94f2d9602535c52613f9d8ad3504b55d99283a4e3dfc64de19e24d767423` |
 | bf-sde-9.7.1.tgz           | `dc0eb79b04797a7332f3995f37533a255a9a12afb158c53cdd421d1d4717ee28` |
 | bf-sde-9.7.2.tgz           | `e8cf3ef364e33e97f6af6dd4e39331221d61c951ffea30cc7221a624df09e4ed` |
+| bf-sde-9.7.3.tgz           | `d45094c47b71fc7a21175436aaa414dd719b21ae0d94b66a5b5ae8450c1d3230` |
 | bf-sde-9.8.0.tgz           | `8d367f0812f17e64cef4acbe2c10130ae4b533bf239e554dc6246c93f826c12a` |
 | bf-sde-9.9.0.tgz           | `c4314e76140a9a6f5d644176e0e3b0ca88f0df606b735c2c47c7cf5575d46257` |
 | bf-sde-9.9.1.tgz           | `34f23716b38dd19cb34f701583b569b3006c5bbda184490bd70d5e5261e993a3` |
@@ -228,22 +234,28 @@ Support](#baseboardPlatform))
 | `accton` `model`  | Intel | `bf-reference-bsp-9.2.0.tar` | 9.2.0 | `d817f609a76b3b5e6805c25c578897f9ba2204e7d694e5f76593694ca74f67ac` |
 | `accton` `model`  | Intel | `bf-reference-bsp-9.3.0.tgz` | 9.3.0 | `dd5e51aebd836bd63d0d7c37400e995fb6b1e3650ef08014a164124ba44e6a06` |
 | `accton` `model`  | Intel | `bf-reference-bsp-9.3.1.tgz` | 9.3.1 | `b934601c77b08c3281f8dcb235450b80316a42e2683ff29e4c9f2485fffbb51f` |
+| `accton` `model`  | Intel | `bf-reference-bsp-9.3.1.tgz` | 9.3.2 | `cb8c126d381ab0dbaf35645d1681c04df5c9675a7ac8231cf10eae5b1a402c9e` |
 | `accton` `model`  | Intel | `bf-reference-bsp-9.4.0.tgz` | 9.4.0 | `269eecaf3186d7c9a061f6b66ce3d1c85d8f2022ce3be81ee9e532d136552fa4` |
 | `accton` `model`  | Intel | `bf-reference-bsp-9.5.0.tgz` | 9.5.0 | `b6a293c8e2694d7ea8d7b12c24b1d63c08b0eca3783eeb7d54e8ecffb4494c9f` |
+| `accton` `model`  | Intel | `bf-reference-bsp-9.5.1.tgz` | 9.5.1 | `34aa5bac92d33afc82cf4106173f7c364e9596c1bbf8d9dab3814f55de330356` |
+| `accton` `model`  | Intel | `bf-reference-bsp-9.5.2.tgz` | 9.5.2 | `2d544175f2ad57c9fc6a76305075540ee33253719bb3b9033d8af7dd39409260` |
+| `accton` `model`  | Intel | `bf-reference-bsp-9.5.3.tgz` | 9.5.3 | `2990fea8e4c7c1065cdcae88e9291e6dacb1462cc48526e93b80ebb832ac18d2` |
+| `accton` `model`  | Intel | `bf-reference-bsp-9.5.4.tgz` | 9.5.4 | `d69264122986a66b0895c4d38bfa84f95f410f8a25649db33e07cd9cb69bdc33` |
 | `accton` `model`  | Intel | `bf-reference-bsp-9.6.0.tgz` | 9.6.0 | `88cb4b0978f23c28499faff75098f939374d9071859593353a18c2235e0be461` |
 | `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.7.0.tgz` | 9.7.0 | `87f91540c0947edff2694cea9beeca78f95062b0aaca812a81c238ff39343e46` |
 | `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.7.1.tgz` | 9.7.1 | `78aa14c5ec463cd4025b241e898e812c980bcd5e4d039213e397fcb6abb61c66` |
 | `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.7.2.tgz` | 9.7.2 | `d578438c44a19d2162079d9e4a4a5363a1503a64d7b05e96ceca96dc216f2380` |
+| `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.7.3.tgz` | 9.7.3 | `33c33ab68dbcf085143e1e8d4a5797d3583fb2044152d063a61764939fa752d4` |
 | `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.8.0.tgz` | 9.8.0 | `975fa33e37abffa81ff01c1142043907f05726e31efcce0475adec0f1a80f919` |
 | `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.9.0.tgz` | 9.9.0 | `f73aecac5eef505a56573c6c9c1d32e0fa6ee00218bc08e936fff966f8d2f87a` |
 | `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.9.1.tgz` | 9.9.1 | `481a2c5e6937f73ff9e9157fb4f313a4d72c0868b3eac94111ee79340c565309` |
 | `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.10.0.tgz`| 9.10.0| `d222007fa6eee4e3a0441f09ed86b3b6f46df4c7d830b82b08bf6df7f88c4268` |
 | `aps_bf2556` `aps_bf6064` | APS Networks | `9.5.0_AOT1.5.1_SAL1.3.2.zip` | 9.4.0 | `2e56f51233c0eef1289ee219582ea0ec6d7455c3f78cac900aeb2b8214df0544`|
 | `aps_bf2556` `aps_bf6064` | APS Networks | `9.5.0_AOT1.5.4_SAL1.3.4.zip` | 9.5.0 | `510e5e18a91203fe6c4c0aabd807eb69ad53224500f7cb755f7c5b09c8e4525d`|
-| `aps_bf2556` `aps_bf6064` | APS Networks | `9.7.0_AOT1.6.1_SAL1.3.5_2.zip` | 9.7.0 9.7.1 9.7.2 | `4941987c4489d592de9b3676c79cb2011a22fe329425e8876fa8ae026fc959ad`|
+| `aps_bf2556` `aps_bf6064` | APS Networks | `9.7.0_AOT1.6.1_SAL1.3.5_2.zip` | 9.7.0 9.7.1 9.7.2 9.7.3 | `4941987c4489d592de9b3676c79cb2011a22fe329425e8876fa8ae026fc959ad`|
 | `inventec`   | Inventec     | `bf-inventec-bsp93.tgz`                   | 9.3.0 9.3.1 9.4.0 9.5.0 9.6.0 | `fd1e4852d0b7543dd5d2b81ab8e0150644a0f24ca87d59f1369216f1a6e796ad`|
-| `inventec`   | Inventec     | `bf-platform_SRC_9.7.0.2.1.tgz`           | 9.7.0 9.7.1 9.7.2 | `8391d5e791ae8b453711a79ed6f6d4372bd9ed6076b3ff54c649b69775b8d9c9`|
-| `netberg`    | Netberg      | `bf-platforms-netberg-7xx-bsp-9.7.0-220210.tgz` | 9.7.0 9.7.1 9.7.2 | `ad140a11fd39f7fbd835d6774d9b855f2ba693fd1d2e61b45a94aa30ed08a4f1`|
+| `inventec`   | Inventec     | `bf-platform_SRC_9.7.0.2.1.tgz`           | 9.7.0 9.7.1 9.7.2 9.7.3 | `8391d5e791ae8b453711a79ed6f6d4372bd9ed6076b3ff54c649b69775b8d9c9`|
+| `netberg`    | Netberg      | `bf-platforms-netberg-7xx-bsp-9.7.0-220210.tgz` | 9.7.0 9.7.1 9.7.2 9.7.3 | `ad140a11fd39f7fbd835d6774d9b855f2ba693fd1d2e61b45a94aa30ed08a4f1`|
 
 ### <a name="addArchives"></a>Add archives to the Nix store
 

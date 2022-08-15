@@ -328,7 +328,7 @@ let
       stdenv = gcc8Stdenv;
       thrift = thrift_0_13;
     };
-    v9_3_1 = rec {
+    v9_3_1 = lib.recursiveUpdate v9_3_0 rec {
       version = "9.3.1";
       sde = fetchFromStore {
         name = "bf-sde-${version}.tgz";
@@ -339,13 +339,23 @@ let
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "b934601c77b08c3281f8dcb235450b80316a42e2683ff29e4c9f2485fffbb51f";
         };
-        inventec = fetchFromStore {
-          name = "bf-inventec-bsp93.tgz";
-          outputHash = "fd1e4852d0b7543dd5d2b81ab8e0150644a0f24ca87d59f1369216f1a6e796ad";
+      };
+    };
+    v9_3_2 = lib.recursiveUpdate v9_3_0 rec {
+      version = "9.3.2";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "8c637d07b788491b7a81896584be5998feadb7014b3ff42dc37d3cafd5fb56f8";
+        patches = {
+          bf-drivers = [];
         };
       };
-      stdenv = gcc8Stdenv;
-      thrift = thrift_0_13;
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "cb8c126d381ab0dbaf35645d1681c04df5c9675a7ac8231cf10eae5b1a402c9e";
+        };
+      };
     };
     v9_4_0 = rec {
       version = "9.4.0";
@@ -409,6 +419,58 @@ let
       };
       stdenv = gcc8Stdenv;
       thrift = thrift_0_13;
+    };
+    v9_5_1 = lib.recursiveUpdate v9_5_0 rec {
+      version = "9.5.1";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "472d10360c30b21ba217eb3bc3dddc4f54182f325c7a5f7ae03e0db3cceba1b0";
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "34aa5bac92d33afc82cf4106173f7c364e9596c1bbf8d9dab3814f55de330356";
+        };
+      };
+    };
+    v9_5_2 = lib.recursiveUpdate v9_5_0 rec {
+      version = "9.5.2";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "60f366438c979f0b03d62ab997922e90e2aac447f3937930e3bd1af98c05d48a";
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "2d544175f2ad57c9fc6a76305075540ee33253719bb3b9033d8af7dd39409260";
+        };
+      };
+    };
+    v9_5_3 = lib.recursiveUpdate v9_5_0 rec {
+      version = "9.5.3";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "fd146282ec80c7fb2aea6f06db9cc871e00ffe3fed5d1de91ce27abdfc8c661a";
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "2990fea8e4c7c1065cdcae88e9291e6dacb1462cc48526e93b80ebb832ac18d2";
+        };
+      };
+    };
+    v9_5_4 = lib.recursiveUpdate v9_5_0 rec {
+      version = "9.5.4";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "3971b6b8400920529f0634de6d6211e709ec6e8797f66716d6c8bd31c4f030cb";
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "d69264122986a66b0895c4d38bfa84f95f410f8a25649db33e07cd9cb69bdc33";
+        };
+      };
     };
     v9_6_0 = rec {
       version = "9.6.0";
@@ -505,13 +567,11 @@ let
       sde = fetchFromStore {
         name = "bf-sde-${version}.tgz";
         outputHash = "dc0eb79b04797a7332f3995f37533a255a9a12afb158c53cdd421d1d4717ee28";
-        inherit (v9_7_0.sde) patches;
       };
       bsps = {
         reference = fetchFromStore {
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "78aa14c5ec463cd4025b241e898e812c980bcd5e4d039213e397fcb6abb61c66";
-          inherit (v9_7_0.bsps.reference) patches;
         };
       };
     };
@@ -520,13 +580,24 @@ let
       sde = fetchFromStore {
         name = "bf-sde-${version}.tgz";
         outputHash = "e8cf3ef364e33e97f6af6dd4e39331221d61c951ffea30cc7221a624df09e4ed";
-        inherit (v9_7_0.sde) patches;
       };
       bsps = {
         reference = fetchFromStore {
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "d578438c44a19d2162079d9e4a4a5363a1503a64d7b05e96ceca96dc216f2380";
-          inherit (v9_7_0.bsps.reference) patches;
+        };
+      };
+    };
+    v9_7_3 = lib.recursiveUpdate v9_7_0 rec {
+      version = "9.7.3";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "d45094c47b71fc7a21175436aaa414dd719b21ae0d94b66a5b5ae8450c1d3230";
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "33c33ab68dbcf085143e1e8d4a5797d3583fb2044152d063a61764939fa752d4";
         };
       };
     };
