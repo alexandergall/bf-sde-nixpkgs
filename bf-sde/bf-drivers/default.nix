@@ -59,6 +59,7 @@ let
         cmake_policy(SET CMP0079 NEW)
         target_link_libraries(bf_switchd edit)
         target_link_libraries(driver PUBLIC edit)
+        install(FILES VERSION DESTINATION share)
       '' + lib.optionalString (lib.versionAtLeast version "9.9.0") ''
         target_include_directories(lld_o PUBLIC ${libedit.dev}/include)
       '';
