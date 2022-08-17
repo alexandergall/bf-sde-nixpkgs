@@ -1,7 +1,7 @@
 { pname, version, src, patches, buildSystem, stdenv, lib, cmake,
   autoconf, automake, libtool }:
 
-stdenv.mkDerivation ({
+stdenv.mkDerivation {
   inherit pname version patches;
   src = buildSystem.cmakeFixupSrc {
     inherit src;
@@ -14,20 +14,7 @@ stdenv.mkDerivation ({
     '';
   };
 
-  buildInputs = lib.optional buildSystem.isCmake [ cmake autoconf automake libtool ];
-  outputs = [ "out" "dev" ] ++ lib.optional buildSystem.isCmake "doc";
-  enableParallelBuilding = ! buildSystem.isCmake;
-
-  ## Remove pprof installed from third-party/gperftools
-  postInstall = ''
-    rm -rf $out/bin
-  '';
-} //   lib.optionalAttrs buildSystem.isCmake {
-  ## Attributes that did not exist in pre-cmake builds are added here
-  ## for cmake builds only to avoid re-building of the autoconf-based
-  ## packages. The empty attributes would not change the result of
-  ## builds but cause the out paths to change.
-  cmakeFlags = [
+  cmakeFlags = lib.optionals buildSystem.isCmake ([
     "-DTCMALLOC=ON"
   ] ++ lib.optionals (lib.versionAtLeast version "9.9.1") [
     ## Very weird. In 9.9.0, there was a little glitch that installed
@@ -45,5 +32,14 @@ stdenv.mkDerivation ({
     ## is guaranteed with Nix. This option disables that
     ## functionality.
     "-DCMAKE_SKIP_RPATH=ON"
-  ];
-})
+  ]);
+
+  buildInputs = lib.optionals buildSystem.isCmake [ cmake autoconf automake libtool ];
+  outputs = [ "out" "dev" ] ++ lib.optional buildSystem.isCmake "doc";
+  enableParallelBuilding = ! buildSystem.isCmake;
+
+  ## Remove pprof installed from third-party/gperftools
+  postInstall = ''
+    rm -rf $out/bin
+  '';
+}

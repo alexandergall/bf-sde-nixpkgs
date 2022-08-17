@@ -16,8 +16,8 @@ in stdenv.mkDerivation {
   };
 
   buildInputs = [ python python.pkgs.wrapPython makeWrapper ]
-                ++ lib.optional (lib.versionAtLeast version "9.8.0") [ thrift ]
-                ++ lib.optional buildSystem.isCmake [ cmake ];
+                ++ lib.optional (lib.versionAtLeast version "9.8.0") thrift
+                ++ lib.optional buildSystem.isCmake cmake;
 
   cmakeFlags = lib.optionals (lib.versionAtLeast version "9.10.0") [
     "-DSTANDALONE=ON"

@@ -18,12 +18,12 @@ stdenv.mkDerivation {
   outputs = [ "out" "dev" ];
   enableParallelBuilding = true;
 
-  configureFlags = [
+  configureFlags = lib.optionals (! buildSystem.isCmake) [
     "--with-tofino"
     "--with-libpcap=${libpcap}"
     "enable_thrift=yes"
   ];
-  cmakeFlags = [
+  cmakeFlags = lib.optionals buildSystem.isCmake [
     "-DTOFINO=ON"
     "-DTHRIFT-DRIVER=ON"
     "-DP4C=${p4c}/bin/bf-p4c"

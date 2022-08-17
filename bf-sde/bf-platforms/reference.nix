@@ -9,7 +9,7 @@ let
           cmake, kernelSpec ? null, runtimeShell, kmod, coreutils }:
 
         assert kernelSpec != null -> newport;
-        stdenv.mkDerivation ({
+        stdenv.mkDerivation {
           pname = "bf-platforms-${baseboard}" + lib.optionalString (kernelSpec != null)
             "-kernel-modules-${kernelSpec.kernelRelease}";
           ## Note: src is the actual reference BSP archive, see
@@ -19,10 +19,10 @@ let
 
           buildInputs = [ bf-drivers.pythonModule thrift boost libusb
                           curl bf-syslibs.dev bf-drivers.dev bf-utils
-                          ] ++ lib.optional buildSystem.isCmake [
-                            cmake ] ++
-                          lib.optionals (lib.versionAtLeast version "9.9.0")
-                            [ bf-utils-tofino.dev ];
+                        ] ++
+                        lib.optional buildSystem.isCmake cmake ++
+                        lib.optional (lib.versionAtLeast version "9.9.0")
+                          bf-utils-tofino.dev;
 
           outputs = [ "out" "dev" ];
           enableParallelBuilding = true;
@@ -41,12 +41,27 @@ let
             sed -i -e '/bf_fpga/d' CMakeLists.txt
           '';
 
-          configureFlags = lib.optional (! buildSystem.isCmake)
+          configureFlags = lib.optionals (! buildSystem.isCmake) (
             (if model then
               [ "--with-model" ]
              else
                [ "--with-tofino" ]) ++
-            [ "enable_thrift=yes" ];
+            [ "enable_thrift=yes" ]
+          );
+
+          cmakeFlags = lib.optionals buildSystem.isCmake (
+            (if model then
+              [ "-DASIC=OFF" ]
+             else
+               [ "-DASIC=ON" ]) ++
+            [ "-DSTANDALONE=ON" ] ++
+            lib.optional newport [
+              "-DNEWPORT=ON"
+            ] ++
+            lib.optional (kernelSpec != null) [
+              "-DKDIR=${kernelSpec.buildTree}"
+            ]
+          );
 
           postInstall =
           if (kernelSpec == null) then ''
@@ -68,20 +83,7 @@ let
               inherit (kernelSpec) kernelRelease;
               inherit runtimeShell kmod coreutils;
             };
-        } // lib.optionalAttrs buildSystem.isCmake {
-          cmakeFlags =
-            (if model then
-              [ "-DASIC=OFF" ]
-             else
-               [ "-DASIC=ON" ]) ++
-            [ "-DSTANDALONE=ON" ] ++
-            lib.optional newport [
-              "-DNEWPORT=ON"
-            ] ++
-            lib.optional (kernelSpec != null) [
-              "-DKDIR=${kernelSpec.buildTree}"
-            ];
-        });
+        };
     in callPackage derivation {};
 in lib.mapAttrs mkBaseboard ({
   accton = {

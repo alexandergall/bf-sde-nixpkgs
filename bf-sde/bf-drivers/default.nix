@@ -32,7 +32,7 @@ let
   ## bf_switchd. Some bf_rt components in bf-drivers need to be
   ## compiled with those headers.
   bfUtilsPythonInclude = "${bf-utils.dev}/include/${bf-utils.pythonLibPrefix}";
-  bf-drivers = stdenv.mkDerivation ({
+  bf-drivers = stdenv.mkDerivation {
     pname = pname + lib.optionalString runtime "-runtime";
     inherit version patches;
     src = buildSystem.cmakeFixupSrc {
@@ -69,12 +69,12 @@ let
     buildInputs = [ thrift openssl boost pkg-config grpc protobuf zlib
                     bf-syslibs.dev bf-utils bf-utils.dev python.pkgs.wrapPython ]
                   ++ lib.optional (runtime && ! buildSystem.isCmake) autoreconfHook
-                  ++ lib.optional buildSystem.isCmake [ cmake libedit python ]
-                  ++ lib.optional (lib.versionAtLeast version "9.9.0") [ bf-utils-tofino.dev ];
+                  ++ lib.optionals buildSystem.isCmake [ cmake libedit python ]
+                  ++ lib.optional (lib.versionAtLeast version "9.9.0") bf-utils-tofino.dev;
     outputs = [ "out" ] ++ lib.optional (! runtime) "dev";
     enableParallelBuilding = true;
 
-    configureFlags = lib.optional (! buildSystem.isCmake) [
+    configureFlags = lib.optionals (! buildSystem.isCmake) [
       "enable_thrift=yes"
       "enable_grpc=yes"
       "enable_bfrt=yes"
@@ -83,7 +83,18 @@ let
       "--without-kdrv"
     ];
 
-    buildFlags = lib.optional (! buildSystem.isCmake) [
+    cmakeFlags = lib.optionals buildSystem.isCmake [
+      "-DTHRIFT-DRIVER=ON"
+      "-DGRPC=ON"
+      "-DBFRT=ON"
+      "-DPI=OFF"
+      "-DP4RT=OFF"
+      "-DBF-PYTHON=ON"
+      ## Indirectly disable build of kdrv
+      "-DASIC=OFF"
+    ];
+
+    buildFlags = lib.optionals (! buildSystem.isCmake) [
       "CFLAGS+=-I${bfUtilsPythonInclude}"
     ];
 
@@ -215,18 +226,7 @@ let
     '' + lib.optionalString (lib.versionAtLeast version "9.8.0") ''
       wrapPythonProgramsIn $out/lib/${python.libPrefix}/site-packages/p4testutils "$pythonPath"
     '';
-  } // lib.optionalAttrs buildSystem.isCmake {
-    cmakeFlags = [
-      "-DTHRIFT-DRIVER=ON"
-      "-DGRPC=ON"
-      "-DBFRT=ON"
-      "-DPI=OFF"
-      "-DP4RT=OFF"
-      "-DBF-PYTHON=ON"
-      ## Indirectly disable build of kdrv
-      "-DASIC=OFF"
-    ];
-  });
+  };
 
 ## This turns the derivation into a Python Module,
 ## i.e. $out/lib/python*/site-packages will be included in all of the

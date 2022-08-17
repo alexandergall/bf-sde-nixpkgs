@@ -18,7 +18,7 @@ in
 ## Note: creating a "dev" output for this package with the default
 ## method creates a dependency cycle between the "out" and "dev"
 ## outputs.  This should be investigated at some point.
-stdenv.mkDerivation ({
+stdenv.mkDerivation {
   inherit pname version patches;
   src = buildSystem.cmakeFixupSrc {
     inherit src;
@@ -32,13 +32,19 @@ stdenv.mkDerivation ({
     '';
   };
 
+  cmakeFlags = lib.optionals buildSystem.isCmake
+    (if (lib.versionOlder version "9.9.0") then
+      [ "-DBF-PYTHON=ON" ]
+     else
+       [ "-DCPYTHON=ON" ]);
+
   buildInputs = [ bf-syslibs.dev python3 ]
-                ++ lib.optional buildSystem.isCmake
+                ++ lib.optionals buildSystem.isCmake
                   ([ cmake autoconf automake libtool ] ++
-                   (lib.optional (lib.versionAtLeast version "9.7.0")
+                   (lib.optionals (lib.versionAtLeast version "9.7.0")
                      ## Needed to build the third-party cpython
                      [ libffi libffi.dev zlib sqlite.out ]) ++
-                   (lib.optional (lib.versionAtLeast version "9.9.0")
+                   (lib.optionals (lib.versionAtLeast version "9.9.0")
                      ## No longer included as third-party, expat is
                      ## a new dependency
                      [ libedit.dev expat.dev ])
@@ -52,6 +58,28 @@ stdenv.mkDerivation ({
   passthru = {
     inherit pythonLibPrefix;
   };
+
+  preConfigure =
+    if (lib.versionOlder version "9.7.0") then ''
+      patchShebangs third-party/bf-python
+    '' else
+      ## Starting with 9.7.0, the install procedure of the
+      ## bf_rt_python modules has been removed from
+      ## bf-utils.  However, our procedure still requires
+      ## those modules to be part of the bf-utils
+      ## package. The corresponding CMake rule is also
+      ## removed from the bf-drivers package.
+      ##
+      ## The other two lines set up the compiler flags needed by
+      ## third-party/cpython/setup.py to find the header files and
+      ## link libraries for libffi, libz and libsqlite3. By default,
+      ## it only searches in standard locations and the automatic Nix
+      ## magic doesn't work in this case.
+      ''
+        echo 'install(DIRECTORY ''${CMAKE_CURRENT_SOURCE_DIR}/bf_rt_python/ DESTINATION lib/${pythonLibPrefix})' >>CMakeLists.txt
+        NIX_CFLAGS_COMPILE="-lffi -lz -lsqlite3 $NIX_CFLAGS_COMPILE"
+        sed -i -e 's!LDFLAGS=\([^ ]*\)!"CPPFLAGS=-I${zlib.dev}/include -I${sqlite.dev}/include" "LDFLAGS=-L${zlib.static}/lib -L${sqlite.out}/lib \1"!' third-party/CMakeLists.txt
+      '';
 
   ## bf-python requires a bit of trickery starting with 9.3.0.
   ## bf-utils contains a full Python interpreter with a customized
@@ -98,6 +126,10 @@ stdenv.mkDerivation ({
       patchShebangs third-party
     '';
 
+  postInstall = lib.optionalString (lib.versionAtLeast version "9.7.0") ''
+    $out/bin/$(basename $out/lib/python*) -m compileall $out/lib/python*/bfrt*
+  '';
+
   ## Hacks to get rid of issues when creating the "dev" output.  They
   ## should be harmless because they would only affect someone wanting
   ## to build Python stuff for the Interpreter embedded in the
@@ -112,41 +144,4 @@ stdenv.mkDerivation ({
       substituteInPlace $file --replace $dev /removed-bf-utils-dev-reference
     done
   '';
-} // lib.optionalAttrs buildSystem.isCmake {
-  ## Attributes that did not exist in pre-cmake builds are added here
-  ## for cmake builds only to avoid re-building of the autoconf-based
-  ## packages. The empty attributes would not change the result of
-  ## builds but cause the out paths to change.
-  cmakeFlags =
-    if (lib.versionOlder version "9.9.0") then
-      [ "-DBF-PYTHON=ON" ]
-    else
-      [ "-DCPYTHON=ON" ];
-
-  preConfigure =
-    if (lib.versionOlder version "9.7.0") then ''
-      patchShebangs third-party/bf-python
-    '' else
-      ## Starting with 9.7.0, the install procedure of the
-      ## bf_rt_python modules has been removed from
-      ## bf-utils.  However, our procedure still requires
-      ## those modules to be part of the bf-utils
-      ## package. The corresponding CMake rule is also
-      ## removed from the bf-drivers package.
-      ##
-      ## The other two lines set up the compiler flags needed by
-      ## third-party/cpython/setup.py to find the header files and
-      ## link libraries for libffi, libz and libsqlite3. By default,
-      ## it only searches in standard locations and the automatic Nix
-      ## magic doesn't work in this case.
-      ''
-        echo 'install(DIRECTORY ''${CMAKE_CURRENT_SOURCE_DIR}/bf_rt_python/ DESTINATION lib/${pythonLibPrefix})' >>CMakeLists.txt
-        NIX_CFLAGS_COMPILE="-lffi -lz -lsqlite3 $NIX_CFLAGS_COMPILE"
-        sed -i -e 's!LDFLAGS=\([^ ]*\)!"CPPFLAGS=-I${zlib.dev}/include -I${sqlite.dev}/include" "LDFLAGS=-L${zlib.static}/lib -L${sqlite.out}/lib \1"!' third-party/CMakeLists.txt
-      '';
-
-  postInstall = lib.optionalString (lib.versionAtLeast version "9.7.0") ''
-    $out/bin/$(basename $out/lib/python*) -m compileall $out/lib/python*/bfrt*
-  '';
 }
-)
