@@ -366,7 +366,7 @@ https://github.com/alexandergall/bf-sde-nixpkgs/tree/master/bf-sde/bf-platforms/
 | `stordis_bf6064x_t`      | APS Netwokrs | `aps_bf6064` |
 | `inventec_d5264q28b`     | Inventec     | `inventec`   |
 | `inventec_d10064   `     | Inventec     | `inventec`   |
-| `netberg_aurora_710'     | Netberg      | `netberg`    |
+| `netberg_aurora_710`     | Netberg      | `netberg`    |
 | `model`                  |              | `model`      |
 | `modelT2`                |              | `model`      |
 | `modelT3`                |              | `model`      |
