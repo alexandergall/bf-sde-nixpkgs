@@ -1,5 +1,5 @@
 { pname, version, src, patches, buildSystem, stdenv, lib, cmake,
-  autoconf, automake, libtool }:
+  autoconf, automake, libtool, glibc }:
 
 stdenv.mkDerivation {
   inherit pname version patches;
@@ -37,6 +37,10 @@ stdenv.mkDerivation {
   buildInputs = lib.optionals buildSystem.isCmake [ cmake autoconf automake libtool ];
   outputs = [ "out" "dev" ] ++ lib.optional buildSystem.isCmake "doc";
   enableParallelBuilding = ! buildSystem.isCmake;
+
+  preConfigure = lib.optionalString (lib.versionAtLeast glibc.version "2.34") ''
+    sed -i -e 's/pthread_yield/sched_yield/' src/bf_sal/linux_usr/bf_sys_thread.c
+  '';
 
   ## Remove pprof installed from third-party/gperftools
   postInstall = ''

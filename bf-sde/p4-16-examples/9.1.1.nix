@@ -19,9 +19,9 @@
     "tna_field_slice"
     "tna_multicast"
     "tna_proxy_hash"
-    "tna_simple_switch"
+    #"tna_simple_switch"
     "tna_custom_hash"
-    "tna_idletimeout"
+    #"tna_idletimeout"
     "tna_operations"
     "tna_pvs"
     "tna_snapshot"
@@ -48,6 +48,9 @@
     };
     tna_proxy_hash = {
       pythonModules = [ "crcmod" ];
+    };
+    tna_ternary_match = {
+      pythonModules = [ "ipaddress" ];
     };
   };
 }

@@ -139,9 +139,9 @@ stdenv.mkDerivation {
   preFixup = lib.optionalString (! buildSystem.isCmake) ''
     mv $out/include/python*/pyconfig.h $dev/include/python*/
     rmdir $out/include/python*
-
-    for file in $out/lib/python*/_sysconfigdata.py $out/lib/python*/config*/Makefile $out/lib/python*/__pycache__/_sysconfigdata*; do
+    for file in $out/lib/python*/_sysconfigdata.py $out/lib/python*/config*/Makefile; do
       substituteInPlace $file --replace $dev /removed-bf-utils-dev-reference
     done
+    rm $out/lib/python*/__pycache__/_sysconfigdata*
   '';
 }

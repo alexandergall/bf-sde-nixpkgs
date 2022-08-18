@@ -267,6 +267,7 @@ let
       patches = {
         mainTools = [ sde/run_switchd.patch sde/run_bfshell.patch sde/run_p4_tests.patch ];
         p4-examples = [ ./p4-16-examples/ptf.patch ];
+        ptf-modules = [ ptf-modules/veth_setup_ethtool.patch ];
       };
     };
   };
@@ -281,6 +282,9 @@ let
       sde = fetchFromStore {
         name = "bf-sde-${version}.tar";
         outputHash = "be166d6322cb7d4f8eff590f6b0704add8de80e2f2cf16eb318e43b70526be11";
+        patches = {
+          ptf-modules = [ ptf-modules/veth_setup_ethtool-9.1.1.patch ];
+        };
       };
       bsps = {
         reference = fetchFromStore {
@@ -296,6 +300,9 @@ let
       sde = fetchFromStore {
         name = "bf-sde-${version}.tar";
         outputHash = "94cf6acf8a69928aaca4043e9ba2c665cc37d72b904dcadb797d5d520fb0dd26";
+        patches = {
+          ptf-modules = [ ptf-modules/veth_setup_ethtool-9.1.1.patch ];
+        };
       };
       bsps = {
         reference = fetchFromStore {
@@ -528,6 +535,7 @@ let
           bf-drivers = [ bf-drivers/port-table-field-size-workaround.patch ];
           p4-examples = [];
           ptf-modules = [ ptf-modules/run_ptf_tests.patch
+                          ptf-modules/veth_setup_ethtool.patch
                           ## The getmac module used by bf-pktpy
                           ## returns None as MAC address if run in a
                           ## VM. This patch sets a static address in
@@ -616,10 +624,7 @@ let
           bf-drivers = [ bf-drivers/port-table-field-size-workaround.patch ];
           p4-examples = [];
           ptf-modules = [ ptf-modules/run_ptf_tests.patch
-                          ## The getmac module used by bf-pktpy
-                          ## returns None as MAC address if run in a
-                          ## VM. This patch sets a static address in
-                          ## this case.
+                          ptf-modules/veth_setup_ethtool.patch
                           ptf-modules/getmac.patch ];
         };
       };
@@ -649,10 +654,7 @@ let
           bf-drivers = [ bf-drivers/port-table-field-size-workaround.patch ];
           p4-examples = [];
           ptf-modules = [ ptf-modules/run_ptf_tests.patch
-                          ## The getmac module used by bf-pktpy
-                          ## returns None as MAC address if run in a
-                          ## VM. This patch sets a static address in
-                          ## this case.
+                          ptf-modules/veth_setup_ethtool.patch
                           ptf-modules/getmac.patch ];
         };
       };
@@ -675,13 +677,15 @@ let
       sde = fetchFromStore {
         name = "bf-sde-${version}.tgz";
         outputHash = "34f23716b38dd19cb34f701583b569b3006c5bbda184490bd70d5e5261e993a3";
-        inherit (v9_9_0.sde) patches;
+        patches = {
+          ptf-modules = [ ptf-modules/run_ptf_tests.patch
+                          ptf-modules/getmac.patch ];
+        };
       };
       bsps = {
         reference = fetchFromStore {
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "481a2c5e6937f73ff9e9157fb4f313a4d72c0868b3eac94111ee79340c565309";
-          inherit (v9_9_0.bsps.reference) patches;
         };
       };
     };
@@ -696,10 +700,6 @@ let
           mainCMake = [ sde/P4Build.cmake.patch ];
           p4-examples = [];
           ptf-modules = [ ptf-modules/run_ptf_tests.patch
-                          ## The getmac module used by bf-pktpy
-                          ## returns None as MAC address if run in a
-                          ## VM. This patch sets a static address in
-                          ## this case.
                           ptf-modules/getmac.patch ];
         };
       };
@@ -712,7 +712,7 @@ let
           };
         };
       };
-      stdenv = gcc10Stdenv;
+      stdenv = gcc11Stdenv;
       thrift = thrift_0_14;
       libcli = libcli1_10;
       python_bf_drivers = python3;

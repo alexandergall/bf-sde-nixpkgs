@@ -1,0 +1,14 @@
+diff -Naur ptf-modules-9.7.0.orig/ptf-utils/veth_setup.sh ptf-modules-9.7.0/ptf-utils/veth_setup.sh
+--- ptf-modules-9.7.0.orig/ptf-utils/veth_setup.sh	2021-10-07 06:01:33.000000000 +0200
++++ ptf-modules-9.7.0/ptf-utils/veth_setup.sh	2022-08-15 08:43:29.540736041 +0200
+@@ -25,8 +25,8 @@
+     if [ -z "$in_docker" ]; then
+         TOE_OPTIONS="rx tx sg tso ufo gso gro lro rxvlan txvlan rxhash"
+         for TOE_OPTION in $TOE_OPTIONS; do
+-           /sbin/ethtool --offload $intf0 "$TOE_OPTION" off &> /dev/null
+-           /sbin/ethtool --offload $intf1 "$TOE_OPTION" off &> /dev/null
++           /sbin/ethtool --offload $intf0 "$TOE_OPTION" off &> /dev/null || true
++           /sbin/ethtool --offload $intf1 "$TOE_OPTION" off &> /dev/null || true
+         done
+     fi
+     # do not fail if ipv6 is disabled system-wide

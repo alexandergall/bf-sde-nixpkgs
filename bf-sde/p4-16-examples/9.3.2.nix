@@ -51,5 +51,8 @@
     tna_proxy_hash = {
       pythonModules = [ "crcmod" ];
     };
+    tna_ternary_match = {
+      pythonModules = [ "ipaddress" ];
+    };
   };
 }

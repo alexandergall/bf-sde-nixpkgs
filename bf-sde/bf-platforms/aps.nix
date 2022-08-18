@@ -9,7 +9,7 @@ let
         { runCommand, version, buildSystem, unzip, stdenv, buildEnv,
           thrift, boost, libusb, curl, coreutils, bf-syslibs,
           bf-drivers, bf-drivers-runtime, bf-utils, cmake, autoconf,
-          automake115x, autoPatchelfHook, boost167,
+          automake115x, autoPatchelfHook, boost168,
           grpcForAPSSalRefApp, i2c-tools, gawk, xz, utillinux, mount,
           umount, cpio, gnused }:
 
@@ -123,7 +123,7 @@ let
                 passthru = {
                   inherit salGrpcPort;
                 };
-                buildInputs = [ autoPatchelfHook self grpcForAPSSalRefApp boost167 bf-drivers-runtime ];
+                buildInputs = [ autoPatchelfHook self grpcForAPSSalRefApp boost168 bf-drivers-runtime ];
                 installPhase = ''
                   mkdir -p $out/bin
                   cp APS-One-touch*/release/sal*/build/salRefApp $out/bin

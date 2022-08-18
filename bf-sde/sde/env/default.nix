@@ -2,14 +2,18 @@
   runCommand, git }:
 
 let
+  ## Note: copy the Git repo to avoid the "unsafe repository" problem
   isDirty = import (runCommand "check-dirty" {} ''
-    cd ${../../..}
-    if [ -z "$(${git}/bin/git status --porcelain)" ]; then
+    tmp=$(mktemp -d)
+    tar -C ${../../..} -cf - . | tar -C $tmp -xf -
+    if [ -z "$(${git}/bin/git -C $tmp status --porcelain)" ]; then
       echo false >$out
     else
       echo true >$out
     fi
-  '');
+    chmod -R u+w $tmp
+    rm -rf $tmp
+   '');
   filter = path: type:
     let
       basename = baseNameOf path;
