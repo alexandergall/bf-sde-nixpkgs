@@ -297,5 +297,13 @@ let
         ln -sr $out/lib/libgrpc++.so $out/lib/libgrpc++.so.1
       '';
     });
+    boost167 = super.boost166.overrideAttrs (_: rec {
+      version = "1.67.0";
+      src = self.fetchurl {
+        url = "mirror://sourceforge/boost/boost_${builtins.replaceStrings ["."] ["_"] version}.tar.bz2";
+        # SHA256 from http://www.boost.org/users/history/version_1_67_0.html
+        sha256 = "2684c972994ee57fc5632e03bf044746f6eb45d4920c343937a465fd67a5adba";
+      };
+    });
   };
 in [ overlay overlayAPS ]
