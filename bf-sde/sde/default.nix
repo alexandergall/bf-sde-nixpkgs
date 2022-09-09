@@ -22,8 +22,6 @@ let
     if (baseboard == "aps_bf2556" && lib.versionAtLeast version "9.9.0") then
       bf-drivers.overrideAttrs (oldAttrs: {
         patches = oldAttrs.patches ++ [ ../bf-drivers/aps-efuse.patch ];
-        ## The APS BSP segfaults when Thrift is enabled
-        cmakeFlags = oldAttrs.cmakeFlags ++ [ "-DTHRIFT-DRIVER=OFF" ];
       })
     else
       bf-drivers;

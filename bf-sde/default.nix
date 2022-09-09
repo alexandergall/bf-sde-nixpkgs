@@ -666,13 +666,6 @@ let
             newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
         };
-        aps = fetchFromStore {
-          name = "apsn-bsp-${version}-ae89bee.tgz";
-          outputHash = "32865ca5c5d28523fc5a25a367cc0bfe493134cbdffb4ee34c6f9429bd91bb33";
-          patches = {
-            default = [ bf-platforms/aps/cmake-9.9.0.patch ];
-          };
-        };
       };
       stdenv = gcc8Stdenv;
       thrift = thrift_0_14;
@@ -693,6 +686,10 @@ let
         reference = fetchFromStore {
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "481a2c5e6937f73ff9e9157fb4f313a4d72c0868b3eac94111ee79340c565309";
+        };
+        aps-bf2556 = fetchFromStore {
+          name = "apsn-bsp-bf2556x-${version}-rc1.tgz";
+          outputHash = "33d79a454113b43cac267d3cc59d9a3b5e2901d77c4cc6a156298f6162e2098f";
         };
       };
     };

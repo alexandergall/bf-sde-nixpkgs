@@ -1,12 +1,5 @@
-{ lib, callPackage, src, patches, reference, version, ... }:
+{ ... }@args:
 
-import (
-  if (lib.versionOlder version "9.9.0") then
-    ## Older BSP that includes support for the "SAL" to driver the
-    ## Marvell gear box
-    aps/sal.nix
-  else
-    ./aps
-) {
-  inherit lib callPackage src patches reference version;
-}
+## Before SDE 9.9, the APS BSP supplied support for the bf2556 and the
+## bf6064 patfroms and included the Marvell SAL
+import ./aps args
