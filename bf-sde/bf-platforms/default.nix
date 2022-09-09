@@ -22,12 +22,11 @@ let
 
   ## Each BSP creates a set of one or more baseboards
   baseboards = lib.mapAttrsToList (bspName: bsp:
-    import (./. + "/${bspName}.nix") {
+    import (./. + "/${bspName}.nix") ({
       inherit version lib callPackage;
-      inherit (bsp) src patches;
       ## Some of the BSPs need to be merged with the reference BSP
       inherit (bsps') reference;
-    }
+    } // bsp)
   ) bsps';
 
   ## Merge the baseboards into the final set

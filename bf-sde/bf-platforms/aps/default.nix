@@ -129,9 +129,9 @@ let
                   cp APS-One-touch*/release/sal*/build/salRefApp $out/bin
                   chmod a+x $out/bin/salRefApp
                   mkdir $out/config
-                  substitute ${aps/sal.ini} $out/config/sal.ini \
+                  substitute ${./sal.ini} $out/config/sal.ini \
                     --subst-var-by GRPC_PORT ${salGrpcPort}
-                  cp ${aps/logger.ini} -r $out/config/logger.ini
+                  cp ${./logger.ini} -r $out/config/logger.ini
                 '';
               };
           };

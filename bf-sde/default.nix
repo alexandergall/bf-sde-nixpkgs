@@ -238,7 +238,7 @@ let
   ## fixed output derivations (added manually with "nix-store
   ## --add-fixed sha256 <...>"). The "outputHash" values below are the
   ## sha256 sums over those files.
-  fetchFromStore = { name, outputHash, patches ? {} }:
+  fetchFromStore = { name, outputHash, patches ? {}, ... }@args:
     {
       src = builtins.derivation {
         inherit name outputHash system;
@@ -255,7 +255,7 @@ let
         outputHashAlgo = "sha256";
       };
       inherit patches;
-    };
+    } // args;
 
   common = {
     curl = curl_7_52;
@@ -690,6 +690,10 @@ let
         aps-bf2556 = fetchFromStore {
           name = "apsn-bsp-bf2556x-${version}-rc1.tgz";
           outputHash = "33d79a454113b43cac267d3cc59d9a3b5e2901d77c4cc6a156298f6162e2098f";
+          salDebianPkg = fetchFromStore {
+            name = "sal_1.7.2-focal_amd64.deb";
+            outputHash = "5df540a805839cf3ea016886b05270a6bbe73d10a94fec6179760c5088564184";
+          };
         };
       };
     };
