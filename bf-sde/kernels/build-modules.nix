@@ -5,7 +5,8 @@
   drvsWithKernelModules, baseboard ? null }:
 
 let
-  driverModules = stdenv.mkDerivation ({
+  baseboard' = if baseboard == null then "" else baseboard;
+  driverModules = stdenv.mkDerivation {
     name = "bf-sde-${version}-kernel-modules-${spec.kernelRelease}";
     src = buildSystem.cmakeFixupSrc {
       inherit src;
@@ -22,9 +23,9 @@ let
     patches = (spec.patches.all or []) ++
               (spec.patches.${version} or []);
     buildInputs = [ bf-syslibs python2 kmod ]
-                  ++ lib.optional buildSystem.isCmake [ cmake ];
+                  ++ lib.optional buildSystem.isCmake cmake;
 
-    configureFlags = lib.optional (! buildSystem.isCmake) [
+    configureFlags = lib.optionals (! buildSystem.isCmake) [
       " --with-kdrv=yes"
       "enable_thrift=no"
       "enable_grpc=no"
@@ -34,8 +35,34 @@ let
     ];
     KDIR = "${spec.buildTree}";
 
+    cmakeFlags = lib.optionals buildSystem.isCmake [
+        "-DSTANDALONE=ON"
+        "-DTHRIFT-DRIVER=OFF"
+        "-DGRPC=OFF"
+        "-DBFRT=OFF"
+        "-DPI=OFF"
+        "-DP4RT=OFF"
+        ## Enable building of kdrv
+        "-DASIC=ON"
+        "-DKDIR=${spec.buildTree}"
+    ];
+
+    buildFlags = lib.optionals buildSystem.isCmake [
+      "bf_kdrv"
+      "bf_knet"
+      "bf_kpkt"
+    ];
+
     preBuild = lib.optionalString (! buildSystem.isCmake) ''
       cd kdrv
+    '';
+
+    installPhase = lib.optionalString buildSystem.isCmake ''
+      (cd kdrv && make install)
+      for dir in bf_kdrv bf_knet bf_kpkt; do
+        (cd kdrv/$dir && make install)
+      done
+      runHook postInstall
     '';
 
     postInstall = lib.optionalString buildSystem.isCmake ''
@@ -54,31 +81,34 @@ let
       inherit (spec) kernelRelease;
       inherit runtimeShell kmod coreutils;
     };
-  } // lib.optionalAttrs (buildSystem.isCmake) {
-    cmakeFlags = [
-        "-DSTANDALONE=ON"
-        "-DTHRIFT-DRIVER=OFF"
-        "-DGRPC=OFF"
-        "-DBFRT=OFF"
-        "-DPI=OFF"
-        "-DP4RT=OFF"
-        ## Enable building of kdrv
-        "-DASIC=ON"
-        "-DKDIR=${spec.buildTree}"
-    ];
-    buildFlags = [
-      "bf_kdrv"
-      "bf_knet"
-      "bf_kpkt"
-    ];
-    installPhase = ''
-      (cd kdrv && make install)
-      for dir in bf_kdrv bf_knet bf_kpkt; do
-        (cd kdrv/$dir && make install)
-      done
-      runHook postInstall
-    '';
-  });
+  };
+  selectDefaultOrBaseboard = attrs: baseboard:
+    lib.filterAttrs (attr: _: attr == "default" || attr == baseboard) attrs;
+  additionalKernelModules = lib.optionals (spec ? additionalModules)
+    (assert lib.assertMsg (spec.buildTree ? source)
+      "kernel flavor for ${spec.kernelRelease} does not support building additional modules";
+      let
+        build = { directory, makeFlags }:
+          ''
+            make -C ${spec.buildTree} M=$(realpath ${directory}) ${builtins.concatStringsSep " " makeFlags}
+          '';
+        install = { directory, makeFlags }:
+          ''
+            cp $(realpath ${directory})/*.ko $dest
+          '';
+        buildDrv = name: modSpecs:
+          stdenv.mkDerivation {
+            name = "additional-kernel-modules-${name}";
+            src = spec.buildTree.source;
+            buildPhase = map build modSpecs;
+            installPhase = ''
+              dest=$out/lib/modules/${spec.kernelRelease}
+              mkdir -p $dest
+            '' + builtins.concatStringsSep "\n" (map install modSpecs);
+          };
+      in lib.mapAttrsToList buildDrv
+        (selectDefaultOrBaseboard spec.additionalModules baseboard')
+    );
 in
 if kernelID == "none" then
   ## Create a dummy modules package which exits with an error when
@@ -105,14 +135,11 @@ if kernelID == "none" then
     '';
   }
 else
-  let
-    baseboard' = if baseboard == null then "" else baseboard;
-  in
   buildEnv {
     name = "bf-sde-${version}-combined-kernel-modules-${spec.kernelRelease}";
-    paths = [ driverModules ] ++
+    paths = [ driverModules ] ++ additionalKernelModules ++
             map (drv: drv.override { kernelSpec = spec; })
-              ((drvsWithKernelModules.default or []) ++
-               (drvsWithKernelModules.${baseboard'} or []));
+              (lib.flatten (builtins.attrValues
+                (selectDefaultOrBaseboard drvsWithKernelModules baseboard')));
     inherit (driverModules) passthru;
   }

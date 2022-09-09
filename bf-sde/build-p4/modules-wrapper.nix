@@ -25,12 +25,35 @@
         /usr/bin/sudo ${modules}/bin/${requiredKernelModule}_mod_load
     fi
 
-  '' + lib.optionalString (self.baseboard == "newport") ''
-     if ! mod_exists bf_fpga; then
-       echo "Loading bf_fpga for Newport baseboard"
-       /usr/bin/sudo ${modules}/bin/bf_fpga_mod_load
-     fi
-  '' + ''
+  '' + ({
+    newport = ''
+      if ! mod_exists bf_fpga; then
+        echo "Loading bf_fpga for Newport baseboard"
+        /usr/bin/sudo ${modules}/bin/bf_fpga_mod_load
+      fi
+    '';
+    inventec = ''
+      mdir=${modules}/lib/modules/${modules.kernelRelease}
+      if [ -e $mdir/.inventec-unsupported ]; then
+        echo "Kernel ${modules.kernelRelease} is not supported for the Inventec baseboard"
+        exit 1
+      fi
+      echo "Loading additional kernel modules"
+      /usr/bin/sudo modprobe i2c-mux
+      for mod in i2c-mux-pca954x gpio-ich inv_cpld inv_eeprom  inv_psoc vpd inv_platform swps; do
+        file=$mdir/$mod.ko
+        echo $file
+        /usr/bin/sudo insmod $file || true
+      done
+    '';
+    netberg_710 = ''
+      export MODULES=${modules}/lib/modules/${modules.kernelRelease}
+      echo "De-initializing I2C for Netberg Aurora 710"
+      /usr/bin/sudo --preserve-env=MODULES ${modules}/bin/i2c_utils.sh i2c_deinit
+      echo "Initializing I2C for Netberg Aurora 710"
+      /usr/bin/sudo --preserve-env=MODULES ${modules}/bin/i2c_utils.sh i2c_init
+    '';
+  }.${self.baseboard} or "") + ''
     exec ${self}/bin/${execName} "$@"
   ''
    else ''

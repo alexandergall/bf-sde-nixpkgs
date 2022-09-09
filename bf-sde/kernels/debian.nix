@@ -1,4 +1,5 @@
-{ snapshotTimestamp, arch, common, kbuild, mkKbuild, fetchurl }:
+{ snapshotTimestamp, arch, common, kbuild, source, mkKbuild, fetchurl,
+  stdenv }:
 
 let
   fetch_deb = { name, sha256 }:
@@ -8,6 +9,18 @@ let
     };
 in mkKbuild.overrideAttrs (_: {
   name = "debian-kbuild";
+  passthru = {
+    source = stdenv.mkDerivation {
+      name = "debian-kbuild-kernel-source.tar.xz";
+      unpackPhase = ''
+        source=${fetch_deb source}
+        ar x $source
+        tar -xf data.tar.* ./usr/src --wildcards linux-source-* --strip-components 3
+        mv linux-source-* $out
+      '';
+      dontInstall = true;
+    };
+  };
   unpackPhase = ''
     arch=${fetch_deb arch}
     common=${fetch_deb common}

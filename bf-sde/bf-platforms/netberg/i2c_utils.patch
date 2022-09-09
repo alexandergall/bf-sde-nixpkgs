@@ -1,0 +1,47 @@
+--- files.orig/debian-bsps/aurora-710/i2c_utils.sh      2022-07-29 13:32:05.343730476 +0200
++++ files/deebian-bsps/aurora-710/i2c_utils.sh  2022-08-03 15:03:18.974590926 +0200
+@@ -99,7 +99,7 @@
+ rov_reg_array=( 0x24 0x21 0x1c 0x26 0x19 0x23 0x1e 0x28 )
+ 
+ #GPIO Offset
+-GPIO_OFFSET=768
++GPIO_OFFSET=256
+ 
+ # Help usage function
+ function _help {
+@@ -167,7 +167,8 @@
+     rmmod i2c_i801
+     modprobe i2c_i801
+     modprobe i2c_dev
+-    modprobe i2c_mux_pca954x force_deselect_on_exit=1
++    modprobe i2c_mux
++    insmod $MODULES/i2c-mux-pca954x.ko force_deselect_on_exit=1
+     #modprobe cpld_wdt
+ 
+     if [ ! -e "${PATH_SYS_I2C_DEVICES}/i2c-${NUM_MUX1_CHAN0_DEVICE}" ]; then
+@@ -221,7 +222,7 @@
+     modprobe lm75
+     modprobe lm90
+     modprobe at24
+-    modprobe gpio-pca953x
++    insmod $MODULES/gpio-pca953x.ko
+     _i2c_io_exp_init
+     _i2c_fan_init
+     _i2c_volmon_init
+@@ -229,12 +230,14 @@
+     _i2c_temp_init
+     modprobe jc42
+     rmmod gpio_ich
++    modprobe leds_pca955x
+     _i2c_gpio_init
+-    modprobe gpio_ich
++    insmod $MODULES/gpio-ich.ko
+     _i2c_mb_eeprom_init "new"
+     _i2c_qsfp_eeprom_init "new"
+     _i2c_sfp_eeprom_init "new"
+-    modprobe pmbus
++    insmod $MODULES/pmbus_core.ko
++    insmod $MODULES/pmbus.ko
+     _i2c_psu_eeprom_pmbus_init "new"
+     _i2c_led_psu_status_set
+     _i2c_led_fan_status_set

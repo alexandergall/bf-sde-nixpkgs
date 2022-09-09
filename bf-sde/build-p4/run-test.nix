@@ -39,9 +39,11 @@ in vmTools.runInLinuxVM (
     '';
   } ''
     ## /usr/bin/sudo is hardcoded in the run_* scripts (on purpose,
-    ## see sde/tools.nix). Create a fake sudo to satisfy this.
+    ## see sde/tools.nix). Create a fake sudo to satisfy this.  We
+    ## need to filter out the --preserve-env option used by run-model.sh
     mkdir -p /usr/bin
-    echo 'exec "$@"' >/usr/bin/sudo
+    echo '[ "''${1}" == "--preserve-env=TOFINO_MODEL_PORTINFO" ] && shift' >/usr/bin/sudo
+    echo 'exec "$@"' >>/usr/bin/sudo
     chmod a+x /usr/bin/sudo
     mkdir /mnt
 

@@ -45,7 +45,7 @@ in if buildSystem.isCmake
          inherit python;
        };
        buildInputs = [ python python.pkgs.wrapPython cmake ]
-                     ++ lib.optional (lib.versionAtLeast version "9.8.0") [ thrift ];
+                     ++ lib.optional (lib.versionAtLeast version "9.8.0") thrift;
 
        postInstall = ''
          python -m compileall $out/lib/${python.libPrefix}/site-packages
@@ -59,7 +59,7 @@ in if buildSystem.isCmake
                     ## python.pkgs", hence the full path below
                     ++ (with python.pkgs; [ python.pkgs.thrift scapy-helper ]
                                           ++ lib.optional (lib.versionAtLeast version "9.7.0")
-                                            [ getmac ]
+                                            getmac
                     );
        postFixup = ''
          wrapPythonProgramsIn $out/bin "$out/bin $pythonPath"

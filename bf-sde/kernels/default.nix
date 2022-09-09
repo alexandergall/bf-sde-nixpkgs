@@ -59,6 +59,45 @@ let
       src = bf-drivers-src;
     }).override spec.buildModulesOverrides;
 
+  ## Additional modules for Debian 11 kernels
+  additionalModulesDebian11 = {
+    inventec = [
+      {
+        directory = "drivers/i2c/muxes";
+        makeFlags = [
+          "CONFIG_I2C_MUX_PCA954x=m"
+        ];
+      }
+      {
+        directory = "drivers/gpio";
+        makeFlags = [
+          "CONFIG_GPIO_ICH=m"
+        ];
+      }
+    ];
+    netberg_710 = [
+      {
+        directory = "drivers/i2c/muxes";
+        makeFlags = [
+          "CONFIG_I2C_MUX_PCA954x=m"
+        ];
+      }
+      {
+        directory = "drivers/gpio";
+        makeFlags = [
+          "CONFIG_GPIO_ICH=m"
+          "CONFIG_GPIO_PCA953X=m"
+        ];
+      }
+      {
+        directory = "drivers/hwmon/pmbus";
+        makeFlags = [
+          "CONFIG_PMBUS=m"
+          "CONFIG_SENSORS_PMBUS=m"
+        ];
+      }
+    ];
+  };
   kernels = {
     ## This pseudo-kernel can be selected to have ./build-modules.nix
     ## create a dummy package that will cause a runtime error when an
@@ -157,6 +196,10 @@ let
             name = "linux-kbuild-4.19_4.19.181-1_amd64.deb";
             sha256 = "01ygxscag9r6pqs1vfydprglqd2g5pa9c49ja5na68bpw3vnzdzv";
           };
+          source = {
+            name = "linux-source-4.19_4.19.181-1_all.deb";
+            sha256 = "0x6z841l996dqhmz3wx5f80rrb9qpw31glsd5cblfbcnn4d0m39a";
+          };
         };
         patchelfInputs = [ openssl_1_1.out elfutils ];
       };
@@ -180,6 +223,10 @@ let
           kbuild = {
             name = "linux-kbuild-4.19_4.19.181-1_amd64.deb";
             sha256 = "01ygxscag9r6pqs1vfydprglqd2g5pa9c49ja5na68bpw3vnzdzv";
+          };
+          source = {
+            name = "linux-source-4.19_4.19.181-1_all.deb";
+            sha256 = "0x6z841l996dqhmz3wx5f80rrb9qpw31glsd5cblfbcnn4d0m39a";
           };
         };
         patchelfInputs = [ openssl_1_1.out elfutils ];
@@ -205,6 +252,10 @@ let
             name = "linux-kbuild-4.19_4.19.194-1_amd64.deb";
             sha256 = "0vf44ks0naqbnbkm8ydlh591nr934k83dkq53jm53nk8acdbbdji";
           };
+          source = {
+            name = "linux-source-4.19_4.19.194-1_all.deb";
+            sha256 = "00y8wkqywsbafgs6s802px7bi6chpsj68m6ks8l4k9vg1i310k55";
+          };
         };
         patchelfInputs = [ openssl_1_1.out elfutils ];
       };
@@ -229,6 +280,10 @@ let
             name = "linux-kbuild-5.10_5.10.46-4_amd64.deb";
             sha256 = "1ihg819bmgn3934xwnjnbclmvki1cb562a3gwa3dnykrqp7wcm3f";
           };
+          source = {
+            name = "linux-source-5.10_5.10.46-4_all.deb";
+            sha256 = "18qmhr93k2fbghb103grvfswmqqgfi2f7bbs2z2b36h37hi8wsrs";
+          };
         };
         patchelfInputs = [ openssl_1_1.out elfutils ];
       };
@@ -242,6 +297,7 @@ let
           "9.3.1" = patch;
           "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
         };
+      additionalModules = additionalModulesDebian11;
     };
     Debian11_3 = {
       kernelRelease = "5.10.0-13-amd64";
@@ -260,6 +316,10 @@ let
             name = "linux-kbuild-5.10_5.10.106-1_amd64.deb";
             sha256 = "0pzzx5qjnkgcxdpl7rx9zpkqnp1d6mnqw73d8w3nqanjn8cgwsmh";
           };
+          source = {
+            name = "linux-source-5.10_5.10.106-1_all.deb";
+            sha256 = "1vgn7dd4j7m884slm56dqllb36c0b4bq0mbdbrr6a0gbm5h9ra9f";
+          };
         };
         patchelfInputs = [ openssl_1_1.out elfutils ];
       };
@@ -273,6 +333,43 @@ let
           "9.3.1" = patch;
           "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
         };
+      additionalModules = additionalModulesDebian11;
+    };
+    Debian11_4 = {
+      kernelRelease = "5.10.0-16-amd64";
+      buildTree = mkDebian {
+        spec = {
+          snapshotTimestamp = "20220728T033224Z";
+          arch = {
+            name = "linux-headers-5.10.0-16-amd64_5.10.127-2_amd64.deb";
+            sha256 = "100sivslj7fljf29s3nvdnp8xn7533n3x09vrxqgcmgh5rffcsmc";
+          };
+          common = {
+            name = "linux-headers-5.10.0-16-common_5.10.127-2_all.deb";
+            sha256 = "0dn5kif58wq3rjnqvk0rdfpx5rmwzqhjd8197ak0nj3fsfrf2fld";
+          };
+          kbuild = {
+            name = "linux-kbuild-5.10_5.10.127-2_amd64.deb";
+            sha256 = "10ywdrr89hhyzzyw4dn8iy0ggwrpb9x94s6pnz52wipckq13q99k";
+          };
+          source = {
+            name = "linux-source-5.10_5.10.127-2_all.deb";
+            sha256 = "15ajv2i1mjlr8ljnyxbxjwjbl20hsgrcq2cx4a44635jx84b39ak";
+          };
+        };
+        patchelfInputs = [ openssl_1_1.out elfutils ];
+      };
+      patches =
+        let
+          patch = [ ./bf-drivers-kernel-5.8.patch ];
+        in {
+          "9.1.1" = patch ++ [ ./bf-drivers-9.1.1.patch ];
+          "9.2.0" = patch;
+          "9.3.0" = patch;
+          "9.3.1" = patch;
+          "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+        };
+      additionalModules = additionalModulesDebian11;
     };
   };
 in

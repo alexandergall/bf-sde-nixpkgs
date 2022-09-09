@@ -349,7 +349,7 @@ _check_installed () {
     local dir gitTag id gen
     dir=$1
     gitTag=$2
-    id=$(nix eval --raw \
+    id=$(nix eval --raw --impure --extra-experimental-features nix-command --expr \
              '(let
                  fn = import '$dir';
                  args = { gitTag = "'$gitTag'"; kernelRelease = "'$kernel_release'"; platform = "'$platform'"; };
@@ -467,13 +467,21 @@ install_git () {
 ##        auto-switch flag
 ## Output: none
 install_local () {
-    local dir switch
+    local dir switch tmp
     dir=$(realpath $1)
     switch=$2
     [ -d $dir ] || ERROR "$dir does not exist or is not a directory"
     check_root
 
     INFO "Installing from $dir"
+    ## Starting with 2.35.2, git fails with "unsafe repository" if the
+    ## repo is owned by a different user. To avoid this, create a copy
+    ## first. We are running as root here and trust that the repo is
+    ## safe.
+    tmp=$(mktemp -d)
+    paths_to_rm+=$tmp
+    tar -C $dir -cf - . | tar -C $tmp --no-same-owner -xf  -
+    dir=$tmp
     gitTag=$(_git_describe $dir)
     if [ -n "$(git -C $dir status --porcelain)" ]; then
         INFO "The Git repository is dirty, creating extended version identifier"

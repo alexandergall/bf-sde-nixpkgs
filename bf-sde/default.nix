@@ -100,6 +100,14 @@ let
             newport = lib.optionals (lib.versionAtLeast sdeSpec.version "9.7.0") [
               sdePkgs.bf-platforms.newport
             ];
+            inventec = lib.optionals (lib.versionAtLeast sdeSpec.version "9.7.0") [
+              (SDE.callPackage (import bf-platforms/inventec/onl-modules.nix) {})
+            ];
+            netberg_710 = lib.optionals (lib.versionAtLeast sdeSpec.version "9.7.0") [
+              ## This doesn't contain any modules but a script that needs to
+              ## have access to modules.
+              (SDE.callPackage (import bf-platforms/netberg/i2c-utils.nix) {})
+            ];
           };
         };
       } // (lib.optionalAttrs (lib.strings.versionAtLeast sdeSpec.version "9.5.0") {
@@ -259,15 +267,24 @@ let
       patches = {
         mainTools = [ sde/run_switchd.patch sde/run_bfshell.patch sde/run_p4_tests.patch ];
         p4-examples = [ ./p4-16-examples/ptf.patch ];
+        ptf-modules = [ ptf-modules/veth_setup_ethtool.patch ];
       };
     };
   };
-  bf-sde = with pkgs; with lib; mapAttrs (_: sdeSpec: mkSDE (recursiveUpdate common sdeSpec)) rec {
+  notPlainAttrs = path: lhs: rhs:
+    let
+      plainAttrs = s:
+        builtins.isAttrs s && ! lib.isDerivation s;
+    in ! (plainAttrs lhs && plainAttrs rhs);
+  bf-sde = with lib; mapAttrs (_: sdeSpec: mkSDE (recursiveUpdateUntil notPlainAttrs common sdeSpec)) rec {
     v9_1_1 = rec {
       version = "9.1.1";
       sde = fetchFromStore {
         name = "bf-sde-${version}.tar";
         outputHash = "be166d6322cb7d4f8eff590f6b0704add8de80e2f2cf16eb318e43b70526be11";
+        patches = {
+          ptf-modules = [ ptf-modules/veth_setup_ethtool-9.1.1.patch ];
+        };
       };
       bsps = {
         reference = fetchFromStore {
@@ -283,6 +300,9 @@ let
       sde = fetchFromStore {
         name = "bf-sde-${version}.tar";
         outputHash = "94cf6acf8a69928aaca4043e9ba2c665cc37d72b904dcadb797d5d520fb0dd26";
+        patches = {
+          ptf-modules = [ ptf-modules/veth_setup_ethtool-9.1.1.patch ];
+        };
       };
       bsps = {
         reference = fetchFromStore {
@@ -315,24 +335,37 @@ let
       stdenv = gcc8Stdenv;
       thrift = thrift_0_13;
     };
-    v9_3_1 = rec {
+    v9_3_1 = lib.recursiveUpdate v9_3_0 rec {
       version = "9.3.1";
       sde = fetchFromStore {
         name = "bf-sde-${version}.tgz";
         outputHash = "71db320fa7d12757127c7da1c16ea98453f4c88ecca7853c73b2bd4dccd1d891";
+        patches = {
+          bf-drivers = [];
+        };
       };
       bsps = {
         reference = fetchFromStore {
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "b934601c77b08c3281f8dcb235450b80316a42e2683ff29e4c9f2485fffbb51f";
         };
-        inventec = fetchFromStore {
-          name = "bf-inventec-bsp93.tgz";
-          outputHash = "fd1e4852d0b7543dd5d2b81ab8e0150644a0f24ca87d59f1369216f1a6e796ad";
+      };
+    };
+    v9_3_2 = lib.recursiveUpdate v9_3_0 rec {
+      version = "9.3.2";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "8c637d07b788491b7a81896584be5998feadb7014b3ff42dc37d3cafd5fb56f8";
+        patches = {
+          bf-drivers = [];
         };
       };
-      stdenv = gcc8Stdenv;
-      thrift = thrift_0_13;
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "cb8c126d381ab0dbaf35645d1681c04df5c9675a7ac8231cf10eae5b1a402c9e";
+        };
+      };
     };
     v9_4_0 = rec {
       version = "9.4.0";
@@ -397,6 +430,58 @@ let
       stdenv = gcc8Stdenv;
       thrift = thrift_0_13;
     };
+    v9_5_1 = lib.recursiveUpdate (lib.filterAttrsRecursive (n: v: n != "aps") v9_5_0) rec {
+      version = "9.5.1";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "472d10360c30b21ba217eb3bc3dddc4f54182f325c7a5f7ae03e0db3cceba1b0";
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "34aa5bac92d33afc82cf4106173f7c364e9596c1bbf8d9dab3814f55de330356";
+        };
+      };
+    };
+    v9_5_2 = lib.recursiveUpdate v9_5_1 rec {
+      version = "9.5.2";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "60f366438c979f0b03d62ab997922e90e2aac447f3937930e3bd1af98c05d48a";
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "2d544175f2ad57c9fc6a76305075540ee33253719bb3b9033d8af7dd39409260";
+        };
+      };
+    };
+    v9_5_3 = lib.recursiveUpdate v9_5_1 rec {
+      version = "9.5.3";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "fd146282ec80c7fb2aea6f06db9cc871e00ffe3fed5d1de91ce27abdfc8c661a";
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "2990fea8e4c7c1065cdcae88e9291e6dacb1462cc48526e93b80ebb832ac18d2";
+        };
+      };
+    };
+    v9_5_4 = lib.recursiveUpdate v9_5_1 rec {
+      version = "9.5.4";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "3971b6b8400920529f0634de6d6211e709ec6e8797f66716d6c8bd31c4f030cb";
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "d69264122986a66b0895c4d38bfa84f95f410f8a25649db33e07cd9cb69bdc33";
+        };
+      };
+    };
     v9_6_0 = rec {
       version = "9.6.0";
       sde = fetchFromStore {
@@ -450,6 +535,7 @@ let
           bf-drivers = [ bf-drivers/port-table-field-size-workaround.patch ];
           p4-examples = [];
           ptf-modules = [ ptf-modules/run_ptf_tests.patch
+                          ptf-modules/veth_setup_ethtool.patch
                           ## The getmac module used by bf-pktpy
                           ## returns None as MAC address if run in a
                           ## VM. This patch sets a static address in
@@ -477,6 +563,10 @@ let
           name = "bf-platform_SRC_9.7.0.2.1.tgz";
           outputHash = "8391d5e791ae8b453711a79ed6f6d4372bd9ed6076b3ff54c649b69775b8d9c9";
         };
+        netberg = fetchFromStore {
+          name = "bf-platforms-netberg-7xx-bsp-9.7.0-220210.tgz";
+          outputHash = "ad140a11fd39f7fbd835d6774d9b855f2ba693fd1d2e61b45a94aa30ed08a4f1";
+        };
       };
       stdenv = gcc8Stdenv;
       thrift = thrift_0_13;
@@ -488,13 +578,11 @@ let
       sde = fetchFromStore {
         name = "bf-sde-${version}.tgz";
         outputHash = "dc0eb79b04797a7332f3995f37533a255a9a12afb158c53cdd421d1d4717ee28";
-        inherit (v9_7_0.sde) patches;
       };
       bsps = {
         reference = fetchFromStore {
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "78aa14c5ec463cd4025b241e898e812c980bcd5e4d039213e397fcb6abb61c66";
-          inherit (v9_7_0.bsps.reference) patches;
         };
       };
     };
@@ -503,13 +591,24 @@ let
       sde = fetchFromStore {
         name = "bf-sde-${version}.tgz";
         outputHash = "e8cf3ef364e33e97f6af6dd4e39331221d61c951ffea30cc7221a624df09e4ed";
-        inherit (v9_7_0.sde) patches;
       };
       bsps = {
         reference = fetchFromStore {
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "d578438c44a19d2162079d9e4a4a5363a1503a64d7b05e96ceca96dc216f2380";
-          inherit (v9_7_0.bsps.reference) patches;
+        };
+      };
+    };
+    v9_7_3 = lib.recursiveUpdate v9_7_0 rec {
+      version = "9.7.3";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "d45094c47b71fc7a21175436aaa414dd719b21ae0d94b66a5b5ae8450c1d3230";
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "33c33ab68dbcf085143e1e8d4a5797d3583fb2044152d063a61764939fa752d4";
         };
       };
     };
@@ -522,12 +621,10 @@ let
           mainTools = [ sde/run_switchd-9.7.0.patch sde/run_bfshell-9.7.0.patch
                         sde/run_p4_tests-9.7.0.patch ];
           mainCMake = [ sde/P4Build.cmake.patch ];
+          bf-drivers = [ bf-drivers/port-table-field-size-workaround.patch ];
           p4-examples = [];
           ptf-modules = [ ptf-modules/run_ptf_tests.patch
-                          ## The getmac module used by bf-pktpy
-                          ## returns None as MAC address if run in a
-                          ## VM. This patch sets a static address in
-                          ## this case.
+                          ptf-modules/veth_setup_ethtool.patch
                           ptf-modules/getmac.patch ];
         };
       };
@@ -554,12 +651,10 @@ let
           mainTools = [ sde/run_switchd-9.7.0.patch sde/run_bfshell-9.7.0.patch
                         sde/run_p4_tests-9.7.0.patch ];
           mainCMake = [ sde/P4Build.cmake.patch ];
+          bf-drivers = [ bf-drivers/port-table-field-size-workaround.patch ];
           p4-examples = [];
           ptf-modules = [ ptf-modules/run_ptf_tests.patch
-                          ## The getmac module used by bf-pktpy
-                          ## returns None as MAC address if run in a
-                          ## VM. This patch sets a static address in
-                          ## this case.
+                          ptf-modules/veth_setup_ethtool.patch
                           ptf-modules/getmac.patch ];
         };
       };
@@ -584,6 +679,51 @@ let
       libcli = libcli1_10;
       python_bf_drivers = python3;
     };
+    v9_9_1 = lib.recursiveUpdate v9_9_0 rec {
+      version = "9.9.1";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "34f23716b38dd19cb34f701583b569b3006c5bbda184490bd70d5e5261e993a3";
+        patches = {
+          ptf-modules = [ ptf-modules/run_ptf_tests.patch
+                          ptf-modules/getmac.patch ];
+        };
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "481a2c5e6937f73ff9e9157fb4f313a4d72c0868b3eac94111ee79340c565309";
+        };
+      };
+    };
+    v9_10_0 = rec {
+      version = "9.10.0";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "e0e423b92dd7c046594db8b435c7a5d292d3d1f3242fd4b3a43ad0af2abafdb1";
+        patches = {
+          mainTools = [ sde/run_switchd-9.7.0.patch sde/run_bfshell-9.7.0.patch
+                        sde/run_p4_tests-9.7.0.patch ];
+          mainCMake = [ sde/P4Build.cmake.patch ];
+          p4-examples = [];
+          ptf-modules = [ ptf-modules/run_ptf_tests.patch
+                          ptf-modules/getmac.patch ];
+        };
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "d222007fa6eee4e3a0441f09ed86b3b6f46df4c7d830b82b08bf6df7f88c4268";
+          patches = {
+            newport = [ bf-platforms/newport-eth-compliance.patch ];
+          };
+        };
+      };
+      stdenv = gcc11Stdenv;
+      thrift = thrift_0_14;
+      libcli = libcli1_10;
+      python_bf_drivers = python3;
+    };
   };
 
-in bf-sde // { latest = bf-sde.v9_9_0; }
+in bf-sde // { latest = bf-sde.v9_10_0; }
