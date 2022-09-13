@@ -4,8 +4,9 @@ let
   derivation =
 
     { version, runCommand, stdenv, cmake, curl, libusb, ipmitool,
-      thrift, boost, bf-syslibs, bf-drivers, bf-utils, coreutils,
-      i2c-tools, gawk, xz, utillinux, mount, umount, cpio, gnused,
+      thrift, boost, bf-syslibs, bf-drivers, bf-utils,
+      bf-utils-tofino, coreutils, i2c-tools, gawk, xz, utillinux,
+      mount, umount, cpio, gnused,
       ## For salRefApp
       binutils-unwrapped, autoPatchelfHook, grpcForAPSSalRefApp,
       boost167, bf-drivers-runtime }:
@@ -22,31 +23,50 @@ let
         src = src';
         patches = (patches.default or []) ++ (patches.${baseboard} or []);
 
-        buildInputs = [ cmake curl libusb ipmitool thrift boost
-                        bf-syslibs bf-drivers bf-utils.dev coreutils ];
+        buildInputs =
+          if (lib.versionOlder version "9.9.0") then
+            [ cmake curl libusb ipmitool thrift boost
+              bf-syslibs bf-drivers bf-utils.dev coreutils ]
+          else
+            [ cmake bf-drivers.pythonModule bf-syslibs
+              bf-utils.dev bf-utils-tofino.dev bf-drivers
+              i2c-tools thrift boost ];
 
-        cmakeFlags = [
-          "-DASIC=ON"
-          "-DSTANDALONE=ON"
-          "-DTHRIFT-DRIVER=ON"
-        ];
+        cmakeFlags =
+          lib.optional (lib.versionOlder version "9.9.0") "-DASIC=ON" ++
+          [
+            "-DSTANDALONE=ON"
+            "-DTHRIFT-DRIVER=ON"
+          ];
 
-        preConfigure = ''
-          sed -i '1 i\cmake_policy(SET CMP0048 NEW)\nproject(APSNNetworksBSP VERSION ${version})' CMakeLists.txt
-        '' + lib.optionalString (baseboard == "aps_bf2556") ''
-          for f in platforms/apsn/src/util/apsn_pltfm_util.c \
-                   platforms/apsn/src/bf_pltfm_chss_mgmt/bf_pltfm_chss_mgmt_ps.c \
-                   platforms/apsn/src/bf_pltfm_chss_mgmt/bf_pltfm_chss_mgmt_fan.c; do
-            substituteInPlace $f \
-              --replace "sudo ipmitool" ${ipmitool}/bin/ipmitool
-          done
-          substituteInPlace platforms/apsn/src/bf_pltfm_chss_mgmt/bf_pltfm_chss_mgmt_ps.c \
-            --replace "sudo i2cget" ${i2c-tools}/bin/i2cget
-          substituteInPlace platforms/apsn/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c \
-            --replace onie-syseeprom $out/bin/onie-syseeprom
-        '';
+        preConfigure =
+          if (lib.versionOlder version "9.9.0") then
+            (''
+               sed -i '1 i\cmake_policy(SET CMP0048 NEW)\nproject(APSNNetworksBSP VERSION ${version})' CMakeLists.txt
+              '' + lib.optionalString (baseboard == "aps_bf2556") ''
+                for f in platforms/apsn/src/util/apsn_pltfm_util.c \
+                         platforms/apsn/src/bf_pltfm_chss_mgmt/bf_pltfm_chss_mgmt_ps.c \
+                         platforms/apsn/src/bf_pltfm_chss_mgmt/bf_pltfm_chss_mgmt_fan.c; do
+                  substituteInPlace $f \
+                    --replace "sudo ipmitool" ${ipmitool}/bin/ipmitool
+                done
+                substituteInPlace platforms/apsn/src/bf_pltfm_chss_mgmt/bf_pltfm_chss_mgmt_ps.c \
+                  --replace "sudo i2cget" ${i2c-tools}/bin/i2cget
+                substituteInPlace platforms/apsn/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c \
+                  --replace onie-syseeprom $out/bin/onie-syseeprom
+              '')
+          else
+            (''
+               sed -i -e '/CMP0135/d' CMakeLists.txt
+             '' + lib.optionalString (baseboard == "aps_bf2556") ''
+               substituteInPlace platforms/bf2556x-1t/src/ipmi/ipmi.c \
+                 --replace /usr/bin/ipmitool ${ipmitool}/bin/ipmitool
+               substituteInPlace platforms/common/src/ipmi.c \
+                 --replace /usr/bin/ipmitool ${ipmitool}/bin/ipmitool
+              '');
 
-        postInstall = lib.optionalString (baseboard == "aps_bf2556") ''
+        postInstall = lib.optionalString (lib.versionOlder version "9.9.0" &&
+                                          baseboard == "aps_bf2556") ''
           substitute ${./onie-syseeprom} $out/bin/onie-syseeprom \
             --subst-var-by PATH \
             "${lib.strings.makeBinPath [ coreutils i2c-tools gawk xz utillinux mount umount cpio gnused ]}"

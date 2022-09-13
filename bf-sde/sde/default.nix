@@ -15,13 +15,24 @@
   ptf-modules, ptf-utils, ptf-utils-runtime }:
 
 let
+  ## The BSP for the APS 2556X-1T currently requires a modified
+  ## bf-drivers package on 9.9.0. We make these specific overrides
+  ## here and hope that they will go away in future versions.
+  bf-drivers' =
+    if (baseboard == "aps_bf2556" && lib.versionAtLeast version "9.9.0") then
+      bf-drivers.overrideAttrs (oldAttrs: {
+        patches = oldAttrs.patches ++ [ ../bf-drivers/aps-efuse.patch ];
+      })
+    else
+      bf-drivers;
+  bf-drivers-runtime' = bf-drivers'.override { runtime = true ; };
   paths =
     (if runtime then
       ## ptf-utils-runtime is required by run_bfshell.sh
-      [ bf-syslibs bf-drivers-runtime bf-utils ptf-utils-runtime ]
+      [ bf-syslibs bf-drivers-runtime' bf-utils ptf-utils-runtime ]
       ++ lib.optional (baseboard == "model") tofino-model
      else
-       [ bf-syslibs bf-drivers bf-drivers.dev bf-utils bf-utils.dev
+       [ bf-syslibs bf-drivers' bf-drivers.dev bf-utils bf-utils.dev
          p4c tofino-model ptf-modules ptf-utils ])
     ++ lib.optional (baseboard != null)
       (assert lib.asserts.assertMsg (builtins.hasAttr baseboard bf-platforms)
