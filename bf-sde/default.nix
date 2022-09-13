@@ -238,7 +238,7 @@ let
   ## fixed output derivations (added manually with "nix-store
   ## --add-fixed sha256 <...>"). The "outputHash" values below are the
   ## sha256 sums over those files.
-  fetchFromStore = { name, outputHash, patches ? {} }:
+  fetchFromStore = { name, outputHash, patches ? {}, ... }@args:
     {
       src = builtins.derivation {
         inherit name outputHash system;
@@ -255,7 +255,7 @@ let
         outputHashAlgo = "sha256";
       };
       inherit patches;
-    };
+    } // args;
 
   common = {
     curl = curl_7_52;
@@ -552,12 +552,20 @@ let
             newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
         };
-        aps = fetchFromStore {
-          name = "9.7.0_AOT1.6.1_SAL1.3.5_2.zip";
-          outputHash = "4941987c4489d592de9b3676c79cb2011a22fe329425e8876fa8ae026fc959ad";
+        aps_bf2556 = fetchFromStore {
+          name = "apsn-bsp-bf2556x-${version}_1.tgz";
+          outputHash = "9fa049642fbe03a7a6f7a7d67c2ef33a1fd0105835c2aad9e656df02f73c3f09";
           patches = {
             aps_bf2556 = [ bf-platforms/aps/bf_pltfm_smb-9.7.0.patch ];
           };
+          salDebianPkg = fetchFromStore {
+            name = "sal_1.7.2-focal_amd64.deb";
+            outputHash = "5df540a805839cf3ea016886b05270a6bbe73d10a94fec6179760c5088564184";
+          };
+        };
+        aps_bf6064 = fetchFromStore {
+          name = "apsn-bsp-bf6064x-${version}_1.tgz";
+          outputHash = "6abdee2b05da4ffc3d348f58c06cdbb102ebddbfdf2131da3b306b9ef5bf4485";
         };
         inventec = fetchFromStore {
           name = "bf-platform_SRC_9.7.0.2.1.tgz";

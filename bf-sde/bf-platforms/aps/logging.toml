@@ -1,0 +1,25 @@
+global_pattern = "[%Y-%m-%dT%T%z] [%L] <%n>: %v"
+
+[[pattern]]
+name = "succinct"
+value = "%c-%L: %v"
+
+[[sink]]
+# Single threaded sink
+name = "console_out"
+type = "stdout_sink_st"
+level = "debug"
+
+[[sink]]
+name = "rotator_out"
+type = "rotating_file_sink_st"
+base_filename = "/var/log/sal.log"
+max_size = "1M"
+max_files = 10
+level = "trace"
+
+[[logger]]
+name = "root"
+level = "trace"
+sinks = ["console_out", "rotator_out"]
+pattern = "succinct" 
