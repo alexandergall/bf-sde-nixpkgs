@@ -1,5 +1,5 @@
 { lib, stdenv, fetchFromGitHub, makeWrapper, coreutils, kmod,
-  i2c-tools, gnugrep, ... }:
+  i2c-tools, gnugrep, utillinux, ... }:
 
 stdenv.mkDerivation {
   name = "netberg-i2c-utils";
@@ -15,6 +15,6 @@ stdenv.mkDerivation {
     mkdir -p $out/bin
     cp debian-bsps/aurora-710/i2c_utils.sh $out/bin
     wrapProgram $out/bin/i2c_utils.sh \
-      --set PATH "${lib.strings.makeBinPath [ coreutils kmod i2c-tools gnugrep ]}"
+      --set PATH "${lib.strings.makeBinPath [ coreutils kmod i2c-tools gnugrep utillinux ]}"
   '';
 }

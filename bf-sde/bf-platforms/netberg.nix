@@ -19,9 +19,11 @@ let
           ];
           preConfigure = ''
             tar xf bf-platforms*
-           substituteInPlace platforms/netberg-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c \
-             --replace eth0 mgmt0
-           '';
+            substituteInPlace platforms/netberg-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c \
+              --replace eth0 mgmt0
+            substituteInPlace platforms/netberg-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c \
+              --replace "grep -i '%s'" "grep -i '%s' 2>&1"
+          '';
         };
     in callPackage derivation {};
 
