@@ -107,6 +107,7 @@ let
               ## This doesn't contain any modules but a script that needs to
               ## have access to modules.
               (SDE.callPackage (import bf-platforms/netberg/i2c-utils.nix) {})
+              (SDE.callPackage (import bf-platforms/netberg/optoe.nix) {})
             ];
           };
         };
