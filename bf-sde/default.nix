@@ -696,8 +696,8 @@ let
           outputHash = "481a2c5e6937f73ff9e9157fb4f313a4d72c0868b3eac94111ee79340c565309";
         };
         aps_bf2556 = fetchFromStore {
-          name = "apsn-bsp-bf2556x-${version}-rc2.tgz";
-          outputHash = "1ebc3615657a46969637ca39356c3236b84ed51f51c881b668aa0d80f3f9a7b2";
+          name = "apsn-bsp-bf2556x-${version}-f3f8024.tgz";
+          outputHash = "9170adf6787996e02dfbb348fab9c1475a1af9c94257164d9bda67914303300e";
           salDebianPkg = fetchFromStore {
             name = "sal-1.8.1-focal_amd64.deb";
             outputHash = "f2f8139cd173aa8d474404bcf810e5f5027376e2a0b32ef6a685262196b0965e";
