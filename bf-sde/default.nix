@@ -645,6 +645,10 @@ let
             newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
         };
+        inventec = fetchFromStore {
+          name = "bf-platform_SRC_9.8.0.1.1.tgz";
+          outputHash = "38bb3810ef5d8d3ee9c68e00d9117f5168a8e7094d21c85bd3427c6362196ee4";
+        };
       };
       stdenv = gcc8Stdenv;
       thrift = thrift_0_14;
@@ -674,6 +678,10 @@ let
           patches = {
             newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
+        };
+        inventec = fetchFromStore {
+          name = "bf-platform_SRC_9.8.0.1.1.tgz";
+          outputHash = "38bb3810ef5d8d3ee9c68e00d9117f5168a8e7094d21c85bd3427c6362196ee4";
         };
       };
       stdenv = gcc8Stdenv;
