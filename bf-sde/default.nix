@@ -726,6 +726,34 @@ let
       libcli = libcli1_10;
       python_bf_drivers = python3;
     };
+    v9_11_0 = rec {
+      version = "9.11.0";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "649cd026bc85a23f09c24d010d460d4192ae2a7e009da1f042183ca001d706b3";
+        patches = {
+          mainTools = [ sde/run_switchd-9.11.0.patch sde/run_bfshell-9.7.0.patch
+                        sde/run_p4_tests-9.7.0.patch ];
+          mainCMake = [ sde/P4Build.cmake.patch ];
+          p4-examples = [];
+          ptf-modules = [ ptf-modules/run_ptf_tests.patch
+                          ptf-modules/getmac.patch ];
+        };
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "a688b7468db32ea48c5ed83b040743b29f5beec28b3861440ff157cc6a5128ea";
+          patches = {
+            newport = [ bf-platforms/newport-eth-compliance.patch ];
+          };
+        };
+      };
+      stdenv = gcc11Stdenv;
+      thrift = thrift_0_14;
+      libcli = libcli1_10;
+      python_bf_drivers = python3;
+    };
   };
 
-in bf-sde // { latest = bf-sde.v9_10_0; }
+in bf-sde // { latest = bf-sde.v9_11_0; }

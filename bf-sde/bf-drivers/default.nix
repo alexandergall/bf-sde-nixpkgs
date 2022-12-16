@@ -106,6 +106,9 @@ let
           substituteInPlace Makefile.am --replace "SUBDIRS = third-party include src pd_api_gen doc" "SUBDIRS = third-party include src doc"
         ''
       else
+        lib.optionalString (lib.versionAtLeast version "9.11.0") ''
+          sed -i -e 's/emulatorflag \''${CMAKE_C_FLAGS}/emulatorflag "\''${CMAKE_C_FLAGS}"/' CMakeLists.txt
+        '' +
         ## Override the location of libpython provided by
         ## bf-utils.
         ''
@@ -174,11 +177,11 @@ let
     ## import bfruntime_pb2 as bfruntime__pb2
     ##
     ## where bfruntime_pb2 is located in the same directory. This
-    ## fails with Python3, which requires
+    ## fails with Python3, which requires a parent directory, i.e.
     ##
-    ## from . import bfruntime_pb2 as bfruntime__pb2
+    ## from bfrt_grpc import bfruntime_pb2 as bfruntime__pb2
     lib.optionalString python.isPy3 ''
-      sed -i -e 's/import bfruntime_pb2/from . import bfruntime_pb2/' $sitePath/tofino/bfrt_grpc/bfruntime_pb2_grpc.py
+      sed -i -e 's/import bfruntime_pb2/from bfrt_grpc import bfruntime_pb2/' $sitePath/tofino/bfrt_grpc/bfruntime_pb2_grpc.py
     '' +
 
     ## Link the directories in site-packages/tofino and
