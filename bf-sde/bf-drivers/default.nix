@@ -179,10 +179,17 @@ let
     ## where bfruntime_pb2 is located in the same directory. This
     ## fails with Python3, which requires a parent directory, i.e.
     ##
-    ## from bfrt_grpc import bfruntime_pb2 as bfruntime__pb2
-    lib.optionalString python.isPy3 ''
-      sed -i -e 's/import bfruntime_pb2/from bfrt_grpc import bfruntime_pb2/' $sitePath/tofino/bfrt_grpc/bfruntime_pb2_grpc.py
-    '' +
+    ## from . import bfruntime_pb2 as bfruntime__pb2
+    ##
+    ## For more recent versions of Python3, the dot no longer works in
+    ## this context either and needs to be replaced by the name of the
+    ## containing package.
+    lib.optionalString python.isPy3 (
+      if (lib.versionOlder version "9.11") then ''
+        sed -i -e 's/import bfruntime_pb2/from . import bfruntime_pb2/' $sitePath/tofino/bfrt_grpc/bfruntime_pb2_grpc.py
+      '' else ''
+        sed -i -e 's/import bfruntime_pb2/from bfrt_grpc import bfruntime_pb2/' $sitePath/tofino/bfrt_grpc/bfruntime_pb2_grpc.py
+      '') +
 
     ## Link the directories in site-packages/tofino and
     ## site-packages/tofino_pd_api to site-packages. This allows
