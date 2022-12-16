@@ -1540,8 +1540,10 @@ verify the proper working of the SDE and the PTF system.  The example
 programs can be exercises as follows.
 
 The `test` attribute is itself a set with one attribute per supported
-compiler target (currently `tofino`, `tofino2` and `tofino3`).  Each
-target attribute set is composed of the following attributes
+compiler target (currently `tofino`, `tofino2` and `tofino3` where
+`tofino2` is supported for versions 9.7.0 and later and `tofino3` is
+supported for versions 9.11.0 and later).  Each target attribute set is
+composed of the following attributes
 
    * `programs`. A set of P4 packages, one for each example program
    * `cases`. A set of derivations, one for each example program. Each

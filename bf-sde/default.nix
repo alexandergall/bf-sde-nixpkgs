@@ -151,8 +151,18 @@ let
         test =
           let
             modelPlatforms = with builtins;
-              lib.filterAttrs (n: v: match "model.*" n != null)
-              (import ./bf-platforms/properties.nix);
+              let
+                pattern =
+                  if (lib.versionOlder sdeSpec.version "9.7.0") then
+                    "model"
+                  else
+                    if (lib.versionOlder sdeSpec.version "9.11.0") then
+                      "model|modelT2"
+                    else
+                      "model.*";
+              in
+                lib.filterAttrs (n: v: match pattern n != null)
+                  (import ./bf-platforms/properties.nix);
             testForTarget = platform: target:
               lib.nameValuePair
                 target
