@@ -1539,7 +1539,9 @@ supports the P4<sub>16</sub> example programs to provide a means to
 verify the proper working of the SDE and the PTF system.  The example
 programs can be exercises as follows.
 
-The `test` attribute is itself a set with the following attributes
+The `test` attribute is itself a set with one attribute per supported
+compiler target (currently `tofino`, `tofino2` and `tofino3`).  Each
+target attribute set is composed of the following attributes
 
    * `programs`. A set of P4 packages, one for each example program
    * `cases`. A set of derivations, one for each example program. Each
@@ -1558,22 +1560,27 @@ The names of the programs are those of the P4 source files located in
 the `p4_16_programs` sub directory of the `p4-examples` SDE components.
 The list of supported example programs can be displayed by evaluating
 a simple Nix expression, for example for the most recent SDE version
+and the `tofino` target
 
 ```
-$ nix eval '(with import ./. {}; builtins.attrNames bf-sde.latest.test.programs)'
-[ "bri_handle" "bri_with_pdfixed_thrift" "tna_32q_2pipe" "tna_action_profile" "tna_action_selector" "tna_bridged_md" "tna_checksum" "tna_counter" "tna_custom_hash" "tna_digest" "tna_dkm" "tna_dyn_hashing" "tna_field_slice" "tna_idletimeout" "tna_lpm_match" "tna_meter_bytecount_adjust" "tna_meter_lpf_wred" "tna_mirror" "tna_multicast" "tna_operations" "tna_pktgen" "tna_port_metadata" "tna_port_metadata_extern" "tna_ports" "tna_proxy_hash" "tna_pvs" "tna_random" "tna_range_match" "tna_register" "tna_resubmit" "tna_simple_switch" "tna_snapshot" "tna_symmetric_hash" "tna_ternary_match" "tna_timestamp" ]
+$ nix eval '(with import ./. {}; builtins.attrNames bf-sde.latest.test.tofino.programs)'
+[ "bri_handle" "bri_with_pdfixed_thrift" "tna_action_profile" "tna_action_selector" "tna_alpm" "tna_bridged_md" "tna_checksum" "tna_counter" "tna_custom_hash" "tna_digest" "tna_dkm" "tna_dyn_hashing" "tna_field_slice" "tna_id
+letimeout" "tna_lpm_match" "tna_meter_bytecount_adjust" "tna_meter_lpf_wred" "tna_mirror" "tna_multicast" "tna_operations" "tna_pktgen" "tna_port_metadata" "tna_port_metadata_extern" "tna_ports" "tna_proxy_hash" "tna_pvs" "tn
+a_random" "tna_range_match" "tna_register" "tna_resubmit" "tna_snapshot" "tna_symmetric_hash" "tna_ternary_match" "tna_timestamp" ]
+
 ```
 
-To build all porgrams and run all tests for the latest version in one go, use
+To build all porgrams and run all tests for the latest version and the
+`tofino` target in one go, use
 
 ```
-$ nix-build -A bf-sde.latest.test
+$ nix-build -A bf-sde.latest.test.tofino
 ```
 
 To select a single test
 
 ```
-$ nix-build -A bf-sde.latest.test.programs.tna_checksum
+$ nix-build -A bf-sde.latest.test.tofino.programs.tna_checksum
 [ ... ]
 /nix/store/hbsfjmyshrmbdwsj9hldqasgrrndr5ka-tna_checksum-0
 $ nix-build -A bf-sde.latest.test.cases.tna_checksum
@@ -1582,10 +1589,6 @@ $ nix-build -A bf-sde.latest.test.cases.tna_checksum
 $ cat /nix/store/rg64frv378cw5v6wr6j95457hw544qrk-bf-sde-9.4.0-test-case-tna_checksum/passed
 true
 ```
-
-Note that some of the programs consistently fail for all SDE
-versions. This should be investigated but it doesn't seem to indicate
-an actual problem with the SDE packages.
 
 ### <a name="kernelSupport"></a>Kernel Support
 

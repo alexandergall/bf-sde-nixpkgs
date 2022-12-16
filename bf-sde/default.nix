@@ -148,20 +148,31 @@ let
       passthru = {
         inherit (sdeSpec) version;
         pkgs = sdePkgs;
-        test = rec {
-          programs = import ./p4-16-examples (mkSrc "p4-examples" // {
-            bf-sde = self;
-            inherit (pkgs) lib;
-          });
-          cases =
-            let
-              runTest = program:
-                let
-                  args = (import (./p4-16-examples + "/${self.version}.nix")).args.${program.p4Name} or {};
-                in program.runTest args;
-             in lib.mapAttrs (_: program: runTest program) programs;
-          failed-cases = lib.filterAttrs (n: v: (import (v + "/passed") == false)) cases;
-        };
+        test =
+          let
+            modelPlatforms = with builtins;
+              lib.filterAttrs (n: v: match "model.*" n != null)
+              (import ./bf-platforms/properties.nix);
+            testForTarget = platform: target:
+              lib.nameValuePair
+                target
+                rec {
+                  programs = import ./p4-16-examples (mkSrc "p4-examples" // {
+                    bf-sde = self;
+                    inherit (pkgs) lib;
+                    inherit platform;
+                  });
+                  cases =
+                    let
+                      runTest = program:
+                        let
+                          args = (import (./p4-16-examples + "/${self.version}.nix")).args.${program.p4Name} or {};
+                        in program.runTest args;
+                    in lib.mapAttrs (_: program: runTest program) programs;
+                  failed-cases = lib.filterAttrs (n: v: (import (v + "/passed") == false)) cases;
+                };
+          in
+            lib.mapAttrs' (n: v: testForTarget n v.target) modelPlatforms;
 
         modulesForKernel = kernelRelease:
           (SDE.callPackage kernels/select-modules.nix {
