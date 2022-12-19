@@ -642,6 +642,19 @@ let
         };
       };
     };
+    v9_7_4 = lib.recursiveUpdate v9_7_0 rec {
+      version = "9.7.4";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "1573577dc2718963dc45210fb9ed75255c68b75a2f219c85a70935dca90f4a16";
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "95cb4e81a4284cc22f0e0af9ef85ea1c0396b82bf1f64b79d8396715ddaec408";
+        };
+      };
+    };
     v9_8_0 = rec {
       version = "9.8.0";
       sde = fetchFromStore {
