@@ -4,6 +4,8 @@
   version, buildSystem, src, kernelID, spec, bf-syslibs, cmake,
   drvsWithKernelModules, baseboard ? null }:
 
+assert lib.assertMsg (baseboard != null -> ! builtins.elem baseboard spec.baseboardBlacklist)
+  "baseboard ${baseboard} is blacklisted for kernel ${kernelID}";
 let
   baseboard' = if baseboard == null then "" else baseboard;
   driverModules = stdenv.mkDerivation {
@@ -17,7 +19,7 @@ let
 
     passthru = {
       inherit kernelID;
-      inherit (spec) kernelRelease;
+      inherit (spec) kernelRelease baseboardBlacklist;
     };
 
     patches = (spec.patches.all or []) ++

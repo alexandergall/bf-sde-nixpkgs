@@ -52,6 +52,7 @@ let
       defaults = {
         patches = [];
         buildModulesOverrides = {};
+        baseboardBlacklist = [];
       };
       spec = defaults // spec';
     in (callPackage ./build-modules.nix {
@@ -137,6 +138,7 @@ let
       buildModulesOverrides = {
         stdenv = gcc8Stdenv;
       };
+      baseboardBlacklist = [ "netberg_710" ];
       patches = {
         "9.1.1" = [ ./bf-drivers-9.1.1.patch ];
         "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];

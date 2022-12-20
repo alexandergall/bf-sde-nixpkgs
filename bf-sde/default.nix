@@ -122,13 +122,17 @@ let
           let
             baseboards = builtins.attrNames sdePkgs.bf-platforms;
             modulesForBaseboards = _: modules:
-              builtins.listToAttrs
+              let
+                notBlacklisted = baseboard:
+                  ! builtins.elem baseboard modules.baseboardBlacklist;
+                baseboards' = builtins.filter notBlacklisted baseboards;
+              in builtins.listToAttrs
                 (map (baseboard:
                   {
                     name = baseboard;
                     value = modules.override { inherit baseboard; };
                   })
-                  baseboards);
+                  baseboards');
           in builtins.mapAttrs modulesForBaseboards sdePkgs.kernel-modules;
       } // (lib.optionalAttrs (lib.strings.versionAtLeast sdeSpec.version "9.5.0") {
 
