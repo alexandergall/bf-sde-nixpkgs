@@ -119,7 +119,7 @@ if kernelID == "none" then
     name = "bf-sde-unsupported-kernel";
     passthru = {
       inherit kernelID;
-      inherit (spec) kernelRelease;
+      inherit (spec) kernelRelease baseboardBlacklist;
     };
     phases = [ "installPhase" ];
     installPhase = ''
