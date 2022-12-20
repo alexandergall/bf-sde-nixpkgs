@@ -136,7 +136,8 @@ if kernelID == "none" then
   }
 else
   buildEnv {
-    name = "bf-sde-${version}-combined-kernel-modules-${spec.kernelRelease}";
+    name = "bf-sde-${version}-combined-kernel-modules-${spec.kernelRelease}"
+           + lib.optionalString (baseboard' != "") "-${baseboard'}";
     paths = [ driverModules ] ++ additionalKernelModules ++
             map (drv: drv.override { kernelSpec = spec; })
               (lib.flatten (builtins.attrValues

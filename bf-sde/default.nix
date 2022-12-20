@@ -58,6 +58,11 @@ let
         ptf-modules = SDE.callPackage ./ptf-modules (mkSrc "ptf-modules");
         ptf-utils = SDE.callPackage ./ptf-modules/utils.nix (mkSrc "ptf-modules");
         ptf-utils-runtime = sdePkgs.ptf-utils.override { runtime = true; };
+        ## Standard kernel modules produced by the bf-drivers package,
+        ## i.e. bf_kdrv, bf_knet, bf_kpkt. Also includes all
+        ## baseboard-independent additional modules (or arbitrary
+        ## other files) specified by the additionalModules attribute
+        ## in kernels/default.nix.
         kernel-modules = import ./kernels {
           bf-drivers-src = extractSource "bf-drivers";
           inherit (SDE) callPackage;
@@ -111,6 +116,20 @@ let
             ];
           };
         };
+        ## Combination of kernel-modules with baseboard-specific
+        ## modules and files.
+        kernel-modules-baseboards =
+          let
+            baseboards = builtins.attrNames sdePkgs.bf-platforms;
+            modulesForBaseboards = _: modules:
+              builtins.listToAttrs
+                (map (baseboard:
+                  {
+                    name = baseboard;
+                    value = modules.override { inherit baseboard; };
+                  })
+                  baseboards);
+          in builtins.mapAttrs modulesForBaseboards sdePkgs.kernel-modules;
       } // (lib.optionalAttrs (lib.strings.versionAtLeast sdeSpec.version "9.5.0") {
 
         ## Up to 9.4.0, the test facility used the PTF from p4.org
