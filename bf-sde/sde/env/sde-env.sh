@@ -11,7 +11,7 @@ export NIX_PATH=
 self=$(basename $0)
 
 usage () {
-    echo "usage: $self [--help] [--pure] [--platform=<platform>] [--pkgs=<pkg>,...] [--python-modules=<module>,...] [--python-ptf-modules=<module>,...]"
+    echo "usage: $self [--help] [--pure] [--platform=<platform>] [--pkgs=<pkg>,...] [--python-modules=<module>,...] [--python-ptf-modules=<module>,...] [--command <command>]"
     exit 0
 }
 
@@ -20,6 +20,7 @@ opts=$(getopt -l platform: \
               -l python-modules: \
               -l python-ptf-modules: \
 	      -l pure \
+              -l command: \
               -l help \
               -o "" \
               -n $self \
@@ -59,6 +60,10 @@ while [ $# -gt 0 ]; do
 	    pureMode="--pure"
 	    shift
 	    ;;
+        --command)
+            runCommand="$2"
+            shift 2
+            ;;
         --help)
             usage
             ;;
@@ -112,4 +117,4 @@ fi
 PATH=$origPath
 nix-shell -j auto $pureMode -I nixpkgs=$sdeNixexpr -E "with import <nixpkgs> {}; bf-sde.${version}.mkShell" \
           $kernelArg --argstr platform $platform \
-          --arg inputFn "$INPUT_FN"
+          --arg inputFn "$INPUT_FN" --argstr runCommand "$runCommand"

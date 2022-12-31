@@ -1,7 +1,7 @@
 { bf-sde, pkgs, isModel }:
 
 { inputFn ? { pkgs, pythonPkgs }: {}, kernelID ? null,
-  kernelRelease ? null, platform ? "model" }:
+  kernelRelease ? null, platform ? "model", runCommand ? "" }:
 
 let
   baseboard = bf-sde.baseboardForPlatform platform;
@@ -89,5 +89,8 @@ in pkgs.mkShell {
     echo "(Re-)Loading bf_fpga kernel module for ${platform}"
     sudo rmmod bf_fpga 2>/dev/null || true
     sudo $(type -p bf_fpga_mod_load)
+  '' + pkgs.lib.optionalString (runCommand != "") ''
+    echo "Executing command \"${runCommand}\""
+    ${runCommand}
   '';
 }

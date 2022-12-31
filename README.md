@@ -474,6 +474,18 @@ The working directory of the SDE shell is inherited from the calling
 shell as is the command search path (`PATH`) [unless the `--pure`
 option](#pureSDE) is used
 
+The `--command` option can be used to execute arbitrary commands right
+after the shell is started. This can be used to automate tasks that
+require access to the SDE environment, e.g. to compile a P4
+program. For example,
+
+```
+$ sde-env-9.7.2 --command "p4c some_program.p4; exit"
+```
+
+would attempt to compile `some_program.p4` located in the directory
+from which the `sde-env` command is executed and then exit the shell.
+
 To install the command for any other version, pass the version number
 (e.g. 9.6.0 or 9.7.0) to the `make` command by setting the `VERSION`
 variable, e.g.
