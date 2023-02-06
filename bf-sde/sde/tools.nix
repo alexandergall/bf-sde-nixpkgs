@@ -58,6 +58,7 @@ stdenv.mkDerivation {
     chmod a+x $out/bin/run_p4_tests.sh
     wrap $out/bin/run_p4_tests.sh \
       "${lib.strings.makeBinPath [ coreutils utillinux gawk python ]}" \
+      --run "PATH=\$PATH:\$PTF_PATH" \
       --run "export PYTHONPATH=\$PTF_PYTHONPATH:\$PYTHONPATH"
 
   '' + (if (lib.versionOlder version "9.7.0") then

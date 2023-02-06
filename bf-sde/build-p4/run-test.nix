@@ -13,7 +13,7 @@
 ## The file "passed" can be imported as a Nix expression
 
 { self, p4Name, src, testDir, lib, build, vmTools, runCommand,
-  bf-sde, ptf-modules, pythonModules ? [] }:
+  bf-sde, ptf-modules, pythonModules ? [], ptfPkgs ? [] }:
 
 let
   ## bf-drivers is also required, but it is already part of the
@@ -62,6 +62,7 @@ in vmTools.runInLinuxVM (
     echo "Starting tests"
     set +e
     export PTF_PYTHONPATH=${python.pkgs.makePythonPath ptfModules}:$PYTHONPATH
+    export PTF_PATH=${lib.strings.makeBinPath ptfPkgs}
     run_p4_tests.sh -p ${p4Name} -t ${src}/${testDir} --arch=${self.target} \
       --test-params="base_pick_path=\"${build}/share/${self.target}pd/\"" 2>&1 | tee /tmp/xchg/test.log
     echo $? >/tmp/xchg/test.status

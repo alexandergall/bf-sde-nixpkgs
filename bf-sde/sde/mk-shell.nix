@@ -18,6 +18,7 @@ let
   python = bf-drivers.pythonModule;
   defaultInputs = {
     pkgs = [];
+    ptfPkgs = [];
     cpModules = [];
     ptfModules = [];
   };
@@ -72,6 +73,7 @@ in pkgs.mkShell {
     export SDE_BUILD=$P4_INSTALL/build
     export SDE_LOGS=$P4_INSTALL/logs
     export PTF_PYTHONPATH=${python.pkgs.makePythonPath inputs.ptfModules}
+    export PTF_PATH=${pkgs.lib.strings.makeBinPath inputs.ptfPkgs}
     mkdir -p $P4_INSTALL $SDE_BUILD $SDE_LOGS
 
     cat <<EOF

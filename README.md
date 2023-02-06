@@ -920,7 +920,7 @@ to be added explicitly with `--pkgs` (apart from the default packages
 mentioned above).
 
 ```
-$ sde-env-9.7.9 --pure
+$ sde-env-9.7.0 --pure
 [...]
 
 [nix-shell(SDE-9.7.0):~]$ type perl
@@ -935,6 +935,30 @@ the list of available packages, execute
 $ echo -e $(nix eval '(let pkgs = import ./. {}; in with builtins; concatStringsSep "\n" (attrNames pkgs))')
 ```
 in the top-level directory of the `bf-sde-nixpkgs` repository.
+
+#### <a name="nonePythonPTFPackages"></a>Non-Python Packages for PTF Tests
+
+As discussed above, the `--python-ptf-modules` option is used to add a
+Python module that needs to be visible to the PTF scripts. Similarly,
+the `--ptf-pkgs` option adds regular (i.e. non-Python) packages to the
+search Path of the PTF script. The `bin` path of every package passed
+with this option will be added to the `PTF_PATH` environment variable,
+which is added to `PATH` by the `run_p4_tests.sh` script.
+
+For example, suppose the PTF script wants to execute the `ip` command
+in a subprocess. This command is part of the `iproute` Nix package,
+hence instantiating the SDE environment with
+
+```
+$ sde-env-9.7.0 --ptf-pkgs=iproute
+```
+
+will create the `$PTF_PATH`
+
+```
+[nix-shell(SDE-9.7.0):~/bf-sde-nixpkgs]$ echo $PTF_PATH
+/nix/store/d0rc2qli8df2xbznca2rld7zl878frsd-iproute2-5.17.0/bin
+```
 
 ### <a name="standaloneSDE"></a>Building a standalone Installer for the SDE
 

@@ -11,15 +11,16 @@ export NIX_PATH=
 self=$(basename $0)
 
 usage () {
-    echo "usage: $self [--help] [--pure] [--platform=<platform>] [--pkgs=<pkg>,...] [--python-modules=<module>,...] [--python-ptf-modules=<module>,...] [--command <command>]"
+    echo "usage: $self [--help] [--pure] [--platform=<platform>] [--pkgs=<pkg>,...] [--ptf-pkgs=<pkg>,...] [--python-modules=<module>,...] [--python-ptf-modules=<module>,...] [--command <command>]"
     exit 0
 }
 
 opts=$(getopt -l platform: \
               -l pkgs: \
+              -l ptf-pkgs: \
               -l python-modules: \
               -l python-ptf-modules: \
-	      -l pure \
+              -l pure \
               -l command: \
               -l help \
               -o "" \
@@ -39,27 +40,34 @@ while [ $# -gt 0 ]; do
             oIFS=$IFS
             IFS=,
             pkgs=($2)
-	    IFS=$oIFS
+            IFS=$oIFS
+            shift 2
+            ;;
+        --ptf-pkgs)
+            oIFS=$IFS
+            IFS=,
+            ptfPkgs=($2)
+            IFS=$oIFS
             shift 2
             ;;
         --python-modules)
             oIFS=$IFS
             IFS=,
             pythonModules=($2)
-	    IFS=$oIFS
+            IFS=$oIFS
             shift 2
             ;;
         --python-ptf-modules)
             oIFS=$IFS
             IFS=,
             pythonPtfModules=($2)
-	    IFS=$oIFS
+            IFS=$oIFS
             shift 2
             ;;
-	--pure)
-	    pureMode="--pure"
-	    shift
-	    ;;
+        --pure)
+            pureMode="--pure"
+            shift
+            ;;
         --command)
             runCommand="$2"
             shift 2
@@ -91,7 +99,7 @@ read -r -d '' verifyFn <<-EOF || true
     chkPkgs = {
       type = "Package";
       attrs = pkgs;
-      list = pkgs.lib.splitString " " "${pkgs[@]}";
+      list = pkgs.lib.splitString " " ("${pkgs[@]}" + " ${ptfPkgs[@]}");
     };
     chkModules = {
       type = "Python module";
@@ -109,6 +117,7 @@ nix-instantiate --eval -E "($verifyFn)" >/dev/null
 
 INPUT_FN="{ pkgs, pythonPkgs }: { \
              pkgs = with pkgs; [ ${pkgs[@]} ]; \
+             ptfPkgs = with pkgs; [ ${ptfPkgs[@]} ]; \
              cpModules = with pythonPkgs; [ ${pythonModules[@]} ]; \
              ptfModules = with pythonPkgs; [ ${pythonPtfModules[@]} ]; }"
 if [[ ! $platform =~ ^model.* ]]; then
