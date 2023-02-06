@@ -1,8 +1,8 @@
 ## Build the SDE modules for a specific kernel
 
-{ lib, stdenv, buildEnv, python2, runtimeShell, kmod, coreutils,
-  version, buildSystem, src, kernelID, spec, bf-syslibs, cmake,
-  drvsWithKernelModules, baseboard ? null }:
+{ lib, stdenv, buildEnv, python2, python3, runtimeShell, kmod,
+  coreutils, version, buildSystem, src, kernelID, spec, bf-syslibs,
+  cmake, drvsWithKernelModules, baseboard ? null }:
 
 assert lib.assertMsg (baseboard != null -> ! builtins.elem baseboard spec.baseboardBlacklist)
   "baseboard ${baseboard} is blacklisted for kernel ${kernelID}";
@@ -25,7 +25,12 @@ let
     patches = (spec.patches.all or []) ++
               (spec.patches.${version} or []);
     buildInputs = [ bf-syslibs python2 kmod ]
+                  ++ lib.optionals (lib.versionAtLeast version "9.12") [ python3 ]
                   ++ lib.optional buildSystem.isCmake cmake;
+
+    preConfigure = lib.optionalString (lib.versionAtLeast version "9.12") ''
+      sed -i '/project/a list(APPEND CMAKE_MODULE_PATH "\''${CMAKE_CURRENT_SOURCE_DIR}/cmake")' CMakeLists.txt
+    '';
 
     configureFlags = lib.optionals (! buildSystem.isCmake) [
       " --with-kdrv=yes"

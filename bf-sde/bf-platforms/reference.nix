@@ -28,8 +28,11 @@ let
           enableParallelBuilding = true;
           ## The Newport platform libraries have unresolved references
           ## on (unused) functions, which is incompatible with the
-          ## default immediate bindings used by mkDerivation.
-          hardeningDisable = lib.optional newport "bindnow";
+          ## default immediate bindings used by mkDerivation. Starting
+          ## with 9.12, the platform library has additional unresolved
+          ## references to Tofino3-specific functions.
+          hardeningDisable = lib.optional (newport ||
+            lib.versionAtLeast version "9.12") "bindnow";
 
           ## Newport requires a kernel module to drive the FPGA I2C
           ## controller. The module is created only when we are called

@@ -1,7 +1,9 @@
-{ pname, src, patches, bf-sde, lib, platform }:
+{ pname, src, patches, bf-sde, pkgs, platform }:
 
 let
-  programs = (import (./. + "/${bf-sde.version}.nix")).programs;
+  programs = (import ./compose.nix {
+    inherit bf-sde pkgs platform;
+  }).programs;
   build = p4Name:
     bf-sde.buildP4Program {
       pname = p4Name;
@@ -9,4 +11,4 @@ let
       inherit src p4Name patches platform;
       path = "p4_16_programs/${p4Name}";
     };
-in lib.genAttrs programs build
+in pkgs.lib.genAttrs programs build

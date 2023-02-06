@@ -1,0 +1,69 @@
+diff -Naur bf-sde-9.12.0.orig/cmake/P4Build.cmake bf-sde-9.12.0/cmake/P4Build.cmake
+--- bf-sde-9.12.0.orig/cmake/P4Build.cmake	2023-01-27 00:48:26.000000000 +0100
++++ bf-sde-9.12.0/cmake/P4Build.cmake	2023-02-06 13:08:19.950598908 +0100
+@@ -196,8 +196,8 @@
+ 
+   # generate pd.c, pdcli.c, p4_pd_rpc.thrift
+   add_custom_command(OUTPUT ${PDDOTC} ${PDCLIDOTC} ${PDRPCDOTTHRIFT}
+-    COMMAND ${PYTHON_COMMAND} ${PDGEN} --path ${t}/${target} --manifest ${t}/${target}/manifest.json ${COMPUTED_PDFLAGS} ${PDFLAGS_INTERNAL} -o ${t}/${target}
+-    COMMAND ${PYTHON_COMMAND} ${PDGENCLI} ${t}/${target}/cli/pd.json -po ${t}/${target}/src -xo ${t}/${target}/cli/xml -xd ${CMAKE_INSTALL_PREFIX}/share/cli/xml -ll ${CMAKE_INSTALL_PREFIX}/lib/${target}pd/${t}
++    COMMAND ${PDGEN} --path ${t}/${target} --manifest ${t}/${target}/manifest.json ${COMPUTED_PDFLAGS} ${PDFLAGS_INTERNAL} -o ${t}/${target}
++    COMMAND ${PDGENCLI} ${t}/${target}/cli/pd.json -po ${t}/${target}/src -xo ${t}/${target}/cli/xml -xd ${CMAKE_INSTALL_PREFIX}/share/cli/xml -ll ${CMAKE_INSTALL_PREFIX}/lib/${target}pd/${t}
+     DEPENDS ${t}/${target}/manifest.json
+   )
+   add_custom_target(${t}-${target}-gen DEPENDS ${PDDOTC} ${PDCLIDOTC} ${PDRPCDOTTHRIFT} driver)
+@@ -209,7 +209,7 @@
+       COMMAND ${THRIFT_COMPILER} --gen py  -o ${t}/${target} -r ${t}/${target}/thrift/p4_pd_rpc.thrift
+       COMMAND mv -f ${t}/${target}/gen-cpp/${t}.h ${t}/${target}/gen-cpp/p4_prefix.h
+       COMMAND sed --in-place 's/include \"${t}.h\"/include \"p4_prefix.h\"/' ${t}/${target}/gen-cpp/${t}.cpp
+-      COMMAND ${PYTHON_COMMAND} ${PDSPLIT} ${t}/${target}/gen-cpp/${t}.cpp ${t}/${target}/gen-cpp 8
++      COMMAND ${PDSPLIT} ${t}/${target}/gen-cpp/${t}.cpp ${t}/${target}/gen-cpp 8
+       DEPENDS ${t}/${target}/manifest.json ${THRIFT_COMPILER}
+     )
+     add_custom_target(${t}-${target}-gen-thrift DEPENDS ${t}-${target}-gen ${PDTHRIFT})
+diff -Naur bf-sde-9.12.0.orig/cmake/PythonDependencies.cmake bf-sde-9.12.0/cmake/PythonDependencies.cmake
+--- bf-sde-9.12.0.orig/cmake/PythonDependencies.cmake	2023-01-27 00:48:26.000000000 +0100
++++ bf-sde-9.12.0/cmake/PythonDependencies.cmake	2023-02-06 14:02:23.122887636 +0100
+@@ -3,18 +3,7 @@
+ endif()
+ set(PYTHON_DEPENDENCIES_INCLUDED TRUE)
+ 
+-if (NOT DEFINED PYTHON_EXECUTABLE)
+-    execute_process(
+-        COMMAND bash -c "readlink --canonicalize $(which python3)"
+-        OUTPUT_VARIABLE PYTHON_EXECUTABLE
+-        RESULT_VARIABLE PYTHON_EXECUTABLE_RET
+-        OUTPUT_STRIP_TRAILING_WHITESPACE
+-    )
+-
+-    if (NOT PYTHON_EXECUTABLE_RET EQUAL 0)
+-        message(FATAL_ERROR "Python executable not found")
+-    endif ()
+-endif ()
++set(PYTHON_EXECUTABLE python3)
+ 
+ if(NOT DEFINED SDE_GENERATED_PYTHON_DIR)
+     execute_process(
+@@ -25,21 +14,5 @@
+     )
+ endif()
+ 
+-if(NOT DEFINED SDE_PYTHON_THIRD_PARTY_DEPENDENCIES)
+-    execute_process(
+-        COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_LIST_DIR}/sdepythonpath.py" --sde-install "${CMAKE_INSTALL_PREFIX}" --sde-dependencies "${SDE_DEPENDENCIES}"
+-        OUTPUT_VARIABLE SDE_PYTHON_THIRD_PARTY_DEPENDENCIES
+-        RESULT_VARIABLE SDE_PYTHON_THIRD_PARTY_DEPENDENCIES_RET
+-        OUTPUT_STRIP_TRAILING_WHITESPACE
+-    )
+-    if (NOT SDE_PYTHON_THIRD_PARTY_DEPENDENCIES_RET EQUAL 0)
+-        message(FATAL_ERROR "Cannot determine path to SDE Python third-party dependencies")
+-    endif ()
+-endif()
+-
+-set(PYTHON_COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH="${SDE_PYTHON_THIRD_PARTY_DEPENDENCIES}:${SDE_GENERATED_PYTHON_DIR}" ${PYTHON_EXECUTABLE})
+-install(PROGRAMS "${CMAKE_CURRENT_LIST_DIR}/sdepythonpath.py" DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
+-
++set(PYTHON_COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH="${SDE_GENERATED_PYTHON_DIR}" ${PYTHON_EXECUTABLE})
+ set(SDE_PYTHON_DEPENDENCIES_DIR ${SDE_GENERATED_PYTHON_DIR})
+-
+-set(CMAKE_PROGRAM_PATH ${SDE_PYTHON_THIRD_PARTY_DEPENDENCIES}/bin)

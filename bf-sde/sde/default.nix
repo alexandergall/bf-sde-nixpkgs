@@ -34,7 +34,7 @@ let
     pname = "bf-sde-misc-components";
     inherit version src;
     patches = patches.mainCMake or [];
-    phases = [ "unpackPhase" "installPhase" ];
+    phases = [ "unpackPhase" "patchPhase" "installPhase" ];
     installPhase = ''
       mkdir $out
       cp *manifest $out

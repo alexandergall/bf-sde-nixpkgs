@@ -187,9 +187,13 @@ let
     lib.optionalString python.isPy3 (
       if (lib.versionOlder version "9.11") then ''
         sed -i -e 's/import bfruntime_pb2/from . import bfruntime_pb2/' $sitePath/tofino/bfrt_grpc/bfruntime_pb2_grpc.py
-      '' else ''
-        sed -i -e 's/import bfruntime_pb2/from bfrt_grpc import bfruntime_pb2/' $sitePath/tofino/bfrt_grpc/bfruntime_pb2_grpc.py
-      '') +
+      '' else
+        ## 9.12 already has the fix with "from ."
+        if (lib.versionOlder version "9.12") then ''
+          sed -i -e 's/import bfruntime_pb2/from bfrt_grpc import bfruntime_pb2/' $sitePath/tofino/bfrt_grpc/bfruntime_pb2_grpc.py
+        '' else ''
+          sed -i -e 's/from . import bfruntime_pb2/from bfrt_grpc import bfruntime_pb2/' $sitePath/tofino/bfrt_grpc/bfruntime_pb2_grpc.py
+        '') +
 
     ## Link the directories in site-packages/tofino and
     ## site-packages/tofino_pd_api to site-packages. This allows

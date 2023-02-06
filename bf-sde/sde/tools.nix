@@ -55,6 +55,12 @@ stdenv.mkDerivation {
     ## same environment.  To isolate the additional modules, we use
     ## PTF_PYTHONPATH and translate it to PYTHONPATH in the wrapper.
     substitute run_p4_tests.sh $out/bin/run_p4_tests.sh --replace sudo /usr/bin/sudo
+  '' + (lib.optionalString (lib.versionAtLeast version "9.12")
+    ## We don't need the Python dependency discovery introduced in
+    ## 9.12.0
+  ''
+    sed -i -e '/sdepythonpath/d' $out/bin/run_p4_tests.sh
+  '') + ''
     chmod a+x $out/bin/run_p4_tests.sh
     wrap $out/bin/run_p4_tests.sh \
       "${lib.strings.makeBinPath [ coreutils utillinux gawk python ]}" \

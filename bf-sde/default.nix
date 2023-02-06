@@ -192,14 +192,16 @@ let
                 rec {
                   programs = import ./p4-16-examples (mkSrc "p4-examples" // {
                     bf-sde = self;
-                    inherit (pkgs) lib;
-                    inherit platform;
+                    inherit pkgs platform;
                   });
                   cases =
                     let
                       runTest = program:
                         let
-                          args = (import (./p4-16-examples + "/${self.version}.nix")).args.${program.p4Name} or {};
+                          args = (import p4-16-examples/compose.nix {
+                            bf-sde = self;
+                            inherit pkgs platform;
+                          }).args.${program.p4Name} or {};
                         in program.runTest args;
                     in lib.mapAttrs (_: program: runTest program) programs;
                   failed-cases = lib.filterAttrs (n: v: (import (v + "/passed") == false)) cases;
@@ -824,6 +826,33 @@ let
         };
       };
     };
+    v9_12_0 = rec {
+      version = "9.12.0";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "5f3c41c32064909d8dab1c5f91b6a268b5c13835e5cfa48ff6ef7a526c93ad38";
+        patches = {
+          mainTools = [ sde/run_switchd-9.11.0.patch sde/run_bfshell-9.7.0.patch
+                        sde/run_p4_tests-9.7.0.patch ];
+          mainCMake = [ sde/P4Build.cmake-9.12.0.patch ];
+          p4-examples = [];
+          ptf-modules = [ ptf-modules/run_ptf_tests.patch ];
+        };
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "60999d78e9a854e3a23b82ad0b644199e4aca5d88ad8eecea156e65faed2c2d4";
+          patches = {
+            newport = [ bf-platforms/newport-eth-compliance.patch ];
+          };
+        };
+      };
+      stdenv = gcc11Stdenv;
+      thrift = thrift_0_14;
+      libcli = libcli1_10;
+      python_bf_drivers = python3;
+    };
   };
 
-in bf-sde // { latest = bf-sde.v9_11_1; }
+in bf-sde // { latest = bf-sde.v9_12_0; }
