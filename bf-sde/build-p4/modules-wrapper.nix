@@ -53,7 +53,7 @@
       echo "Initializing I2C for Netberg Aurora 710"
       /usr/bin/sudo --preserve-env=MODULES ${modules}/bin/i2c_utils.sh i2c_init
     '';
-  }.${self.baseboard} or "") + ''
+  }.${if self.baseboard != null then self.baseboard else ""} or "") + ''
     exec ${self}/bin/${execName} "$@"
   ''
    else ''

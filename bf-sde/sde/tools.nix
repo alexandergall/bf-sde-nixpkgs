@@ -1,7 +1,7 @@
 { src, patches, version, sdeEnv, runtime, baseboard, stdenv, lib,
   makeWrapper, python, coreutils, ethtool, iproute, utillinux,
   gnugrep, gnused, gawk, less, findutils, gcc, gnumake, which, procps,
-  bash, cmake }:
+  bash, cmake, jq }:
 
 stdenv.mkDerivation {
   inherit version src patches;
@@ -73,14 +73,14 @@ stdenv.mkDerivation {
             ## the BF Academy courses.
             copy ${./p4_build.sh} p4_build.sh \
               "${lib.strings.makeBinPath [ coreutils utillinux gnugrep gnused gawk
-                                           less findutils gcc gnumake which python ]}"
+                                           less findutils gcc gnumake which python jq ]}"
 
           ''
         else
           ''
             copy ${./p4_build-cmake} p4_build.sh \
               "${lib.strings.makeBinPath [ sdeEnv coreutils utillinux cmake gnumake
-                                           gcc findutils gnused python ]}"
+                                           gcc findutils gnused python jq ]}"
           '')
     );
 }

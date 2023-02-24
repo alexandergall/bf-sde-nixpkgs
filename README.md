@@ -36,6 +36,7 @@ Table of Contents
       * [Add archives to the Nix store](#addArchives)
       * [Clone into the Repository](#cloneRepo)
    * [Baseboard and Platform Support](#baseboardPlatform)
+      * [BSP-Less Platform Support](#bspLess)
    * [P4 Program Development with the SDE Shell](#sdeShell)
       * [Compile](#compile)
       * [Run on ASIC](#runOnASIC)
@@ -392,6 +393,38 @@ overriding the `target` paramete.
 
 References to platforms and baseboards throughout this document refer
 to the table above.
+
+### <a name="bspLess"></a> BSP-Less Platform Support
+
+If a BSP is not available for a particular platform, it can still be
+supported, provided that at least a file known as the _board port map_
+is present. A collection of these files is provided by the [Stratum
+project](https://github.com/stratum/stratum/tree/main/stratum/hal/config).
+
+The port mapping file is a low-level description of how the SerDes
+lines of the Tofino chip are wired on a particular baseboard. It is
+the bare minimum required to enable and configure the ports through
+the `bf_switchd` process.  In this mode of operation, the SDE is built
+without any BSP and hence contains no platform-dependent libraries at
+all.  The port map file is passed to the `bf_switchd` process which
+will then skip the step where it would try to locate those libraries
+and use the static port configuration instead.
+
+As a consequence, the QSFP ports are completely invisible, i.e. it is
+not possible to check, for example, whether a plugin is present or not
+or discover any of its properties including optical power levels.  It
+is still expected that most plugins work.
+
+Some of the parametets in the port map file concern characteristics of
+the electrical signals which could be specific for certain plugin
+types like copper wires. It is possible that those values are not
+suited for other types of plugins hence no guarantee can be made that
+all plugins will work correctly in BSP-less mode.
+
+Due to the nature of the management interfaced used for QSFP-DD
+plugins (CMIS), which requires access to the modules for proper
+operation, BSP-less mode can not be applied to Tofino2-based
+platforms.
 
 ## <a name="sdeShell"></a>P4 Program Development with the SDE Shell
 
@@ -1540,7 +1573,31 @@ the utility scripts like `run_bfshell.sh`.
 
 This is a function which, given a [platform
 identifier](#baseboardPlatform), returns the identifier of the
-baseboard that provides support for it.
+baseboard that provides support for it. An exception is raised if the
+platform identifier is not known.
+
+The baseboard can be `null` if the platform is supported in [BSP-Less
+Mode](#bspLess). There are two ways in which this can happen. The
+first is to explicitly set the `baseboard` attribute in
+`bf-sde/bf-platforms/properties.nix` to null. In that case, the
+`portMap` attribute must also be present and point to the port map
+JSON file.  In this mode, the platform is supported for any SDE
+version in BSP-less mode.
+
+If `baseboard` is not `null`, i.e. it contains the name of an actual
+baseboard, the platform can only be supported if a BSP is available
+for the given SDE version, i.e. the platform cannpt be supported for
+SDE versions for which there is no BSP available.  It is possible to
+fall back to BSP-less mode for such a platform by adding the port map
+file with the `portMap` attribute. In that case,
+`baseboardForPlatform` will return `null` and emit the message "No
+native platform support for `<platform>`, falling back to BSP-less
+mode".
+
+If the SDE does not have a BSP for the platform and no `portMap` is
+specified, `baseboardForPlatform` raises an exception with the message
+"Platform `<platform>` not supported in SDE `<SDE-version>` and no
+BSP-less fallback provided".
 
 #### <a name="support"></a>`support`
 

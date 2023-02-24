@@ -45,6 +45,7 @@ in {
   };
   inventec_d5264q28b = {
     baseboard = "inventec";
+    portMap = port-maps/inventec_d5264q28b.json;
     target = "tofino";
     serialDevice = "ttyS0";
     serialSettings = "115200n8";
@@ -52,6 +53,7 @@ in {
   };
   inventec_d10064 = {
     baseboard = "inventec";
+    portMap = port-maps/inventec_d10064.json;
     target = "tofino";
     serialDevice = "ttyS0";
     serialSettings = "115200n8";

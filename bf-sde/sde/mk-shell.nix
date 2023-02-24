@@ -5,6 +5,7 @@
 
 let
   baseboard = bf-sde.baseboardForPlatform platform;
+  bspLess = baseboard == null;
   sde = bf-sde.override {
     inherit baseboard;
   };
@@ -66,6 +67,8 @@ in pkgs.mkShell {
     pkgs.lib.optionalString (baseboard == "aps_bf2556") ''
       export LD_LIBRARY_PATH=${pkgs.lib.strings.makeLibraryPath [ sde ]}
       export SAL_HOME=''${SAL_HOME:-${sde.pkgs.bf-platforms.aps_bf2556.salRefApp}}
+    '' + pkgs.lib.optionalString bspLess ''
+      export TOFINO_PORT_MAP=${bf-sde.platforms.${platform}.portMap}
     '' + ''
     export P4_INSTALL=~/.bf-sde/${sde.version}
     export SDE=${sde}
@@ -79,7 +82,11 @@ in pkgs.mkShell {
     cat <<EOF
 
     Intel Tofino SDE ${sde.version} on platform "${platform}"
+  '' + pkgs.lib.optionalString bspLess ''
 
+     Running in BSP-less mode with board port mapping $TOFINO_PORT_MAP
+
+  '' + ''
     ${greetings.${platform} or greetings.asic}
     Build artifacts and logs are stored in $P4_INSTALL
 

@@ -222,14 +222,28 @@ let
 
         baseboardForPlatform = platform:
           assert lib.assertOneOf "platform" platform (builtins.attrNames self.allPlatforms);
-          self.allPlatforms.${platform}.baseboard;
+          with builtins;
+          let
+            properties = self.allPlatforms.${platform};
+            baseboard = properties.baseboard;
+          in
+            if (baseboard == null || hasAttr baseboard sdePkgs.bf-platforms) then
+              assert lib.assertMsg (baseboard == null -> properties ? portMap)
+                "Port-mapping file missing for BSP-less platform ${platform}";
+              baseboard
+            else
+              if (properties ? portMap) then
+                trace "No native platform support for ${platform}, falling back to BSP-less mode"
+                  null
+              else
+                throw ("Platform ${platform} not supported in SDE ${self.version} "
+                       + "and no BSP-less fallback provided");
 
         ## The set of all known platforms
         allPlatforms = import bf-platforms/properties.nix;
         ## The set of platforms supported by this SDE
-        platforms = lib.filterAttrs (_: prop:
-          ## BSP-less platforms are supported in all SDEs
-          prop.baseboard == null || builtins.hasAttr prop.baseboard sdePkgs.bf-platforms)
+        platforms = lib.filterAttrs (platform: _:
+          (builtins.tryEval (self.baseboardForPlatform platform)).success)
           self.allPlatforms;
 
         runtimeEnv = baseboard:

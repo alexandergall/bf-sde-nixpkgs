@@ -57,7 +57,12 @@ let
     '';
   };
   maybeRuntime = lib.optionalString runtime "-runtime";
-  maybeBaseboard = lib.optionalString (baseboard != null) "-${baseboard}";
+  maybeBaseboard =
+    if baseboard == null then
+      "-bspless"
+    else
+      "-${baseboard}";
+    #lib.optionalString (baseboard != null) "-${baseboard}";
   sdeEnv = buildEnv {
     name = "bf-sde" + maybeBaseboard + maybeRuntime + "-env-${version}";
     paths = paths ++ [ addToEnv ];

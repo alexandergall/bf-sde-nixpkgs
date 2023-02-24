@@ -65,6 +65,7 @@ let
   };
 
   baseboard = bf-sde.baseboardForPlatform platform;
+  bspLess = baseboard == null;
   passthru = {
     inherit p4Name platform target baseboard;
 
@@ -112,9 +113,14 @@ let
     pname = "${execName}-artifacts";
     inherit version src p4Name patches buildFlags;
 
-    buildPhase = if lib.versionOlder bf-sde.version "9.7.0" then ''
-      set -e
-      export P4_INSTALL=$out
+    buildPhase =
+      assert lib.assertMsg (bspLess -> target == "tofino")
+        "${platform}/${target}: bsp-less mode only supported for tofino target";
+      ''
+        set -e
+        export P4_INSTALL=$out
+        export TOFINO_PORT_MAP=${bf-sde.platforms.${platform}.portMap or ""}
+      '' + (if lib.versionOlder bf-sde.version "9.7.0" then ''
       export SDE_BUILD=$TEMP
       export SDE_LOGS=$TEMP
       mkdir $out
@@ -128,8 +134,6 @@ let
       ${bf-sde}/bin/p4_build.sh $buildFlags $path/$exec_name.p4
     '' else (
       ''
-        set -e
-        export P4_INSTALL=$out
         echo "Building \"${p4Name}.p4\" as \"${execName}\" for target \"${target}\" with p4c flags \"$buildFlags\""
         ${bf-sde}/bin/p4_build.sh --p4-name=${execName} --p4c-flags="$buildFlags" \
           --cmake-flags ${targetFlag} $(realpath ${path}/${p4Name}.p4)
@@ -137,20 +141,9 @@ let
       '' + lib.optionalString pureArtifacts ''
         find $out/share \( -name source.json -o -name frontend-ir.json \) -exec rm {} \;
       ''
-    );
+    ));
 
     installPhase = ''true'';
-    postFixup =
-      let
-        portMap = bf-sde.platforms.${platform}.portMap;
-      in
-        assert lib.assertMsg (baseboard == null -> target == "tofino")
-          "${platform}/${target}: bspless mode only supported for tofino target";
-        lib.optionalString (baseboard == null) ''
-          conf=$out/share/p4/targets/${target}/${execName}.conf
-          jq '.p4_devices[0].p4_programs[0] += {"board-port-map": "${portMap}"}' $conf >$conf.tmp
-          mv $conf.tmp $conf
-        '';
   };
 
   self = stdenv.mkDerivation {
@@ -195,7 +188,7 @@ let
         chmod a+x $out/bin/$EXEC_NAME
       '';
     }.${platform} or (
-      lib.optionalString (baseboard == null) ''
+      lib.optionalString bspLess ''
         BANNER=\
         '=============================================================\n'\
         'NOTE: This platform is supported in \"BSP-less\" mode only.\n'\
