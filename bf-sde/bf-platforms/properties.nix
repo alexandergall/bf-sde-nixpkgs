@@ -80,4 +80,36 @@ in {
     serialSettings = "115200n8";
     mgmtEthPciAddr = "0000:08:00.0";
   };
+  asterfusion_x308p = {
+    baseboard = null;
+    target = "tofino";
+    portMap = port-maps/asterfusion_x308p.json;
+    serialDevice = "ttyS0";
+    serialSettings = "115200n8";
+    ## mgmtEthPciAddr TBD
+  };
+  asterfusion_x312p = {
+    baseboard = null;
+    target = "tofino";
+    portMap = port-maps/asterfusion_x312p.json;
+    serialDevice = "ttyS0";
+    serialSettings = "115200n8";
+    ## mgmtEthPciAddr TBD
+  };
+  asterfusion_x532p = {
+    baseboard = null;
+    target = "tofino";
+    portMap = port-maps/asterfusion_x532p.json;
+    serialDevice = "ttyS0";
+    serialSettings = "115200n8";
+    ## mgmtEthPciAddr TBD
+  };
+  asterfusion_x564p = {
+    baseboard = null;
+    target = "tofino";
+    portMap = port-maps/asterfusion_x564p.json;
+    serialDevice = "ttyS0";
+    serialSettings = "115200n8";
+    ## mgmtEthPciAddr TBD
+  };
 }
