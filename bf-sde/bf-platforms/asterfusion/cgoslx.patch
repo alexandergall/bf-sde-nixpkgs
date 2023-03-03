@@ -1,0 +1,56 @@
+diff -Naur cgoslx-master.orig/CgosDrv/Lx/DrvOsaLx.c cgoslx-master/CgosDrv/Lx/DrvOsaLx.c
+--- cgoslx-master.orig/CgosDrv/Lx/DrvOsaLx.c	2022-08-08 08:20:54.000000000 +0200
++++ cgoslx-master/CgosDrv/Lx/DrvOsaLx.c	2023-03-01 13:47:51.220094829 +0100
+@@ -45,9 +45,9 @@
+ #endif
+ /* by tsihang, 2022-08-08. */
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(5,0,0)
+-#define __cgolx_cur_state(s) current->state=(s);
+-#else
+ #define __cgolx_cur_state(s) current->__state=(s);
++#else
++#define __cgolx_cur_state(s) current->state=(s);
+ #endif
+ 
+ #ifndef PAGE_KERNEL_EXEC
+diff -Naur cgoslx-master.orig/Makefile cgoslx-master/Makefile
+--- cgoslx-master.orig/Makefile	2022-08-08 08:20:54.000000000 +0200
++++ cgoslx-master/Makefile	2023-03-01 13:31:58.600559264 +0100
+@@ -1,4 +1,8 @@
+-ALLDIRS = CgosDrv CgosLib CgosDump CgosMon CgosTest CgosTest-I2C CgosTest-reg-I2C
++ifdef KMOD
++ ALLDIRS = CgosDrv
++else
++ ALLDIRS = CgosLib CgosDump CgosMon CgosTest CgosTest-I2C CgosTest-reg-I2C
++endif
+ 
+ # Determination of the target system
+ target = $(shell uname)
+@@ -28,14 +32,19 @@
+ 	$(M) $(N)
+ 
+ install:
+-	install -m 755 -o root -g root CgosDump/$(sysdir)/cgosdump /usr/bin
+-	install -m 755 -o root -g root CgosMon/$(sysdir)/cgosmon /usr/bin
+-	install -m 755 -o root -g root CgosTest/$(sysdir)/cgostest /usr/bin
+-	install -m 755 -o root -g root CgosTest-I2C/$(sysdir)/cgosi2c /usr/bin
+-	install -m 755 -o root -g root CgosTest-reg-I2C/$(sysdir)/cgosreg /usr/bin
+-	install -m 755 -o root -g root CgosLib/$(sysdir)/libcgos.so /usr/lib
+-	install -m 644 -o root -g root CgosDrv/$(sysdir)/cgosdrv.ko /lib/modules/`uname -r`/kernel/drivers/misc
+-	depmod -a
++ifndef KMOD
++	install -m 755 -d $(PREFIX)/bin
++	install -m 755 CgosDump/$(sysdir)/cgosdump $(PREFIX)/bin
++	install -m 755 CgosMon/$(sysdir)/cgosmon $(PREFIX)/bin
++	install -m 755 CgosTest/$(sysdir)/cgostest $(PREFIX)/bin
++	install -m 755 CgosTest-I2C/$(sysdir)/cgosi2c $(PREFIX)/bin
++	install -m 755 CgosTest-reg-I2C/$(sysdir)/cgosreg $(PREFIX)/bin
++	install -m 755 -d $(PREFIX)/lib
++	install -m 755 CgosLib/$(sysdir)/libcgos.so $(PREFIX)/lib
++else
++	install -m 755 -d $(KMOD_INSTALL)
++	install -m 644 CgosDrv/$(sysdir)/cgosdrv.ko $(KMOD_INSTALL)
++endif
+ 
+ # copy the udev rules to /lib/udev/rules.d - but only if the file does not already exist
+ 	@if ! [ -e /lib/udev/rules.d/99-cgos.rules ]; \

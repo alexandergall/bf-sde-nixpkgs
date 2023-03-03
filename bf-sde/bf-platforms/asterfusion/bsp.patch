@@ -1,0 +1,113 @@
+diff -Naur bf-bsp-8.9.x-master.orig/configure.ac bf-bsp-8.9.x-master/configure.ac
+--- bf-bsp-8.9.x-master.orig/configure.ac	2023-02-28 04:20:27.000000000 +0100
++++ bf-bsp-8.9.x-master/configure.ac	2023-03-02 11:06:24.492410170 +0100
+@@ -59,6 +59,13 @@
+ #AM_CONDITIONAL([BUILD_TOFINO_BRINGUP_PLAT], [test "x$build_tof_brgup" = xyes])
+ #AM_CONDITIONAL([BUILD_NEWPORT_PLAT], [test "x$build_newport" = xyes])
+ AM_CONDITIONAL([BUILD_ASTERFUSIONBF_PLAT], [test "x$build_asterfusionbf" = xyes])
++AM_CONDITIONAL([BUILD_ASTERFUSIONBF_PLAT], [test "x$build_asterfusionbf" = xyes])
++AC_ARG_WITH([sde_version],
++	[AS_HELP_STRING([--with-sde-version],
++	[SDE version as numeric value (e.g. 990) [default=990]])],
++	[],
++	[with_sde_version=990])
++AM_CONDITIONAL([SDE_AT_LEAST_990],[test ${with_sde_version} -ge 990])
+ 
+ asterfusion_diags=no
+ AC_ARG_WITH([asterfusion-diags],
+diff -Naur bf-bsp-8.9.x-master.orig/drivers/include/bf_pltfm_types/bf_pltfm_types.h bf-bsp-8.9.x-master/drivers/include/bf_pltfm_types/bf_pltfm_types.h
+--- bf-bsp-8.9.x-master.orig/drivers/include/bf_pltfm_types/bf_pltfm_types.h	2023-02-28 04:20:27.000000000 +0100
++++ bf-bsp-8.9.x-master/drivers/include/bf_pltfm_types/bf_pltfm_types.h	2023-03-01 17:26:33.292132815 +0100
+@@ -31,7 +31,9 @@
+ /* Mainline SDE version used by bsp, set 9.5.0 as default.
+  * Valid value in [891,900,910,930,950,970,990,9110,9120,...].
+  * A sub version start from a given mainline is valid too, such as 931,952,971, etc. */
++#ifndef SDE_VERSION
+ #define SDE_VERSION 950
++#endif
+ #define SDE_VERSION_EQ(key) \
+         EQ(SDE_VERSION, (key))
+ 
+@@ -42,7 +44,9 @@
+         LT(SDE_VERSION, (key))
+ 
+ /* Mainline OS version, <= 9 or > 9. Valid value in [8,9,10,11]. */
++#ifndef OS_VERSION
+ #define OS_VERSION 9
++#endif
+ #define OS_VERSION_EQ(key) \
+         EQ(OS_VERSION, (key))
+ 
+@@ -103,7 +107,7 @@
+ #endif
+ 
+ 
+-#if SDE_VERSION_LT(980)
++#if SDE_VERSION_LT(990)
+ #ifdef INC_PLTFM_UCLI
+ #include <bfutils/uCli/ucli.h>
+ #include <bfutils/uCli/ucli_argparse.h>
+diff -Naur bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/cp2112_util/Makefile.am bf-bsp-8.9.x-master/platforms/asterfusion-bf/cp2112_util/Makefile.am
+--- bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/cp2112_util/Makefile.am	2023-02-28 04:20:27.000000000 +0100
++++ bf-bsp-8.9.x-master/platforms/asterfusion-bf/cp2112_util/Makefile.am	2023-03-02 10:27:22.879898665 +0100
+@@ -19,10 +19,15 @@
+ # Different SDE on different OS.
+ # Default to OS <= 9 and SDE < 9.9.x. by tsihang, 2022-11-09.
+ # For SDE version <  9.9.x && OS <= 9
+-cp2112_util_LDADD = -lbfsys -lusb-1.0 -lcurl -lcgos
++#cp2112_util_LDADD = -lbfsys -lusb-1.0 -lcurl -lcgos
+ # For SDE version >= 9.9.x && OS <= 9
+ #cp2112_util_LDADD =  -ltarget_sys -lusb-1.0 -lcurl -lcgos
+ # For SDE version <  9.9.x && OS >= 10
+ #cp2112_util_LDADD =  -lbfsys -lusb-1.0 -lcurl -lcgos -li2c
+ # For SDE version >= 9.9.x && OS >= 10
+ #cp2112_util_LDADD =  -ltarget_sys -lusb-1.0 -lcurl -lcgos -li2c
++if SDE_AT_LEAST_990
++cp2112_util_LDADD =  -ltarget_sys -lusb-1.0 -lcurl -lcgos -li2c
++else
++cp2112_util_LDADD =  -lbfsys -lusb-1.0 -lcurl -lcgos -li2c
++endif
+diff -Naur bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/tofino_spi_util/Makefile.am bf-bsp-8.9.x-master/platforms/asterfusion-bf/tofino_spi_util/Makefile.am
+--- bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/tofino_spi_util/Makefile.am	2023-02-28 04:20:27.000000000 +0100
++++ bf-bsp-8.9.x-master/platforms/asterfusion-bf/tofino_spi_util/Makefile.am	2023-03-02 10:25:56.547589894 +0100
+@@ -11,7 +11,7 @@
+ # Different SDE on different OS.
+ # Default to OS <= 9 and SDE < 9.9.x. by tsihang, 2022-11-09.
+ # For SDE version <  9.9.x && OS <= 9
+-tofino_spi_util_LDADD = -lbfsys -lusb-1.0 -lcurl -lcgos
++#tofino_spi_util_LDADD = -lbfsys -lusb-1.0 -lcurl -lcgos
+ # For SDE version >= 9.9.x && OS <= 9
+ #tofino_spi_util_LDADD =  -ltarget_sys -ldriver -lusb-1.0 -lcurl -lcgos
+ # For SDE version <  9.9.x && OS >= 10
+@@ -19,5 +19,11 @@
+ # For SDE version >= 9.9.x && OS >= 10
+ #tofino_spi_util_LDADD =  -ltarget_sys -ldriver -lusb-1.0 -lcurl -lcgos -li2c
+ 
++if SDE_AT_LEAST_990
++tofino_spi_util_LDADD =  -ltarget_sys -ldriver -lusb-1.0 -lcurl -lcgos -li2c
++else
++tofino_spi_util_LDADD =  -lbfsys -ldriver -lusb-1.0 -lcurl -lcgos -li2c
++endif
++
+ # For SDE version <  9.7.x
+ #tofino_spi_util_LDADD += -lbf_switchd_lib
+diff -Naur bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/uart_util/Makefile.am bf-bsp-8.9.x-master/platforms/asterfusion-bf/uart_util/Makefile.am
+--- bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/uart_util/Makefile.am	2023-02-28 04:20:27.000000000 +0100
++++ bf-bsp-8.9.x-master/platforms/asterfusion-bf/uart_util/Makefile.am	2023-03-02 10:32:47.097060312 +0100
+@@ -17,10 +17,15 @@
+ # Different SDE on different OS.
+ # Default to OS <= 9 and SDE < 9.9.x. by tsihang, 2022-11-09.
+ # For SDE version <  9.9.x && OS <= 9
+-uart_util_LDADD = -lbfsys -lusb-1.0 -lcurl -lcgos
++#uart_util_LDADD = -lbfsys -lusb-1.0 -lcurl -lcgos
+ # For SDE version >= 9.9.x && OS <= 9
+ #uart_util_LDADD =  -ltarget_sys -lusb-1.0 -lcurl -lcgos
+ # For SDE version <  9.9.x && OS >= 10
+ #uart_util_LDADD =  -lbfsys -lusb-1.0 -lcurl -lcgos -li2c
+ # For SDE version >= 9.9.x && OS >= 10
+ #uart_util_LDADD =  -ltarget_sys -lusb-1.0 -lcurl -lcgos -li2c
++if SDE_AT_LEAST_990
++uart_util_LDADD =  -ltarget_sys -lusb-1.0 -lcurl -lcgos -li2c
++else
++uart_util_LDADD =  -lbfsys -lusb-1.0 -lcurl -lcgos -li2c
++endif

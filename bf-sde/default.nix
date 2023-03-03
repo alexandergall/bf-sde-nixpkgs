@@ -114,6 +114,10 @@ let
               (SDE.callPackage (import bf-platforms/netberg/i2c-utils.nix) {})
               (SDE.callPackage (import bf-platforms/netberg/optoe.nix) {})
             ];
+            asterfusion = [
+              sdePkgs.bf-platforms.asterfusion.cgos
+              sdePkgs.bf-platforms.asterfusion.nct6779d
+            ];
           };
         };
         ## Combination of kernel-modules with baseboard-specific
@@ -660,6 +664,29 @@ let
           name = "bf-platforms-netberg-7xx-bsp-9.7.0-220210.tgz";
           outputHash = "ad140a11fd39f7fbd835d6774d9b855f2ba693fd1d2e61b45a94aa30ed08a4f1";
         };
+        asterfusion = fetchFromStore {
+          ## These tarballs were created from the Asterfusion Gitlab
+          ## repositories
+          name = "bf-bsp-8.9.x-1ccba211.tar.gz";
+          ## Run gitver.sh in the cloned BSP to get this version ID
+          asterfusion_version = "Git: r25 23.02-rc3";
+          outputHash = "5b0468c011d2c835c11ff34bd7b5fc890b2010ca3caa8d4109f1e17233423466";
+          patches = {
+            asterfusion = [ bf-platforms/asterfusion/bsp.patch ];
+          };
+          cgoslx = fetchFromStore {
+            name = "cgoslx-facc4fb4.tar.gz";
+            outputHash = "aeebf6ef2238233e9a50707770fbbfc00440c4f7cf4adc94ddc1ef755552c7b4";
+            patches = [
+                bf-platforms/asterfusion/cgoslx.patch
+            ];
+          };
+          nct6779d = fetchFromStore {
+            name = "nct6779d-0b64ec0b.tar.gz";
+            outputHash = "e33b38a5b23ec17b6bcc233cb59b3dc07f8c66c86c1d5b64e8503df95c3e078f";
+            patches = [];
+          };
+        };
       };
       stdenv = gcc8Stdenv;
       thrift = thrift_0_13;
@@ -742,6 +769,7 @@ let
             newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
         };
+        inherit (v9_7_0.bsps) asterfusion;
       };
       stdenv = gcc8Stdenv;
       thrift = thrift_0_14;
@@ -772,6 +800,7 @@ let
             newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
         };
+        inherit (v9_7_0.bsps) asterfusion;
       };
       stdenv = gcc8Stdenv;
       thrift = thrift_0_14;
@@ -817,6 +846,7 @@ let
             newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
         };
+        inherit (v9_7_0.bsps) asterfusion;
       };
       stdenv = gcc11Stdenv;
       thrift = thrift_0_14;
@@ -845,6 +875,7 @@ let
             newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
         };
+        inherit (v9_7_0.bsps) asterfusion;
       };
       stdenv = gcc11Stdenv;
       thrift = thrift_0_14;
@@ -898,6 +929,7 @@ let
             newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
         };
+        inherit (v9_7_0.bsps) asterfusion;
       };
       stdenv = gcc11Stdenv;
       thrift = thrift_0_14;
