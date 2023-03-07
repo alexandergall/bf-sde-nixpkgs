@@ -106,9 +106,15 @@ let
           substituteInPlace Makefile.am --replace "SUBDIRS = third-party include src pd_api_gen doc" "SUBDIRS = third-party include src doc"
         ''
       else
-        lib.optionalString (lib.versionAtLeast version "9.11.0") ''
+        lib.optionalString (lib.versionAtLeast version "9.11.0") (''
           sed -i -e 's/emulatorflag \''${CMAKE_C_FLAGS}/emulatorflag "\''${CMAKE_C_FLAGS}"/' CMakeLists.txt
         '' +
+        ## There is a glitch that only exists in 9.11, where client.py
+        ## is missing a prefix in an import statement. Prior and later
+        ## SDEs don't have that.
+        lib.optionalString (lib.versionOlder version "9.12.0") ''
+        sed -i -e 's/from bfruntime_pb2_grpc/from bfrt_grpc.bfruntime_pb2_grpc/' src/bf_rt/bfruntime_grpc_client/python/client.py
+      '') +
         ## Override the location of libpython provided by
         ## bf-utils.
         ''
