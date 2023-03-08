@@ -118,6 +118,12 @@ let
               sdePkgs.bf-platforms.asterfusion.cgos
               sdePkgs.bf-platforms.asterfusion.nct6779d
             ];
+            aps_bf2556 = lib.optionals (lib.versionAtLeast sdeSpec.version "9.11.0") [
+              sdePkgs.bf-platforms.aps_bf2556.irq
+            ];
+            aps_bf6064 = lib.optionals (lib.versionAtLeast sdeSpec.version "9.11.0") [
+              sdePkgs.bf-platforms.aps_bf6064.igb
+            ];
           };
         };
         ## Combination of kernel-modules with baseboard-specific
@@ -876,6 +882,29 @@ let
           };
         };
         inherit (v9_7_0.bsps) asterfusion;
+        aps_bf2556 = fetchFromStore {
+          name = "apsn-bsp-bf2556x-1t_${version}-beta1.tgz";
+          outputHash = "8c0ff0e2aee2df6f225bc32debc426a10abd84b1d67483548ad49f8ba9149069";
+          aps_gearbox = fetchFromStore {
+            name = "apsn-bf2556x-gearbox-standalone_0.9.0_amd64.deb";
+            outputHash = "51e4e3f6eef8c1491697285b3704017f52744b264d8a9f1806894f24d5203924";
+            version = "0.9.0";
+          };
+          aps_irq = fetchFromStore {
+            name = "irq-debug-dkms_1.0.0.tar.xz";
+            outputHash = "0a30519ff82617348e65b3139761277c604a8a768d2ce06817d3cb2fe7c2bf90";
+            version = "1.0.0";
+          };
+        };
+        aps_bf6064 = fetchFromStore {
+          name = "apsn-bsp-bf6064x-t_${version}-beta1.tgz";
+          outputHash = "82353c9aaf4dc4ead6dc800d5f4f334201ea970114761655ea0530e4eae436b8";
+          aps_igb = fetchFromStore {
+            name = "igb-dkms_5.4.6-0.tar.gz";
+            outputHash = "634c2c1be504a1fba3d1bd79a3680d2cf6f6ef92efd7826db86c0745fc9b6adc";
+            version = "5.4.6";
+          };
+        };
       };
       stdenv = gcc11Stdenv;
       thrift = thrift_0_14;

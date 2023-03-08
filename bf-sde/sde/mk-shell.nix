@@ -65,11 +65,13 @@ let
   };
 in pkgs.mkShell {
   buildInputs = [ sde pythonEnv ] ++ inputs.pkgs
-                ++ (pkgs.lib.optional (baseboard == "aps_bf2556")
+                ++ (pkgs.lib.optional (baseboard == "aps_bf2556" &&
+                                       lib.versionOlder sde.version "9.11.0")
                   sde.pkgs.bf-platforms.aps_bf2556.salRefApp);
 
   shellHook =
-    pkgs.lib.optionalString (baseboard == "aps_bf2556") ''
+    pkgs.lib.optionalString (baseboard == "aps_bf2556" &&
+                             lib.versionOlder sde.version "9.11.0") ''
       export LD_LIBRARY_PATH=${pkgs.lib.strings.makeLibraryPath [ sde ]}
       export SAL_HOME=''${SAL_HOME:-${sde.pkgs.bf-platforms.aps_bf2556.salRefApp}}
     '' + pkgs.lib.optionalString bspLess ''

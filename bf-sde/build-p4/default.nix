@@ -158,7 +158,7 @@ let
       BUILD=${build}
       RUNTIME_ENV=${runtimeEnv}
     '' +
-    (rec {
+    ((rec {
       model = ''
         substitute ${./run-model.sh} $out/bin/$EXEC_NAME \
           --subst-var BUILD \
@@ -173,6 +173,7 @@ let
       '';
       modelT2 = model;
       modelT3 = model;
+    } // lib.optionalAttrs (lib.versionOlder bf-sde.version "9.11.0") {
       stordis_bf2556x_1t = ''
         RUNTIME_ENV_WITH_ARTIFACTS=${runtimeEnvWithArtifacts}
         APS_SAL_REFAPP=${bf-sde.pkgs.bf-platforms.aps_bf2556.salRefApp}
@@ -187,7 +188,7 @@ let
           --subst-var _LD_LIBRARY_PATH
         chmod a+x $out/bin/$EXEC_NAME
       '';
-    }.${platform} or (
+    }).${platform} or (
       lib.optionalString bspLess ''
         BANNER=\
         '=============================================================\n'\
