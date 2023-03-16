@@ -73,7 +73,7 @@ let
     ## kernel before executing the program.
     moduleWrapper' = modules:
       callPackage ./modules-wrapper.nix {
-        inherit execName self;
+        inherit execName self bf-sde;
         modules = modules.override { inherit baseboard; };
         requiredKernelModule =
           if isModel platform then
