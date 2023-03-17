@@ -103,6 +103,10 @@ in pkgs.mkShell {
     echo "(Re-)Loading bf_fpga kernel module for ${platform}"
     sudo rmmod bf_fpga 2>/dev/null || true
     sudo $(type -p bf_fpga_mod_load)
+  '' + pkgs.lib.optionalString (baseboard == "asterfusion") ''
+    echo -e "\nPerforming platform detection for the Asterfusion series\n"
+    export MODULES=${sde}
+    sudo --preserve-env=MODULES $(type -p xt-cfgen.sh)
   '' + pkgs.lib.optionalString (runCommand != "") ''
     echo "Executing command \"${runCommand}\""
     ${runCommand}
