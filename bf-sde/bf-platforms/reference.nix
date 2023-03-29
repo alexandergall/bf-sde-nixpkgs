@@ -40,7 +40,7 @@ let
           ## the derivation will *only* contain the module where as
           ## for the non-kernel build, the derivation will not contain
           ## the module or any part related to it.
-          preConfigure = lib.optionalString (baseboard == "newport" && kernelSpec == null) ''
+          preConfigure = lib.optionalString (baseboard != "newport" || kernelSpec == null) ''
             sed -i -e '/bf_fpga/d' CMakeLists.txt
           '';
 
@@ -79,6 +79,7 @@ let
               shopt -s extglob
               rm -rf $out/lib/!(modules)
               rm -rf $out/bin/!(bf_fpga*)
+              rm -rf $out/share
               shopt -u extglob
               mkdir $out/lib/modules/${kernelSpec.kernelRelease}
               mv $out/lib/modules/*.ko $out/lib/modules/${kernelSpec.kernelRelease}
