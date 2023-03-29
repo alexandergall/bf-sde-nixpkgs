@@ -1292,6 +1292,7 @@ be accessed with the "attribute path" `bf-sde.<version>.<attribute>`.
    * `version`, type: string
    * `pkgs`, type: attribute set of derivations (see previous section)
    * `buildP4Program`, type: function
+   * `kernelIDFromRelease`, type: function
    * `modulesForKernel`, type: function
    * `allPlatforms`, type: attribute set
    * `platforms`, type: attribute set
@@ -1491,22 +1492,18 @@ of the `pkgs.kernel-modules` sub-package).
 The `runTest` function runs the PTF tests from test scripts in the
 source tree (more documentation on this TBD).
 
-#### <a name="modulesForKernel"></a>`modulesForKernel`
+#### <a name="kernelIDFromRelease"></a>`kernelIDFromRelease`
 
 The function takes a kernel release identifier as input and returns a
-derivation containing the matching kernel modules.  The release
-identifier is a string as returned by the `uname -r` command.  The
-function attempts to find a match of the kernel release with the
-kernel releases associated with all supported kernels. The logic for
-this can be found in `bf-sde/kernels/select-modules.nix`.  There are
-three possible results:
+kernel ID that uniquely identifies a supported kernel.  The release
+identifier is a string as returned by the `uname -r` command. There
+are three possible results:
 
-   1. There is exactly one match. The function returns the kernel
-      module package for the matching kernel (i.e. one of the
-      attributes of the `pkgs.kernel-modules` sub-package).
-   2. There is no match. The function returns a dummy kernel module
-      package that produces an error message when an attempt is made
-      to load the module.
+   1. There is exactly one match. The function returns the kernel ID
+      for the matching kernel (i.e. one of the attribute names of the
+      `pkgs.kernel-modules` sub-package).
+   2. There is no match. The function returns the dummy kernel ID
+      "none".
    3. There are multiple matches. This means that there are several
       distinct kernels which produce the same release identifier
       (i.e. `uname -r` results in the same string when executed on a
@@ -1515,6 +1512,18 @@ three possible results:
       options.  In this case, the user must disambiguate the choice
       by setting the `SDE_KERNEL_ID` environment variable to the
       desired kernel ID.
+
+If the environment variable `SDE_KERNEL_ID` is set, it overrides the
+value of the kernel release passed to the function. An error is thrown
+if the given kernel ID does not exist in the set
+`pkgs.kernel-modules`.
+
+#### <a name="modulesForKernel"></a>`modulesForKernel`
+
+The function takes a kernel release identifier as input and returns a
+derivation containing the matching kernel modules. It first calls
+[kernelIDFromRelease](#kernelIDFromRelease) and then returns the
+attribute of `pkgs.kernel-modules` for the resulting kernel ID.
 
 #### <a name="allPlatforms"></a>`allPlatforms`
 
