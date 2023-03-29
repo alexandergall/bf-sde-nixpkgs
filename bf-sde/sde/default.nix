@@ -8,11 +8,17 @@
 ## compiled P4 programs (see ../build-p4-program.nix). It respects the
 ## rules concerning the distribution of SDE components to third
 ## parties imposed by Intel.
+##
+## If called without kernelID, the environment does not contain any
+## kernel modules. Otherwise, the kernel modules for the given kernel
+## are added to the environment. This includes all baseboard-sepcific
+## modules and related tools (if any).
 
 { runtime ? false, baseboard, version, src, patches, passthru ? {},
   lib, stdenv, buildEnv, callPackage, bf-syslibs, bf-drivers,
   bf-drivers-runtime, bf-utils, bf-platforms, p4c, tofino-model,
-  ptf-modules, ptf-utils, ptf-utils-runtime }:
+  ptf-modules, ptf-utils, ptf-utils-runtime, kernelID ? null,
+  kernel-modules }:
 
 let
   paths =
@@ -26,7 +32,9 @@ let
     ++ lib.optional (baseboard != null)
       (assert lib.asserts.assertMsg (builtins.hasAttr baseboard bf-platforms)
         "Baseboard ${baseboard} not supported by SDE ${version}";
-        bf-platforms.${baseboard});
+        bf-platforms.${baseboard})
+    ++ lib.optional (kernelID != null && baseboard != null)
+      (kernel-modules.${kernelID}.override { inherit baseboard; });
 
   ## Additional things from the SDE source that need to go into
   ## sdeEnv.
@@ -62,7 +70,6 @@ let
       "-bspless"
     else
       "-${baseboard}";
-    #lib.optionalString (baseboard != null) "-${baseboard}";
   sdeEnv = buildEnv {
     name = "bf-sde" + maybeBaseboard + maybeRuntime + "-env-${version}";
     paths = paths ++ [ addToEnv ];

@@ -1,20 +1,25 @@
 { bf-sde, pkgs, isModel }:
 
-{ inputFn ? { pkgs, pythonPkgs }: {}, kernelID ? null,
-  kernelRelease ? null, platform ? "model", runCommand ? "" }:
+{ inputFn ? { pkgs, pythonPkgs }: {}
+, kernelID ?
+  if isModel platform then
+    "none"
+  else
+    assert kernelRelease != null;
+    bf-sde.kernelIDFromRelease kernelRelease
+, kernelRelease ? null
+, platform ? "model"
+, runCommand ? ""
+}:
 
 let
   baseboard = bf-sde.baseboardForPlatform platform;
   bspLess = baseboard == null;
+  ## Add kernel modules to the SDE environment (generic and
+  ## baseboard-specific)
   sde = bf-sde.override {
-    inherit baseboard;
+    inherit baseboard kernelID;
   };
-  kernelModules = pkgs.lib.optional (! isModel platform)
-    (assert kernelID != null -> kernelRelease == null;
-      if kernelID != null then
-        sde.pkgs.kernel-modules.${kernelID}
-      else
-        sde.modulesForKernel kernelRelease);
   bf-drivers = sde.pkgs.bf-drivers;
   python = bf-drivers.pythonModule;
   defaultInputs = {
@@ -59,7 +64,7 @@ let
     modelT3 = model;
   };
 in pkgs.mkShell {
-  buildInputs = [ sde pythonEnv ] ++ inputs.pkgs ++ kernelModules
+  buildInputs = [ sde pythonEnv ] ++ inputs.pkgs
                 ++ (pkgs.lib.optional (baseboard == "aps_bf2556")
                   sde.pkgs.bf-platforms.aps_bf2556.salRefApp);
 

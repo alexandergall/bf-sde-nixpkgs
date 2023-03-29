@@ -209,10 +209,34 @@ let
           in
             lib.mapAttrs' (n: v: testForTarget n v.target) modelPlatforms;
 
+        kernelIDFromRelease = kernelRelease:
+          let
+            kernel-modules = sdePkgs.kernel-modules;
+            envKernelID = builtins.getEnv "SDE_KERNEL_ID";
+            matches = lib.filterAttrs (_: spec: spec.kernelRelease == kernelRelease) kernel-modules;
+            ids = lib.attrNames matches;
+            nMatches = builtins.length ids;
+          in
+            if envKernelID != "" then
+              builtins.trace ("Using kernel \"${envKernelID}\" from the environment, "
+                              + "ignoring kernelRelease \"${kernelRelease}\"")
+                (assert lib.assertMsg (builtins.hasAttr envKernelID kernel-modules)
+                  "Unknown kernel ID \"${envKernelID}\"";
+                  envKernelID)
+            else
+              if nMatches == 0 then
+                builtins.trace "Unsupported kernel ${kernelRelease}, bf_switchd on TNA not available"
+                  "none"
+              else
+                if nMatches == 1 then
+                  builtins.head ids
+                else
+                  throw ("Multiple matches exist for kernel ${kernelRelease}. " +
+                         "Chose one by setting SDE_KERNEL_ID to one of: ${lib.concatStringsSep ", " ids}");
+
         modulesForKernel = kernelRelease:
-          (SDE.callPackage kernels/select-modules.nix {
-             inherit (self.pkgs) kernel-modules;
-           }) kernelRelease;
+          builtins.getAttr (self.kernelIDFromRelease kernelRelease)
+            sdePkgs.kernel-modules;
 
         ## A function that compiles a given P4 program in the context of
         ## the SDE.

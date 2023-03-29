@@ -16,18 +16,11 @@ let
   rootPaths =
     with builtins;
     let
-      kernels = attrNames bf-sde.pkgs.kernel-modules;
-      baseboards = attrNames bf-sde.pkgs.bf-platforms;
-      allPlatforms = attrNames (import ../../bf-platforms/properties.nix);
-      isSupported = platform:
-        elem (bf-sde.baseboardForPlatform platform) baseboards;
-      platforms = filter isSupported allPlatforms;
+      kernelID = attrNames bf-sde.pkgs.kernel-modules;
+      platform = attrNames bf-sde.platforms;
     in
       map mkEnvInputDrv
-        (lib.crossLists (platform: kernelID: { inherit platform kernelID; }) [
-          platforms
-          kernels
-        ]);
+        (lib.cartesianProductOfSets { inherit kernelID platform; });
   closure = closureInfo {
     rootPaths =
       ## List of input derivations of mkShell for all platforms and
@@ -45,7 +38,7 @@ let
       ## properly.
       ++ (with bashInteractive; [ doc info man dev ])
       ## Build dependencies for the "unsupported-kernel" package.
-      ++ [ (bf-sde.modulesForKernel "dummy").inputDerivation ];
+      ++ [ (bf-sde.modulesForKernel "none").inputDerivation ];
   };
 in runCommand "sde-env-${bf-sde.version}-standalone-installer" {} ''
   mkdir tmp
