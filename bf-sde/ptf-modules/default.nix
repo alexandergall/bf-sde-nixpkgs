@@ -24,7 +24,7 @@ in python.pkgs.buildPythonApplication rec {
     inherit python;
   };
 
-  propagatedBuildInputs = [ bf-drivers ] ++ (with python.pkgs; [ scapy thrift ]);
+  propagatedBuildInputs = [ bf-drivers ] ++ (with python.pkgs; [ scapy thrift protobuf ]);
   buildInputs = [ makeWrapper ];
 
   catchConflicts = false;

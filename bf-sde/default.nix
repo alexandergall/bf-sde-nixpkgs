@@ -196,13 +196,16 @@ let
                   });
                   cases =
                     let
+                      args = (import p4-16-examples/compose.nix {
+                        bf-sde = self;
+                        inherit pkgs platform;
+                      }).args;
                       runTest = program:
                         let
-                          args = (import p4-16-examples/compose.nix {
-                            bf-sde = self;
-                            inherit pkgs platform;
-                          }).args.${program.p4Name} or {};
-                        in program.runTest args;
+                          testArgs = lib.attrsets.zipAttrsWith
+                            (n: v: lib.flatten v) [ (args.${program.p4Name} or {})
+                                                    (args.default or {}) ];
+                        in program.runTest testArgs;
                     in lib.mapAttrs (_: program: runTest program) programs;
                   failed-cases = lib.filterAttrs (n: v: (import (v + "/passed") == false)) cases;
                 };
@@ -378,6 +381,8 @@ let
         };
       };
       stdenv = gcc7Stdenv;
+      grpc = grpc_1_17_0.override { inherit protobuf; };
+      protobuf = protobuf3_6;
       thrift = thrift_0_12;
     };
     v9_2_0 = rec {
@@ -396,6 +401,8 @@ let
         };
       };
       stdenv = gcc7Stdenv;
+      grpc = grpc_1_17_0.override { inherit protobuf; };
+      protobuf = protobuf3_6;
       thrift = thrift_0_12;
     };
     v9_3_0 = rec {
@@ -418,6 +425,8 @@ let
         };
       };
       stdenv = gcc8Stdenv;
+      grpc = grpc_1_17_0.override { inherit protobuf; };
+      protobuf = protobuf3_6;
       thrift = thrift_0_13;
     };
     v9_3_1 = lib.recursiveUpdate v9_3_0 rec {
@@ -479,6 +488,8 @@ let
         };
       };
       stdenv = gcc8Stdenv;
+      grpc = grpc_1_17_0.override { inherit protobuf; };
+      protobuf = protobuf3_6;
       thrift = thrift_0_13;
     };
     v9_5_0 = rec {
@@ -513,6 +524,8 @@ let
         };
       };
       stdenv = gcc8Stdenv;
+      grpc = grpc_1_17_0.override { inherit protobuf; };
+      protobuf = protobuf3_6;
       thrift = thrift_0_13;
     };
     v9_5_1 = lib.recursiveUpdate (lib.filterAttrsRecursive (n: v: n != "aps") v9_5_0) rec {
@@ -595,6 +608,8 @@ let
         };
       };
       stdenv = gcc8Stdenv;
+      grpc = grpc_1_17_0.override { inherit protobuf; };
+      protobuf = protobuf3_6;
       thrift = thrift_0_13;
       libcli = libcli1_10;
     };
@@ -662,9 +677,11 @@ let
         };
       };
       stdenv = gcc8Stdenv;
+      grpc = grpc_1_17_0.override { inherit protobuf; };
+      protobuf = protobuf3_6;
       thrift = thrift_0_13;
       libcli = libcli1_10;
-      python_bf_drivers = python3;
+      python_bf_drivers = python39BfDrivers grpc protobuf;
     };
     v9_7_1 = lib.recursiveUpdate v9_7_0 rec {
       version = "9.7.1";
@@ -744,9 +761,11 @@ let
         };
       };
       stdenv = gcc8Stdenv;
+      grpc = grpc_1_17_0.override { inherit protobuf; };
+      protobuf = protobuf3_6;
       thrift = thrift_0_14;
       libcli = libcli1_10;
-      python_bf_drivers = python3;
+      python_bf_drivers = python39BfDrivers grpc protobuf;
     };
     v9_9_0 = rec {
       version = "9.9.0";
@@ -774,9 +793,11 @@ let
         };
       };
       stdenv = gcc8Stdenv;
+      grpc = grpc_1_17_0.override { inherit protobuf; };
+      protobuf = protobuf3_6;
       thrift = thrift_0_14;
       libcli = libcli1_10;
-      python_bf_drivers = python3;
+      python_bf_drivers = python39BfDrivers grpc protobuf;
     };
     v9_9_1 = lib.recursiveUpdate v9_9_0 rec {
       version = "9.9.1";
@@ -819,9 +840,11 @@ let
         };
       };
       stdenv = gcc11Stdenv;
+      grpc = grpc_1_17_0.override { inherit protobuf; };
+      protobuf = protobuf3_6;
       thrift = thrift_0_14;
       libcli = libcli1_10;
-      python_bf_drivers = python3;
+      python_bf_drivers = python39BfDrivers grpc protobuf;
     };
     v9_11_0 = rec {
       version = "9.11.0";
@@ -846,6 +869,8 @@ let
           };
         };
       };
+      ## p4studio requires grcp 1.40.0 and protobuf 3.15.8. We use
+      ## slightly newer versions provided by the stock nixpkgs.
       stdenv = gcc11Stdenv;
       thrift = thrift_0_14;
       libcli = libcli1_10;
@@ -886,7 +911,7 @@ let
           };
         };
       };
-      stdenv = gcc11Stdenv;
+      stdenv = gcc12Stdenv;
       thrift = thrift_0_14;
       libcli = libcli1_10;
       python_bf_drivers = python3;

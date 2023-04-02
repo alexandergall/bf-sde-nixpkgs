@@ -1,34 +1,25 @@
 nixpkgsSrc:
 
 let
-  grpc_1_17_0_attrs = super: pname: fetchSubmodules: sha256: rec {
-    version = "1.17.0";
-    name = "${pname}-${version}";
-    src = super.fetchFromGitHub {
-      owner = "grpc";
-      repo = "grpc";
-      rev = "v${version}";
-      inherit fetchSubmodules sha256;
-    };
-    ## Fix issue with glibc 2.30 and later
-    patches = [ ./grpc/1.17.0-glibc.patch ];
-  };
-  pythonCommon = super: python-self: python-super: {
-    grpcio = python-super.grpcio.overrideAttrs (oldAttrs:
-      grpc_1_17_0_attrs super "grpcio" true "06jpr27l71wz0fbifizdsalxvpraix7s5dg30pgd2wvd77ky5p3h");
+  pythonCommon = python-self: python-super: {
     ## Required by Intel's modified PTF from ptf-modules/bf-ptf
     scapy-helper = python-super.buildPythonPackage rec {
       pname = "scapy_helper";
-      version = "0.10.0";
+      version = "0.14.8";
 
       buildInputs = with python-self; [ pyperclip scapy ];
       propagatedBuildInputs = with python-self; [ tabulate ];
       src = python-super.fetchPypi {
         inherit pname version;
-        sha256 = "1xkmkb2vx2j5ca2367m1v4p821nnsm7rfxp621bbkxsav8kgc77g";
+        sha256 = "0q71fmibb1wfwbzkwymv306kd0s6r9pvp8225h1l4bqla5sbblz9";
       };
       doCheck = false;
+      preConfigure = ''
+        echo ${version} >VERSION
+        sed -i -e 's/tabulate~=/tabulate>=/' setup.py
+      '';
     };
+
     ## tenjin.py is included in the bf-drivers packages and
     ## installed in
     ## SDE_INSTALL/lib/python2.7/site-packages/tofino_pd_api/.
@@ -125,6 +116,7 @@ let
           url = "https://archive.apache.org/dist/thrift/${version}/${name}.tar.gz";
           sha256 = "0a04v7dgm1qzgii7v0sisnljhxc9xpq2vxkka60scrdp6aahjdn3";
       };
+      patches = [];
       doCheck = false;
     }));
 
@@ -136,6 +128,7 @@ let
           url = "https://archive.apache.org/dist/thrift/${version}/${name}.tar.gz";
           sha256 = "0yai9c3bdsrkkjshgim7zk0i7malwfprg00l9774dbrkh2w4ilvs";
       };
+      patches = [];
       doCheck = false;
     }));
 
@@ -165,11 +158,12 @@ let
         owner = "dparrish";
       };
       patches = [];
+      CFLAGS = [
+        "-Wno-error=array-bounds"
+      ];
     });
 
-    ## Override protobuf globally because grpc and grpcio depend on it and
-    ## they are both dependencies of bf-drivers.
-    protobuf = (super.protobuf.overrideAttrs (_: rec {
+    protobuf3_6 = (super.protobuf3_17.overrideAttrs (_: rec {
       version = "3.6.1.3";
       src = self.fetchFromGitHub {
         owner = "protocolbuffers";
@@ -184,8 +178,16 @@ let
       in callPackageOverride { inherit stdenv buildPackages; }
     );
 
-    grpc = (super.grpc.overrideAttrs (oldAttrs:
-      (grpc_1_17_0_attrs super "grpc" false "17y8lhkx22qahjk89fa0bh76q76mk9vwza59wbwcpzmy0yhl2k23") // {
+    grpc_1_17_0 = (super.grpc.overrideAttrs (oldAttrs: rec {
+      version = "1.17.0";
+      src = super.fetchFromGitHub {
+        owner = "grpc";
+        repo = "grpc";
+        rev = "v${version}";
+        sha256 = "17y8lhkx22qahjk89fa0bh76q76mk9vwza59wbwcpzmy0yhl2k23";
+      };
+      ## Fix issue with glibc 2.30 and later
+      patches = [ ./grpc/1.17.0-glibc.patch ];
       # grpc has a CMakefile and a standard (non-autoconf) Makefile. We
       # use cmake to build the package but that method does not support
       # pkg-config. We have to use the Makefile for that explicitely.
@@ -199,68 +201,146 @@ let
 
     python2 = super.python2.override {
       packageOverrides = python-self: python-super:
-        (pythonCommon super python-self python-super) // {
-        scapy = python-super.scapy.override {
-          withOptionalDeps = false;
-          withCryptography = false;
-          withPlottingSupport = false;
-          withGraphicsSupport = false;
-        };
-        pyperclip = python-super.pyperclip.overridePythonAttrs (_:  rec {
-          doCheck = false;
-        });
-        ply = python-super.ply.overrideAttrs (_: rec {
-          pname = "ply";
-          version = "3.9";
+        (pythonCommon python-self python-super) // {
+          scapy = python-super.scapy.override {
+            withOptionalDeps = false;
+            withCryptography = false;
+            withPlottingSupport = false;
+            withGraphicsSupport = false;
+          };
+          pyperclip = python-super.pyperclip.overridePythonAttrs (_:  rec {
+            doCheck = false;
+          });
+          ply = python-super.ply.overrideAttrs (_: rec {
+            pname = "ply";
+            version = "3.9";
 
-          src = python-super.fetchPypi {
-            inherit pname version;
-            sha256 = "0gpl0yli3w03ipyqfrp3w5nf0iawhsq65anf5wwm2wf5p502jzhd";
+            src = python-super.fetchPypi {
+              inherit pname version;
+              sha256 = "0gpl0yli3w03ipyqfrp3w5nf0iawhsq65anf5wwm2wf5p502jzhd";
+            };
+          });
+          mox = python-self.buildPythonPackage rec {
+            pname = "mox";
+            version = "0.5.3";
+            src = self.fetchurl {
+              url = "http://pymox.googlecode.com/files/${pname}-${version}.tar.gz";
+              sha256 = "4d18a4577d14da13d032be21cbdfceed302171c275b72adaa4c5997d589a5030";
+            };
+            # error: invalid command 'test'
+            doCheck = false;
           };
-        });
-        mox = python-self.buildPythonPackage rec {
-          pname = "mox";
-          version = "0.5.3";
-          src = self.fetchurl {
-            url = "http://pymox.googlecode.com/files/${pname}-${version}.tar.gz";
-            sha256 = "4d18a4577d14da13d032be21cbdfceed302171c275b72adaa4c5997d589a5030";
+          ipaddress = python-self.buildPythonPackage rec {
+            pname = "ipaddress";
+            version = "1.0.23";
+            src = python-super.fetchPypi {
+              inherit pname version;
+              sha256 = "1qp743h30s04m3cg3yk3fycad930jv17q7dsslj4mfw0jlvf1y5p";
+            };
           };
-          # error: invalid command 'test'
-          doCheck = false;
+          netifaces = python-self.buildPythonPackage rec {
+            pname = "netifaces";
+            version = "0.11.0";
+            src = python-super.fetchPypi {
+              inherit pname version;
+              sha256 = "0cnajf5rl4w1sa72j921scbigr6zndig56cq8ggpx45jdqa7jfh4";
+            };
+          };
+          funcsigs = python-self.buildPythonPackage rec {
+            pname = "funcsigs";
+            version = "1.0.2";
+            src = python-super.fetchPypi {
+              inherit pname version;
+              sha256 = "0l4g5818ffyfmfs1a924811azhjj8ax9xd1cffr1mzd3ycn0zfx7";
+            };
+            doCheck = false;
+          };
+          mock = python-self.buildPythonPackage rec {
+            pname = "mock";
+            version = "3.0.5";
+            src = python-super.fetchPypi {
+              inherit pname version;
+              sha256 = "1hrp6j0yrx2xzylfv02qa8kph661m6yq4p0mc8fnimch9j4psrc3";
+            };
+            propagatedBuildInputs = with python-self; [ funcsigs six ];
+          };
+          psutil = python-self.buildPythonPackage rec {
+            pname = "psutil";
+            version = "5.9.4";
+            src = python-super.fetchPypi {
+              inherit pname version;
+              sha256 = "0qjafyldjnp25rylh9sz77jvv14myhivwjll709lnpa3xcwrfzrx";
+            };
+            propagatedBuildInputs = with python-self; [ mock ];
+            doCheck = false;
+          };
+          tabulate = python-self.buildPythonPackage rec {
+            pname = "tabulate";
+            version = "0.8.10";
+            src = python-super.fetchPypi {
+              inherit pname version;
+              sha256 = "06gm2jqn8pljk5sz4hkycdls5cdh5pdklpqmf0kpihksvprz6mvc";
+            };
+          };
+          grpcio =
+            let
+              grpc = self.grpc_1_17_0;
+            in (python-super.grpcio.overrideAttrs (oldAttrs: {
+              enableParallelBuilding = false;
+              inherit (grpc) patches;
+            })).override { inherit grpc; };
+          protobuf =
+            let
+              protobuf' = python-super.protobuf.override { protobuf = self.protobuf3_6; };
+            in protobuf'.overridePythonAttrs (old: {
+              prePatch = "";
+              propagatedBuildInputs = [ python-self.six ];
+              postInstall = ''
+                touch $out/lib/${self.python2.libPrefix}/site-packages/google/__init__.py
+              '';
+            });
         };
-        protobuf = python-super.protobuf.overridePythonAttrs (old: {
-          ## protoc hangs when compiling the unittest proto files :/
-          preConfigure = ''
-            sed -i -e '/GenerateUnittestProtos()$/d' setup.py
-          '';
-          postInstall = ''
-            touch $out/lib/${self.python2.libPrefix}/site-packages/google/__init__.py
-          '';
-        });
-      };
     };
 
     python3 = super.python3.override {
       packageOverrides = python-self: python-super:
-        (pythonCommon super python-self python-super) // {
-        jsl = python-super.buildPythonPackage rec {
-          pname = "jsl";
-          version = "0.2.4";
-          name = "${pname}-${version}";
+        (pythonCommon python-self python-super) // {
+          jsl = python-super.buildPythonPackage rec {
+            pname = "jsl";
+            version = "0.2.4";
+            name = "${pname}-${version}";
 
-          src = python-super.fetchPypi {
-            inherit pname version;
-            sha256 = "17f14h2aj05hcwc5p1600s5n33fhfsjig7id5gqhixbgdc8j29i2";
+            src = python-super.fetchPypi {
+              inherit pname version;
+              sha256 = "17f14h2aj05hcwc5p1600s5n33fhfsjig7id5gqhixbgdc8j29i2";
+            };
+            doCheck = false;
           };
-
-          doCheck = false;
         };
-        protobuf = python-super.protobuf.overridePythonAttrs (_: {
-          preBuild = ''
-            sed -i -e 's/_2to3//' setup.py
-          '';
-        });
-      };
+    };
+
+    ## Older versions of protobuf are not compatible with Python 3.10
+    ## due to changes in the "collections" module (stuff like
+    ## "MutableMapping" were moved out of the main module). SDEs that
+    ## use Python3 in bf-drivers but require an old version of
+    ## protobuf (i.e. 9.7 through 9.10) use this Python version.
+    python39BfDrivers = grpc: protobuf: super.python39.override {
+      packageOverrides = python-self: python-super:
+        (pythonCommon python-self python-super) // {
+          grpcio = (python-super.grpcio.overrideAttrs (oldAttrs: {
+            inherit (grpc) patches;
+          })).override { inherit grpc; };
+          protobuf =
+            let
+              protobuf' = python-super.protobuf.override { inherit protobuf; };
+            in protobuf'.overridePythonAttrs (_: {
+              preBuild = ''
+                sed -i -e 's/_2to3//' setup.py
+              '';
+              prePatch = "";
+              propagatedBuildInputs = [ python-self.six ];
+            });
+        };
     };
 
     ## This set contains one derivation per SDE version.  The names of

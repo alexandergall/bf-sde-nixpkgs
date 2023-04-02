@@ -19,7 +19,7 @@ in if buildSystem.isCmake
        };
        buildInputs = [ python cmake ];
        propagatedBuildInputs = with python.pkgs;
-         [ ipaddress six netifaces psutil ];
+         [ six netifaces psutil ];
        postInstall = ''
          python -m compileall $out/lib/${python.libPrefix}/site-packages
        '';

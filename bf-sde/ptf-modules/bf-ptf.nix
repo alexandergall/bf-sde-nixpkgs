@@ -57,7 +57,7 @@ in if buildSystem.isCmake
        pythonPath = [ bf-drivers.dev bf-pktpy ]
                     ## Note: the global thrift shadows that from "with
                     ## python.pkgs", hence the full path below
-                    ++ (with python.pkgs; [ python.pkgs.thrift scapy-helper ]
+                    ++ (with python.pkgs; [ python.pkgs.thrift scapy-helper protobuf ]
                                           ++ lib.optional (lib.versionAtLeast version "9.7.0")
                                             getmac
                     );
@@ -77,7 +77,7 @@ in if buildSystem.isCmake
 
        propagatedBuildInputs =
          [ bf-drivers bf-pktpy ]
-         ++ (with python.pkgs; [ thrift scapy-helper]);
+         ++ (with python.pkgs; [ python.pkgs.thrift scapy-helper protobuf ]);
 
        preConfigure = ''pushd bf-ptf'';
        postInstall = ''

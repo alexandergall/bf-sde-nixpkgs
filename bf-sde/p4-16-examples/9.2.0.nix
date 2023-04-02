@@ -44,14 +44,14 @@
     # "tna_32q_multiprogram"
   ];
   args = {
+    default = {
+      pythonModules = [ "ipaddress" ];
+    };
     tna_custom_hash = {
       pythonModules = [ "crcmod" ];
     };
     tna_proxy_hash = {
       pythonModules = [ "crcmod" ];
-    };
-    tna_ternary_match = {
-      pythonModules = [ "ipaddress" ];
     };
   };
 }
