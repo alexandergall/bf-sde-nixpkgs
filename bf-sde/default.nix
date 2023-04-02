@@ -911,7 +911,7 @@ let
           };
         };
       };
-      stdenv = gcc12Stdenv;
+      stdenv = gcc11Stdenv;
       thrift = thrift_0_14;
       libcli = libcli1_10;
       python_bf_drivers = python3;
