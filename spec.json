@@ -14,10 +14,10 @@
             "src": { "type": "git", "value": "https://github.com/alexandergall/bf-sde-nixpkgs.git", "emailresponsible": false }
         }
     },
-    "SDE-track-nixpkgs-22.11": {
+    "SDE-track-nixpkgs-master": {
         "enabled": 1,
         "hidden": false,
-        "description": "Barefoot Tofino SDE on nixpkgs 22.11",
+        "description": "Barefoot Tofino SDE on nixpkgs master",
         "nixexprinput": "src",
         "nixexprpath": "release.nix",
         "checkinterval": 86400,
@@ -26,8 +26,8 @@
         "emailoverride": "",
         "keepnr": 3,
         "inputs": {
-            "src": { "type": "git", "value": "https://github.com/alexandergall/bf-sde-nixpkgs.git nixpkgs-22.11", "emailresponsible": false },
-	    "nixpkgs": { "type": "git", "value": "https://github.com/NixOS/nixpkgs.git release-22.11", "emailresponsible": false }
+            "src": { "type": "git", "value": "https://github.com/alexandergall/bf-sde-nixpkgs.git nixpkgs-master", "emailresponsible": false },
+	    "nixpkgs": { "type": "git", "value": "https://github.com/NixOS/nixpkgs.git", "emailresponsible": false }
         }
     },
     "test-cases": {
@@ -45,10 +45,10 @@
             "src": { "type": "git", "value": "https://github.com/alexandergall/bf-sde-nixpkgs.git", "emailresponsible": false }
         }
     },
-    "test-cases-track-nixpkgs-22.11": {
+    "test-cases-track-nixpkgs-master": {
         "enabled": 1,
         "hidden": false,
-        "description": "Barefoot Tofino SDE test cases on nixpkgs 22.11",
+        "description": "Barefoot Tofino SDE test cases on nixpkgs master",
         "nixexprinput": "src",
         "nixexprpath": "release-test-cases.nix",
         "checkinterval": 86400,
@@ -57,8 +57,8 @@
         "emailoverride": "",
         "keepnr": 3,
         "inputs": {
-            "src": { "type": "git", "value": "https://github.com/alexandergall/bf-sde-nixpkgs.git nixpkgs-22.11", "emailresponsible": false },
-	    "nixpkgs": { "type": "git", "value": "https://github.com/NixOS/nixpkgs.git release-22.11", "emailresponsible": false }
+            "src": { "type": "git", "value": "https://github.com/alexandergall/bf-sde-nixpkgs.git nixpkgs-master", "emailresponsible": false },
+	    "nixpkgs": { "type": "git", "value": "https://github.com/NixOS/nixpkgs.git", "emailresponsible": false }
         }
     }
 }
