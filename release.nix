@@ -1,9 +1,9 @@
 ## Used by the Hydra CI system to build all components for all
 ## SDE versions.
-{ }:
+{ ... }@args:
 
 let
-  pkgs = import ./. {};
+  pkgs = import ./. args;
 in
 with pkgs;
 with lib;
