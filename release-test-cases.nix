@@ -2,10 +2,10 @@
 ## we would also run the test cases themselves but that requires a lot
 ## of memory for parallel builds because each test is run in a VM with
 ## 6GB.
-{ }:
+{ ... }@args:
 
 let
-  pkgs = import ./. {};
+  pkgs = import ./. args;
 in
 with pkgs;
 with lib;
