@@ -208,6 +208,7 @@ the `sha256` sums are as follows
 | bf-sde-9.10.0.tgz          | `e0e423b92dd7c046594db8b435c7a5d292d3d1f3242fd4b3a43ad0af2abafdb1` |
 | bf-sde-9.11.0.tgz          | `649cd026bc85a23f09c24d010d460d4192ae2a7e009da1f042183ca001d706b3` |
 | bf-sde-9.11.1.tgz          | `3880d0ea8e245b0c64c517530c3185da960a032878070d80f4647f3bc15b4a9f` |
+| bf-sde-9.11.2.tgz          | `e6c8cb7083b0c51fcccc5ba175889906cb596d3f05514dfe31f44a4c9102ad57` |
 | bf-sde-9.12.0.tgz          | `5f3c41c32064909d8dab1c5f91b6a268b5c13835e5cfa48ff6ef7a526c93ad38` |
 
 #### <a name="BSPArchives"></a> BSP
@@ -258,6 +259,7 @@ Support](#baseboardPlatform))
 | `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.10.0.tgz`| 9.10.0| `d222007fa6eee4e3a0441f09ed86b3b6f46df4c7d830b82b08bf6df7f88c4268` |
 | `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.11.0.tgz`| 9.11.0| `a688b7468db32ea48c5ed83b040743b29f5beec28b3861440ff157cc6a5128ea` |
 | `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.11.1.tgz`| 9.11.1| `37aa23ebf4f117bfc45e4ad1fbdb0d366b3bd094dd609f6ef1ec8b37ff6f2246` |
+| `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.11.2.tgz`| 9.11.1| `f957ae2888289acc57271ad8d27e59075ddaaab723b38456382d25b8e3330331` |
 | `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.12.0.tgz`| 9.12.0| `60999d78e9a854e3a23b82ad0b644199e4aca5d88ad8eecea156e65faed2c2d4` |
 | `aps_bf2556` `aps_bf6064` | APS Networks | `9.5.0_AOT1.5.1_SAL1.3.2.zip` | 9.4.0 | `2e56f51233c0eef1289ee219582ea0ec6d7455c3f78cac900aeb2b8214df0544`|
 | `aps_bf2556` `aps_bf6064` | APS Networks | `9.5.0_AOT1.5.4_SAL1.3.4.zip` | 9.5.0 | `510e5e18a91203fe6c4c0aabd807eb69ad53224500f7cb755f7c5b09c8e4525d`|
