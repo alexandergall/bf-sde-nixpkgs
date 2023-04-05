@@ -1,18 +1,15 @@
 diff -Naur cgoslx-master.orig/CgosDrv/Lx/DrvOsaLx.c cgoslx-master/CgosDrv/Lx/DrvOsaLx.c
---- cgoslx-master.orig/CgosDrv/Lx/DrvOsaLx.c	2022-08-08 08:20:54.000000000 +0200
-+++ cgoslx-master/CgosDrv/Lx/DrvOsaLx.c	2023-03-01 13:47:51.220094829 +0100
-@@ -45,9 +45,9 @@
+--- cgoslx-master.orig/CgosDrv/Lx/DrvOsaLx.c	2023-04-05 08:44:39.729054316 +0200
++++ cgoslx-master/CgosDrv/Lx/DrvOsaLx.c	2023-04-05 08:44:52.625102987 +0200
+@@ -44,7 +44,7 @@
+ #define __cgolx_vmalloc(size,gfp_mask,prot) __vmalloc((size),(gfp_mask))
  #endif
  /* by tsihang, 2022-08-08. */
- #if LINUX_VERSION_CODE < KERNEL_VERSION(5,0,0)
--#define __cgolx_cur_state(s) current->state=(s);
--#else
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(5,0,0)
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5,14,0)
+ #define __cgolx_cur_state(s) current->state=(s);
+ #else
  #define __cgolx_cur_state(s) current->__state=(s);
-+#else
-+#define __cgolx_cur_state(s) current->state=(s);
- #endif
- 
- #ifndef PAGE_KERNEL_EXEC
 diff -Naur cgoslx-master.orig/Makefile cgoslx-master/Makefile
 --- cgoslx-master.orig/Makefile	2022-08-08 08:20:54.000000000 +0200
 +++ cgoslx-master/Makefile	2023-03-01 13:31:58.600559264 +0100
