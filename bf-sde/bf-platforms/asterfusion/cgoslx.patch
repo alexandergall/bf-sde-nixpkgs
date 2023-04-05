@@ -1,7 +1,14 @@
 diff -Naur cgoslx-master.orig/CgosDrv/Lx/DrvOsaLx.c cgoslx-master/CgosDrv/Lx/DrvOsaLx.c
 --- cgoslx-master.orig/CgosDrv/Lx/DrvOsaLx.c	2023-04-05 08:44:39.729054316 +0200
-+++ cgoslx-master/CgosDrv/Lx/DrvOsaLx.c	2023-04-05 08:44:52.625102987 +0200
-@@ -44,7 +44,7 @@
++++ cgoslx-master/CgosDrv/Lx/DrvOsaLx.c	2023-04-05 09:07:28.542139928 +0200
+@@ -38,13 +38,13 @@
+ #define cgos_ioremap ioremap_cache
+ #endif
+ /* by tsihang, 2022-08-08. */
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(5,0,0)
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5,8,0)
+ #define __cgolx_vmalloc(size,gfp_mask,prot) __vmalloc((size),(gfp_mask),(prot))
+ #else
  #define __cgolx_vmalloc(size,gfp_mask,prot) __vmalloc((size),(gfp_mask))
  #endif
  /* by tsihang, 2022-08-08. */
