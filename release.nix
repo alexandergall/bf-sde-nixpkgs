@@ -1,8 +1,13 @@
 ## Used by the Hydra CI system to build all components for all
 ## SDE versions.
-{ ... }@args:
+{ nixpkgs ? null }:
 
 let
+  args =
+    if nixpkgs == null then
+      {}
+    else
+      { inherit nixpkgs; };
   pkgs = import ./. args;
 in
 with pkgs;
