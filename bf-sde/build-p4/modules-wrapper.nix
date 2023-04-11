@@ -1,5 +1,5 @@
-{ lib, writeShellScriptBin, kmod, gawk, gnugrep, modules, execName,
-  requiredKernelModule, self }:
+{ lib, writeShellScriptBin, kmod, gawk, gnugrep, coreutils, modules,
+  execName, requiredKernelModule, self, bf-sde }:
 
 ## Build a dummy wrapper if no kernel module is required by the
 ## program in order to treat all programs the same.
@@ -52,6 +52,10 @@
       /usr/bin/sudo --preserve-env=MODULES ${modules}/bin/i2c_utils.sh i2c_deinit
       echo "Initializing I2C for Netberg Aurora 710"
       /usr/bin/sudo --preserve-env=MODULES ${modules}/bin/i2c_utils.sh i2c_init
+    '';
+    asterfusion = ''
+      export MODULES=${modules}
+      ${builtins.getAttr self.baseboard bf-sde.pkgs.bf-platforms}/bin/xt-cfgen.sh
     '';
   }.${if self.baseboard != null then self.baseboard else ""} or "") + ''
     exec ${self}/bin/${execName} "$@"

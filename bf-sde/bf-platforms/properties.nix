@@ -16,6 +16,14 @@ let
     serialSettings = "57600n8";
     mgmtEthPciAddr = "0000:02:00.0";
   };
+  asterfusion = {
+    baseboard = "asterfusion";
+    target = "tofino";
+    serialDevice = "ttyS0";
+    serialSettings = "115200n8";
+    ## Checked for X312P
+    mgmtEthPciAddr = "0000:06:00.0";
+  };
 in {
   ## This is a pseudo-platform which uses a variant of the reference
   ## BSP configured for the Tofino software model.
@@ -80,36 +88,8 @@ in {
     serialSettings = "115200n8";
     mgmtEthPciAddr = "0000:08:00.0";
   };
-  asterfusion_x308p = {
-    baseboard = null;
-    target = "tofino";
-    portMap = port-maps/asterfusion_x308p.json;
-    serialDevice = "ttyS0";
-    serialSettings = "115200n8";
-    ## mgmtEthPciAddr TBD
-  };
-  asterfusion_x312p = {
-    baseboard = null;
-    target = "tofino";
-    portMap = port-maps/asterfusion_x312p.json;
-    serialDevice = "ttyS0";
-    serialSettings = "115200n8";
-    ## mgmtEthPciAddr TBD
-  };
-  asterfusion_x532p = {
-    baseboard = null;
-    target = "tofino";
-    portMap = port-maps/asterfusion_x532p.json;
-    serialDevice = "ttyS0";
-    serialSettings = "115200n8";
-    ## mgmtEthPciAddr TBD
-  };
-  asterfusion_x564p = {
-    baseboard = null;
-    target = "tofino";
-    portMap = port-maps/asterfusion_x564p.json;
-    serialDevice = "ttyS0";
-    serialSettings = "115200n8";
-    ## mgmtEthPciAddr TBD
-  };
+  asterfusion_x308p = asterfusion;
+  asterfusion_x312p = asterfusion;
+  asterfusion_x532p = asterfusion;
+  asterfusion_x564p = asterfusion;
 }

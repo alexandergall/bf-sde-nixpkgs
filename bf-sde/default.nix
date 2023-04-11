@@ -114,6 +114,10 @@ let
               (SDE.callPackage (import bf-platforms/netberg/i2c-utils.nix) {})
               (SDE.callPackage (import bf-platforms/netberg/optoe.nix) {})
             ];
+            asterfusion = [
+              sdePkgs.bf-platforms.asterfusion.cgos
+              sdePkgs.bf-platforms.asterfusion.nct6779d
+            ];
           };
         };
         ## Combination of kernel-modules with baseboard-specific
@@ -675,6 +679,29 @@ let
           name = "bf-platforms-netberg-7xx-bsp-9.7.0-220210.tgz";
           outputHash = "ad140a11fd39f7fbd835d6774d9b855f2ba693fd1d2e61b45a94aa30ed08a4f1";
         };
+        asterfusion = fetchFromStore {
+          ## These tarballs were created from the Asterfusion Gitlab
+          ## repositories
+          name = "bf-bsp-8.9.x-b4a4b6c3.tar.gz";
+          ## Run gitver.sh in the cloned BSP to get this version ID
+          asterfusion_version = "Git: r25 23.02-rc3";
+          outputHash = "887c8d618c10ce5b5622afbe95250ecd3818a3be14c0f4b7763c8ce2812e41a6";
+          patches = {
+            asterfusion = [ bf-platforms/asterfusion/bsp.patch ];
+          };
+          cgoslx = fetchFromStore {
+            name = "cgoslx-facc4fb4.tar.gz";
+            outputHash = "aeebf6ef2238233e9a50707770fbbfc00440c4f7cf4adc94ddc1ef755552c7b4";
+            patches = [
+                bf-platforms/asterfusion/cgoslx.patch
+            ];
+          };
+          nct6779d = fetchFromStore {
+            name = "nct6779d-0b64ec0b.tar.gz";
+            outputHash = "e33b38a5b23ec17b6bcc233cb59b3dc07f8c66c86c1d5b64e8503df95c3e078f";
+            patches = [];
+          };
+        };
       };
       stdenv = gcc8Stdenv;
       grpc = grpc_1_17_0.override { inherit protobuf; };
@@ -759,6 +786,7 @@ let
             newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
         };
+        inherit (v9_7_0.bsps) asterfusion;
       };
       stdenv = gcc8Stdenv;
       grpc = grpc_1_17_0.override { inherit protobuf; };
@@ -791,6 +819,7 @@ let
             newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
         };
+        inherit (v9_7_0.bsps) asterfusion;
       };
       stdenv = gcc8Stdenv;
       grpc = grpc_1_17_0.override { inherit protobuf; };
@@ -838,6 +867,7 @@ let
             newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
         };
+        inherit (v9_7_0.bsps) asterfusion;
       };
       stdenv = gcc11Stdenv;
       grpc = grpc_1_17_0.override { inherit protobuf; };
@@ -868,6 +898,7 @@ let
             newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
         };
+        inherit (v9_7_0.bsps) asterfusion;
       };
       ## p4studio requires grcp 1.40.0 and protobuf 3.15.8. We use
       ## slightly newer versions provided by the stock nixpkgs.
@@ -886,6 +917,19 @@ let
         reference = fetchFromStore {
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "37aa23ebf4f117bfc45e4ad1fbdb0d366b3bd094dd609f6ef1ec8b37ff6f2246";
+        };
+      };
+    };
+    v9_11_2 = lib.recursiveUpdate v9_11_0 rec {
+      version = "9.11.2";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "e6c8cb7083b0c51fcccc5ba175889906cb596d3f05514dfe31f44a4c9102ad57";
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "f957ae2888289acc57271ad8d27e59075ddaaab723b38456382d25b8e3330331";
         };
       };
     };
@@ -910,6 +954,7 @@ let
             newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
         };
+        inherit (v9_7_0.bsps) asterfusion;
       };
       stdenv = gcc11Stdenv;
       thrift = thrift_0_14;

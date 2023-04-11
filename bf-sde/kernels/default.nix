@@ -373,6 +373,42 @@ let
         };
       additionalModules = additionalModulesDebian11;
     };
+    Debian11_6 = {
+      kernelRelease = "5.10.0-20-amd64";
+      buildTree = mkDebian {
+        spec = {
+          snapshotTimestamp = "20230404T204441Z";
+          arch = {
+            name = "linux-headers-5.10.0-20-amd64_5.10.158-2_amd64.deb";
+            sha256 = "0gxlnwlblw8qapagvndrycrzixdn0kainp5k0q7xzjbxcgpl8c0i";
+          };
+          common = {
+            name = "linux-headers-5.10.0-20-common_5.10.158-2_all.deb";
+            sha256 = "0986hzwp9pph81n4i2p0qzgzdqwrgiw5kzshd49s38df4kbr9znj";
+          };
+          kbuild = {
+            name = "linux-kbuild-5.10_5.10.158-2_amd64.deb";
+            sha256 = "0d5941h5gv08hbh08d99ldnijsvvkm1wg4vc17ipwmg4sy39018k";
+          };
+          source = {
+            name = "linux-source-5.10_5.10.158-2_all.deb";
+            sha256 = "1x0h5rrq3xdq83bsj5c4lla4ssni8nrgfaj4wa4yd8z4v83w1rim";
+          };
+        };
+        patchelfInputs = [ openssl_1_1.out elfutils ];
+      };
+      patches =
+        let
+          patch = [ ./bf-drivers-kernel-5.8.patch ];
+        in {
+          "9.1.1" = patch ++ [ ./bf-drivers-9.1.1.patch ];
+          "9.2.0" = patch;
+          "9.3.0" = patch;
+          "9.3.1" = patch;
+          "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+        };
+      additionalModules = additionalModulesDebian11;
+    };
   };
 in
   builtins.mapAttrs mkModules kernels
