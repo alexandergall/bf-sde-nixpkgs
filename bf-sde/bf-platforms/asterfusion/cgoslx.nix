@@ -7,6 +7,9 @@ stdenv.mkDerivation {
   KMOD = kernelSpec != null;
   KERNELDIR = lib.optionalString (kernelSpec != null)
     kernelSpec.buildTree;
+  NIX_CFLAGS_COMPILE = lib.optionals (lib.versionAtLeast stdenv.cc.version "11.0") [
+    "-fcommon"
+  ];
   buildPhase = ''
     export KMOD
     export KERNELDIR
