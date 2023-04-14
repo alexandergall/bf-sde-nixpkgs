@@ -887,6 +887,9 @@ let
       sde = fetchFromStore {
         name = "bf-sde-${version}.tgz";
         outputHash = "3880d0ea8e245b0c64c517530c3185da960a032878070d80f4647f3bc15b4a9f";
+        patches = {
+          bf-drivers = [ bf-drivers/9.11-bfrt-INT64-data-type.patch ];
+        };
       };
       bsps = {
         reference = fetchFromStore {
@@ -895,7 +898,7 @@ let
         };
       };
     };
-    v9_11_2 = lib.recursiveUpdate v9_11_0 rec {
+    v9_11_2 = lib.recursiveUpdate v9_11_1 rec {
       version = "9.11.2";
       sde = fetchFromStore {
         name = "bf-sde-${version}.tgz";
