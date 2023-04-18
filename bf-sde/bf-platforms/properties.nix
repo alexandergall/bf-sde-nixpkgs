@@ -76,6 +76,7 @@ in {
   netberg_aurora_710 = {
     baseboard = "netberg_710";
     target = "tofino";
+    portMap = port-maps/netberg_aurora_710.json;
     serialDevice = "ttyS0";
     serialSettings = "115200n8";
     mgmtEthPciAddr = "0000:08:00.0";

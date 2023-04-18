@@ -748,6 +748,10 @@ let
             newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
         };
+        netberg = fetchFromStore {
+          name = "bf-platforms-netberg-7xx-bsp-9.9.0-221113.tgz";
+          outputHash = "def63b745be735a0acfb4cb1a1f2eaeea91d0424762a9ffe04257b5659028870";
+        };
       };
       stdenv = gcc8Stdenv;
       thrift = thrift_0_14;

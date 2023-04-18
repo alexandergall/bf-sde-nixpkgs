@@ -10,7 +10,7 @@ let
         stdenv.mkDerivation {
           pname = "bf-platforms-${baseboard}";
           inherit version;
-          src = if (lib.versionAtLeast version "9.11.0")
+          src = if (lib.versionAtLeast version "9.9.0")
                 then
                   buildSystem.cmakeFixupSrc {
                     inherit src;
@@ -29,7 +29,7 @@ let
             "-DASIC=ON"
           ];
           preConfigure =
-            if (lib.versionOlder version "9.11.0") then ''
+            if (lib.versionOlder version "9.9.0") then ''
               tar xf bf-platforms*
             '' else ''
               rm packages/bf-platforms*.tgz
