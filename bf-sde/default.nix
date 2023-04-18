@@ -800,6 +800,10 @@ let
             newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
         };
+        netberg = fetchFromStore {
+          name = "bf-platforms-netberg-7xx-bsp-9.9.0-221113.tgz";
+          outputHash = "def63b745be735a0acfb4cb1a1f2eaeea91d0424762a9ffe04257b5659028870";
+        };
         inherit (v9_7_0.bsps) asterfusion;
       };
       stdenv = gcc8Stdenv;
@@ -874,6 +878,10 @@ let
           patches = {
             newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
+        };
+        netberg = fetchFromStore {
+          name = "bf-platforms-netberg-7xx-bsp-9.11.0-221209.tgz";
+          outputHash = "0a7bc5a9b152932dca7b9f269101a4d362ea07d87214c8ef594754a1234d7479";
         };
         inherit (v9_7_0.bsps) asterfusion;
       };
