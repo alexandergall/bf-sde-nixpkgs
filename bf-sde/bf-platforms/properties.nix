@@ -69,6 +69,7 @@ in {
   };
   stordis_bf2556x_1t = {
     baseboard = "aps_bf2556";
+    portMap = port-maps/aps_bf2556.json;
     target = "tofino";
     serialDevice = "ttyS0";
     serialSettings = "115200n8";
@@ -76,6 +77,7 @@ in {
   };
   stordis_bf6064x_t = {
     baseboard = "aps_bf6064";
+    portMap = port-maps/aps_bf6064.json;
     target = "tofino";
     serialDevice = "ttyS0";
     serialSettings = "115200n8";
@@ -84,6 +86,7 @@ in {
   netberg_aurora_710 = {
     baseboard = "netberg_710";
     target = "tofino";
+    portMap = port-maps/netberg_aurora_710.json;
     serialDevice = "ttyS0";
     serialSettings = "115200n8";
     mgmtEthPciAddr = "0000:08:00.0";

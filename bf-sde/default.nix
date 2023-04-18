@@ -819,6 +819,10 @@ let
             newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
         };
+        netberg = fetchFromStore {
+          name = "bf-platforms-netberg-7xx-bsp-9.9.0-221113.tgz";
+          outputHash = "def63b745be735a0acfb4cb1a1f2eaeea91d0424762a9ffe04257b5659028870";
+        };
         inherit (v9_7_0.bsps) asterfusion;
       };
       stdenv = gcc8Stdenv;
@@ -898,6 +902,10 @@ let
             newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
         };
+        netberg = fetchFromStore {
+          name = "bf-platforms-netberg-7xx-bsp-9.11.0-221209.tgz";
+          outputHash = "0a7bc5a9b152932dca7b9f269101a4d362ea07d87214c8ef594754a1234d7479";
+        };
         inherit (v9_7_0.bsps) asterfusion;
       };
       ## p4studio requires grcp 1.40.0 and protobuf 3.15.8. We use
@@ -912,6 +920,9 @@ let
       sde = fetchFromStore {
         name = "bf-sde-${version}.tgz";
         outputHash = "3880d0ea8e245b0c64c517530c3185da960a032878070d80f4647f3bc15b4a9f";
+        patches = {
+          bf-drivers = [ bf-drivers/9.11-bfrt-INT64-data-type.patch ];
+        };
       };
       bsps = {
         reference = fetchFromStore {
@@ -920,7 +931,7 @@ let
         };
       };
     };
-    v9_11_2 = lib.recursiveUpdate v9_11_0 rec {
+    v9_11_2 = lib.recursiveUpdate v9_11_1 rec {
       version = "9.11.2";
       sde = fetchFromStore {
         name = "bf-sde-${version}.tgz";

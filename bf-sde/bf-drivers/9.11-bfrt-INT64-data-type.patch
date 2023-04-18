@@ -1,0 +1,33 @@
+--- bf-drivers-9.11.1/src/bf_rt/proto/bf_rt_server_impl.cpp	2022-12-15 15:34:54.000000000 +0100
++++ bf-drivers-9.12.0/src/bf_rt/proto/bf_rt_server_impl.cpp	2023-01-27 00:48:02.000000000 +0100
+@@ -1650,6 +1650,21 @@
+       field->set_bool_val(val);
+       break;
+     }
++    case DataType::INT64: {
++      int64_t val = 0;
++      bf_status = data->getValue(field_id, &val);
++      if (bf_status == BF_OBJECT_NOT_FOUND) {
++        bf_status = BF_SUCCESS;
++        break;
++      }
++      check_and_return(bf_status,
++                       "ERROR in getting value for table %s field id %d",
++                       table_name_get(table).c_str(),
++                       field_id);
++      field->set_stream(&val, size);
++      break;
++    }
++
+     case DataType::FLOAT: {
+       float val = 0;
+       bf_status = data->getValue(field_id, &val);
+@@ -2472,7 +2487,7 @@
+   auto bf_status = info.bfrtTableFromIdGet(table_entry.table_id(), &table);
+ 
+   check_and_return(
+-      bf_status, "Table %s not found.", table_name_get(table).c_str());
++      bf_status, "Table not found for id %u", table_entry.table_id());
+ 
+   LOG_DBG("%s:%d Read request (%s): %s",
+           __func__,
