@@ -1,5 +1,5 @@
 { stdenv, callPackage, procps, kmod, lib, buildEnv, coreutils, gnused,
-  gnugrep, bash, jq, bf-sde, isModel }:
+  gnugrep, bash, jq, bf-sde, isModel, runCommand }:
 
 { pname,
   version,
@@ -107,10 +107,8 @@ let
   };
 
   ## Create a separate derivation for the P4 artifacts that does not
-  ## depend on the runtime environment (i.e. on the platform) unless
-  ## BSP-less mode is in effect. In that case, the artifacts
-  ## necessarily contain the platform-dependent port-map file.
-  build = stdenv.mkDerivation {
+  ## depend on the runtime environment (i.e. on the platform).
+  build' = stdenv.mkDerivation {
     buildInputs = [ bf-sde jq ];
     pname = "${execName}-artifacts";
     inherit version src p4Name patches buildFlags;
@@ -121,8 +119,6 @@ let
       ''
         set -e
         export P4_INSTALL=$out
-      '' + lib.optionalString bspLess ''
-        export TOFINO_PORT_MAP=${bf-sde.platforms.${platform}.portMap}
       '' +
       (if lib.versionOlder bf-sde.version "9.7.0"
        then
@@ -153,6 +149,21 @@ let
 
     installPhase = ''true'';
   };
+
+  ## Platforms supported in BSP-less mode require a platform-specific
+  ## "port-map" file.
+  build =
+    if bspLess then
+      runCommand "${execName}-artifacts-port-map-${platform}" {} ''
+        path=$(cd ${build'} && find share/p4 -name ${execName}.conf)
+        mkdir $out
+        (cd ${build'} && cp --parents $path $out)
+        chmod u+w $out/$path $(dirname $out/$path)
+        export TOFINO_PORT_MAP=${bf-sde.platforms.${platform}.portMap}
+        ${bf-sde}/bin/set_port_map.sh $out/$path
+      ''
+    else
+      build';
 
   self = stdenv.mkDerivation {
     inherit pname version passthru;
