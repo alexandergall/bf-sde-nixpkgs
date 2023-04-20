@@ -1,5 +1,5 @@
 { stdenv, callPackage, procps, kmod, lib, buildEnv, coreutils, gnused,
-  gnugrep, bash, jq, bf-sde, isModel }:
+  gnugrep, bash, jq, bf-sde, isModel, runCommand }:
 
 { pname,
   version,
@@ -108,7 +108,7 @@ let
 
   ## Create a separate derivation for the P4 artifacts that does not
   ## depend on the runtime environment (i.e. on the platform).
-  build = stdenv.mkDerivation {
+  build' = stdenv.mkDerivation {
     buildInputs = [ bf-sde jq ];
     pname = "${execName}-artifacts";
     inherit version src p4Name patches buildFlags;
@@ -119,32 +119,51 @@ let
       ''
         set -e
         export P4_INSTALL=$out
-        export TOFINO_PORT_MAP=${bf-sde.platforms.${platform}.portMap or ""}
-      '' + (if lib.versionOlder bf-sde.version "9.7.0" then ''
-      export SDE_BUILD=$TEMP
-      export SDE_LOGS=$TEMP
-      mkdir $out
-      path=${path}
-      exec_name="${p4Name}"
-      if [ "${p4Name}" != "${execName}" ]; then
-        ln -s ${p4Name}.p4 $path/${execName}.p4
-        exec_name=${execName}
-      fi
-      echo "Building \"${p4Name}.p4\" as \"${execName}\" with p4c flags \"$buildFlags\""
-      ${bf-sde}/bin/p4_build.sh $buildFlags $path/$exec_name.p4
-    '' else (
-      ''
-        echo "Building \"${p4Name}.p4\" as \"${execName}\" for target \"${target}\" with p4c flags \"$buildFlags\""
-        ${bf-sde}/bin/p4_build.sh --p4-name=${execName} --p4c-flags="$buildFlags" \
-          --cmake-flags ${targetFlag} $(realpath ${path}/${p4Name}.p4)
-        rm -rf $out/build
-      '' + lib.optionalString pureArtifacts ''
-        find $out/share \( -name source.json -o -name frontend-ir.json \) -exec rm {} \;
-      ''
-    ));
+      '' +
+      (if lib.versionOlder bf-sde.version "9.7.0"
+       then
+         ''
+           export SDE_BUILD=$TEMP
+           export SDE_LOGS=$TEMP
+           mkdir $out
+           path=${path}
+           exec_name="${p4Name}"
+           if [ "${p4Name}" != "${execName}" ]; then
+             ln -s ${p4Name}.p4 $path/${execName}.p4
+             exec_name=${execName}
+           fi
+           echo "Building \"${p4Name}.p4\" as \"${execName}\" with p4c flags \"$buildFlags\""
+           ${bf-sde}/bin/p4_build.sh $buildFlags $path/$exec_name.p4
+         ''
+       else (
+         ''
+           echo "Building \"${p4Name}.p4\" as \"${execName}\" for target \"${target}\" with p4c flags \"$buildFlags\""
+           ${bf-sde}/bin/p4_build.sh --p4-name=${execName} --p4c-flags="$buildFlags" \
+             --cmake-flags ${targetFlag} $(realpath ${path}/${p4Name}.p4)
+           rm -rf $out/build
+         '' + lib.optionalString pureArtifacts ''
+           find $out/share \( -name source.json -o -name frontend-ir.json \) -exec rm {} \;
+         ''
+       )
+      );
 
     installPhase = ''true'';
   };
+
+  ## Platforms supported in BSP-less mode require a platform-specific
+  ## "port-map" file.
+  build =
+    if bspLess then
+      runCommand "${execName}-artifacts-port-map-${platform}" {} ''
+        path=$(cd ${build'} && find share/p4 -name ${execName}.conf)
+        mkdir $out
+        (cd ${build'} && cp --parents $path $out)
+        chmod u+w $out/$path $(dirname $out/$path)
+        export TOFINO_PORT_MAP=${bf-sde.platforms.${platform}.portMap}
+        ${bf-sde}/bin/set_port_map.sh $out/$path
+      ''
+    else
+      build';
 
   self = stdenv.mkDerivation {
     inherit pname version passthru;
@@ -158,7 +177,7 @@ let
       BUILD=${build}
       RUNTIME_ENV=${runtimeEnv}
     '' +
-    (rec {
+    ({
       model = ''
         substitute ${./run-model.sh} $out/bin/$EXEC_NAME \
           --subst-var BUILD \
@@ -171,9 +190,7 @@ let
           --subst-var-by sleep ${coreutils}/bin/sleep
         chmod a+x $out/bin/$EXEC_NAME
       '';
-      modelT2 = model;
-      modelT3 = model;
-      stordis_bf2556x_1t = ''
+      aps_bf2556 = ''
         RUNTIME_ENV_WITH_ARTIFACTS=${runtimeEnvWithArtifacts}
         APS_SAL_REFAPP=${bf-sde.pkgs.bf-platforms.aps_bf2556.salRefApp}
         P4_PROG=$EXEC_NAME
@@ -187,7 +204,7 @@ let
           --subst-var _LD_LIBRARY_PATH
         chmod a+x $out/bin/$EXEC_NAME
       '';
-    }.${platform} or (
+    }.${if bspLess then "" else baseboard} or (
       lib.optionalString bspLess ''
         BANNER=\
         '=============================================================\n'\

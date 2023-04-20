@@ -67,19 +67,22 @@ stdenv.mkDerivation {
       --run "PATH=\$PATH:\$PTF_PATH" \
       --run "export PYTHONPATH=\$PTF_PYTHONPATH:\$PYTHONPATH"
 
+    copy ${./set_port_map.sh} set_port_map.sh \
+      "${lib.strings.makeBinPath [ coreutils jq ]}"
+
   '' + (if (lib.versionOlder version "9.7.0") then
           ''
             ## This script was copied from the tools provided for
             ## the BF Academy courses.
             copy ${./p4_build.sh} p4_build.sh \
-              "${lib.strings.makeBinPath [ coreutils utillinux gnugrep gnused gawk
+              "$out/bin:${lib.strings.makeBinPath [ coreutils utillinux gnugrep gnused gawk
                                            less findutils gcc gnumake which python jq ]}"
 
           ''
         else
           ''
             copy ${./p4_build-cmake} p4_build.sh \
-              "${lib.strings.makeBinPath [ sdeEnv coreutils utillinux cmake gnumake
+              "$out/bin:${lib.strings.makeBinPath [ sdeEnv coreutils utillinux cmake gnumake
                                            gcc findutils gnused python jq ]}"
           '')
     );

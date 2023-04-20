@@ -64,7 +64,6 @@ make install
 for file in $(find $P4_INSTALL/share/p4 -name ${P4_NAME}.conf); do
     sed -E -i -e "s,\"share/tofino([0-9]*)pd,\"$P4_INSTALL/share/tofino\1pd,g" $file
     if [ -n "$TOFINO_PORT_MAP" ]; then
-        jq '.p4_devices[0].p4_programs[0] += {"board-port-map": "'$TOFINO_PORT_MAP'"}' $file >$file.tmp
-	mv $file.tmp $file
+        set_port_map.sh $file
     fi
 done
