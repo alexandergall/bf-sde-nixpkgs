@@ -28,6 +28,13 @@ let
             "-DSTANDALONE=ON"
             "-DASIC=ON"
           ];
+          ## Avoid multiple-definition error during linking with GCC
+          ## 11 and newer. The eeprom_raw_data array is defined in a
+          ## header file and ends up in the BSS section of multiple
+          ## objects with the default -fno-common in GCC 11.
+          NIX_CFLAGS_COMPILE = [
+            "-fcommon"
+          ];
           preConfigure =
             if (lib.versionOlder version "9.9.0") then ''
               tar xf bf-platforms*
