@@ -940,6 +940,42 @@ let
             newport = [ bf-platforms/newport-eth-compliance.patch ];
           };
         };
+        netberg = fetchFromStore {
+          name = "bf-platforms-netberg-7xx-bsp-9.11.0-221209.tgz";
+          outputHash = "0a7bc5a9b152932dca7b9f269101a4d362ea07d87214c8ef594754a1234d7479";
+        };
+        inherit (v9_7_0.bsps) asterfusion;
+      };
+      stdenv = gcc11Stdenv;
+      thrift = thrift_0_14;
+      libcli = libcli1_10;
+      python_bf_drivers = python3;
+    };
+    v9_13_0 = rec {
+      version = "9.13.0";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "cc1c45f6a536ba0b26f3ae46a3d7b013e9d80f31b4c23c621f419dfb586d92f4";
+        patches = {
+          mainTools = [ sde/run_switchd-9.11.0.patch sde/run_bfshell-9.7.0.patch
+                        sde/run_p4_tests-9.7.0.patch ];
+          mainCMake = [ sde/P4Build.cmake-9.12.0.patch ];
+          p4-examples = [];
+          ptf-modules = [ ptf-modules/run_ptf_tests.patch ];
+        };
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "bd0ebd2bd8a08494668641fee7a7b7430d89925327c016c2a78315262097f485";
+          patches = {
+            newport = [ bf-platforms/newport-eth-compliance.patch ];
+          };
+        };
+        netberg = fetchFromStore {
+          name = "bf-platforms-netberg-7xx-bsp-9.11.0-221209.tgz";
+          outputHash = "0a7bc5a9b152932dca7b9f269101a4d362ea07d87214c8ef594754a1234d7479";
+        };
         inherit (v9_7_0.bsps) asterfusion;
       };
       stdenv = gcc11Stdenv;
@@ -949,4 +985,4 @@ let
     };
   };
 
-in bf-sde // { latest = bf-sde.v9_12_0; }
+in bf-sde // { latest = bf-sde.v9_13_0; }

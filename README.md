@@ -210,6 +210,7 @@ the `sha256` sums are as follows
 | bf-sde-9.11.1.tgz          | `3880d0ea8e245b0c64c517530c3185da960a032878070d80f4647f3bc15b4a9f` |
 | bf-sde-9.11.2.tgz          | `e6c8cb7083b0c51fcccc5ba175889906cb596d3f05514dfe31f44a4c9102ad57` |
 | bf-sde-9.12.0.tgz          | `5f3c41c32064909d8dab1c5f91b6a268b5c13835e5cfa48ff6ef7a526c93ad38` |
+| bf-sde-9.13.0.tgz          | `cc1c45f6a536ba0b26f3ae46a3d7b013e9d80f31b4c23c621f419dfb586d92f4` |
 
 #### <a name="BSPArchives"></a> BSP
 
@@ -261,12 +262,15 @@ Support](#baseboardPlatform))
 | `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.11.1.tgz`| 9.11.1| `37aa23ebf4f117bfc45e4ad1fbdb0d366b3bd094dd609f6ef1ec8b37ff6f2246` |
 | `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.11.2.tgz`| 9.11.1| `f957ae2888289acc57271ad8d27e59075ddaaab723b38456382d25b8e3330331` |
 | `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.12.0.tgz`| 9.12.0| `60999d78e9a854e3a23b82ad0b644199e4aca5d88ad8eecea156e65faed2c2d4` |
+| `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.13.0.tgz`| 9.13.0| `bd0ebd2bd8a08494668641fee7a7b7430d89925327c016c2a78315262097f485` |
 | `aps_bf2556` `aps_bf6064` | APS Networks | `9.5.0_AOT1.5.1_SAL1.3.2.zip` | 9.4.0 | `2e56f51233c0eef1289ee219582ea0ec6d7455c3f78cac900aeb2b8214df0544`|
 | `aps_bf2556` `aps_bf6064` | APS Networks | `9.5.0_AOT1.5.4_SAL1.3.4.zip` | 9.5.0 | `510e5e18a91203fe6c4c0aabd807eb69ad53224500f7cb755f7c5b09c8e4525d`|
 | `aps_bf2556` `aps_bf6064` | APS Networks | `9.7.0_AOT1.6.1_SAL1.3.5_2.zip` | 9.7.0 9.7.1 9.7.2 9.7.3 | `4941987c4489d592de9b3676c79cb2011a22fe329425e8876fa8ae026fc959ad`|
 | `inventec`   | Inventec     | `bf-inventec-bsp93.tgz`                   | 9.3.0 9.3.1 9.4.0 9.5.0 9.6.0 | `fd1e4852d0b7543dd5d2b81ab8e0150644a0f24ca87d59f1369216f1a6e796ad`|
 | `inventec`   | Inventec     | `bf-platform_SRC_9.7.0.2.1.tgz`           | 9.7.0 9.7.1 9.7.2 9.7.3 | `8391d5e791ae8b453711a79ed6f6d4372bd9ed6076b3ff54c649b69775b8d9c9`|
 | `netberg`    | Netberg      | `bf-platforms-netberg-7xx-bsp-9.7.0-220210.tgz` | 9.7.0 9.7.1 9.7.2 9.7.3 | `ad140a11fd39f7fbd835d6774d9b855f2ba693fd1d2e61b45a94aa30ed08a4f1`|
+| `netberg`    | Netberg      | `bf-platforms-netberg-7xx-bsp-9.9.0-221113.tgz` | 9.9.0 9.9.1 | `def63b745be735a0acfb4cb1a1f2eaeea91d0424762a9ffe04257b5659028870`|
+| `netberg`    | Netberg      | `bf-platforms-netberg-7xx-bsp-9.11.0-221209.tgz` | 9.11.0 9.11.1 9.11.2 9.12.0 9.13.0 | `0a7bc5a9b152932dca7b9f269101a4d362ea07d87214c8ef594754a1234d7479`|
 
 ### <a name="addArchives"></a>Add archives to the Nix store
 
