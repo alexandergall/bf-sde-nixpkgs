@@ -39,10 +39,6 @@ in {
     baseboard = "model";
     target = "tofino2";
   };
-  modelT3 = {
-    baseboard = "model";
-    target = "tofino3";
-  };
   accton_wedge100bf_32x = accton;
   accton_wedge100bf_32qs = accton;
   accton_wedge100bf_65x = accton;

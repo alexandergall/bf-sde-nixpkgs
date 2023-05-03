@@ -42,7 +42,7 @@
 assert requiredKernelModule != null -> lib.assertOneOf "kernel module"
   requiredKernelModule [ "bf_kdrv" "bf_kpkt" "bf_knet" ];
 
-assert target != null -> lib.assertOneOf "target" target [ "tofino" "tofino2" "tofino3" ];
+assert target != null -> lib.assertOneOf "target" target [ "tofino" "tofino2" ];
 
 assert lib.versionOlder bf-sde.version "9.7.0" ->
        lib.assertMsg (target == "tofino")
@@ -52,7 +52,6 @@ let
   targetFlag = {
     tofino = "-DTOFINO=ON";
     tofino2 = "-DTOFINO2=ON";
-    tofino3 = "-DTOFINO3=ON";
   }.${target};
 
   runtimeEnv = bf-sde.runtimeEnv' platform;
