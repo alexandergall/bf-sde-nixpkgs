@@ -10,9 +10,15 @@
 import nixpkgs ( attrs // {
   overlays = (import ./overlay.nix) nixpkgs ++ overlays;
   config = {
-    ## 23.05 is the first release that disables python2 by default.
-    ## It's still there and as long as it works we raise it from the
-    ## dead.
-    permittedInsecurePackages = [ "python-2.7.18.6" ];
+    permittedInsecurePackages = [
+      ## 23.05 is the first release that disables python2 by default.
+      ## It's still there and as long as it works we raise it from the
+      ## dead.
+      "python-2.7.18.6"
+
+      ## OpenSSL 1.1 will be EOL by the end of 2023 but we only use it
+      ## to patch some binaries in the Debian kbuild environment
+      "openssl-1.1.1t"
+    ];
   };
 })
