@@ -18,7 +18,7 @@ import nixpkgs ( attrs // {
 
       ## OpenSSL 1.1 will be EOL by the end of 2023 but we only use it
       ## to patch some binaries in the Debian kbuild environment
-      "openssl-1.1.1t"
+      "openssl-1.1.1u"
     ];
   };
 })
