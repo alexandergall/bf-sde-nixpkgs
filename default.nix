@@ -1,8 +1,8 @@
 { overlays ? []
 , nixpkgs ?
   fetchTarball {
-    url = https://github.com/NixOS/nixpkgs/archive/23.05-pre-39751-g44780192142.tar.gz;
-    sha256 = "06xykb1b7wxryy05cm63dcxdik6z6zlq14qxvy0mkhpmjhlxa25w";
+    url = https://github.com/NixOS/nixpkgs/archive/23.05-130-g70f7275b32f.tar.gz;
+    sha256 = "08crz8z6jlvgk095pv70fix70ag9axy8qk46yhdal2kd9gvan8v0";
   }
 ,  ...
 } @attrs:
