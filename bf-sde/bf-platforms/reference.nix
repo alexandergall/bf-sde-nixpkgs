@@ -21,7 +21,7 @@ let
                           curl bf-syslibs.dev bf-drivers.dev bf-utils
                         ] ++
                         lib.optional buildSystem.isCmake cmake ++
-                        lib.optionals (lib.versionAtLeast version "9.9.0")
+                        lib.optional (lib.versionAtLeast version "9.9.0")
                           bf-utils-tofino.dev;
 
           outputs = [ "out" "dev" ];
