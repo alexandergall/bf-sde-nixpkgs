@@ -4,8 +4,9 @@ let
   derivation =
 
     { version, runCommand, stdenv, cmake, curl, libusb, ipmitool,
-      thrift, boost, bf-syslibs, bf-drivers, bf-utils, coreutils,
-      i2c-tools, gawk, xz, utillinux, mount, umount, cpio, gnused,
+      thrift, boost, bf-syslibs, bf-drivers, bf-utils,
+      bf-utils-tofino, coreutils, i2c-tools, gawk, xz, utillinux,
+      mount, umount, cpio, gnused,
       ## For salRefApp
       binutils-unwrapped, autoPatchelfHook, grpcForAPSSalRefApp,
       boost167, bf-drivers-runtime }:
@@ -23,7 +24,9 @@ let
         patches = (patches.default or []) ++ (patches.${baseboard} or []);
 
         buildInputs = [ cmake curl libusb ipmitool thrift boost
-                        bf-syslibs bf-drivers bf-utils.dev coreutils ];
+                        bf-syslibs bf-drivers bf-utils.dev coreutils ] ++
+                        lib.optionals (lib.versionAtLeast version "9.9.0")
+                          [ bf-utils-tofino.dev i2c-tools ];
 
         cmakeFlags = [
           "-DASIC=ON"

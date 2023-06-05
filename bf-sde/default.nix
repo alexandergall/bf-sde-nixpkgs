@@ -847,6 +847,10 @@ let
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "481a2c5e6937f73ff9e9157fb4f313a4d72c0868b3eac94111ee79340c565309";
         };
+        aps_bf6064 = fetchFromStore {
+          name = "apsn-bsp-bf6064x-t_${version}-rc1.tgz";
+          outputHash = "c24a030d3c79e0136211cb72825b0de4698e64832c07b1d2ed34ec25720a15fe";
+        };
       };
     };
     v9_10_0 = rec {
@@ -905,6 +909,10 @@ let
         netberg = fetchFromStore {
           name = "bf-platforms-netberg-7xx-bsp-9.11.0-221209.tgz";
           outputHash = "0a7bc5a9b152932dca7b9f269101a4d362ea07d87214c8ef594754a1234d7479";
+        };
+        aps_bf6064 = fetchFromStore {
+          name = "apsn-bsp-bf6064x-t_${version}-r1.tgz";
+          outputHash = "3a52f660d7bb585c3591facad047dc7cdea6303fd3cc96d8d7baf34a545e9889";
         };
         inherit (v9_7_0.bsps) asterfusion;
       };
@@ -1000,6 +1008,10 @@ let
         netberg = fetchFromStore {
           name = "bf-platforms-netberg-7xx-bsp-9.11.0-221209.tgz";
           outputHash = "0a7bc5a9b152932dca7b9f269101a4d362ea07d87214c8ef594754a1234d7479";
+        };
+        aps_bf6064 = fetchFromStore {
+          name = "apsn-bsp-bf6064x-t_${version}-beta1.tgz";
+          outputHash = "1dbe3c691acdffa52fa80907a170a3d2bc219fd9f5033e331d7fec6dda94d282";
         };
         inherit (v9_7_0.bsps) asterfusion;
       };
