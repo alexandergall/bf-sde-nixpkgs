@@ -124,6 +124,7 @@ let
     ## build the mion image, for example
     ## https://github.com/NetworkGradeLinux/meta-mion-bsp/blob/dunfell/meta-mion-accton/recipes-kernel/linux/linux-yocto_5.4.bbappend
     mion = {
+      disable = true;
       kernelRelease = "5.4.49-yocto-standard";
       buildTree = mkMion {
         spec = {
@@ -151,6 +152,7 @@ let
     ## (they are the result of building ONL
     ## locally).
     ONL9 = {
+      disable = true;
       ## ONL with Debian9 created from commit 7c3bfd
       kernelRelease = "4.14.151-OpenNetworkLinux";
       buildTree = mkONL {
@@ -164,6 +166,7 @@ let
       };
     };
     ONL10 = {
+      disable = true;
       ## ONL with Debian10, based on commit 1537d8
       kernelRelease = "4.19.81-OpenNetworkLinux";
       buildTree = mkONL {
@@ -411,4 +414,4 @@ let
     };
   };
 in
-  builtins.mapAttrs mkModules kernels
+builtins.mapAttrs mkModules (lib.filterAttrs (n: v: ! (v.disable or false)) kernels)
