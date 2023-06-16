@@ -1,6 +1,6 @@
-diff -Naur bf-bsp-8.9.x-master.orig/configure.ac bf-bsp-8.9.x-master/configure.ac
---- bf-bsp-8.9.x-master.orig/configure.ac	2023-03-06 08:18:24.000000000 +0100
-+++ bf-bsp-8.9.x-master/configure.ac	2023-03-16 17:17:02.998665644 +0100
+diff -Naur bf-bsp-9.11.x-cbeddbbb.orig/configure.ac bf-bsp-9.11.x-cbeddbbb/configure.ac
+--- bf-bsp-9.11.x-cbeddbbb.orig/configure.ac	2023-07-03 05:45:35.000000000 +0200
++++ bf-bsp-9.11.x-cbeddbbb/configure.ac	2023-07-07 14:29:32.757611202 +0200
 @@ -59,6 +59,13 @@
  #AM_CONDITIONAL([BUILD_TOFINO_BRINGUP_PLAT], [test "x$build_tof_brgup" = xyes])
  #AM_CONDITIONAL([BUILD_NEWPORT_PLAT], [test "x$build_newport" = xyes])
@@ -15,9 +15,21 @@ diff -Naur bf-bsp-8.9.x-master.orig/configure.ac bf-bsp-8.9.x-master/configure.a
  
  asterfusion_diags=no
  AC_ARG_WITH([asterfusion-diags],
-diff -Naur bf-bsp-8.9.x-master.orig/drivers/include/bf_pltfm_types/bf_pltfm_types.h bf-bsp-8.9.x-master/drivers/include/bf_pltfm_types/bf_pltfm_types.h
---- bf-bsp-8.9.x-master.orig/drivers/include/bf_pltfm_types/bf_pltfm_types.h	2023-03-06 08:18:24.000000000 +0100
-+++ bf-bsp-8.9.x-master/drivers/include/bf_pltfm_types/bf_pltfm_types.h	2023-03-16 17:17:02.998665644 +0100
+diff -Naur bf-bsp-9.11.x-cbeddbbb.orig/drivers/include/bf_bd_cfg/bf_bd_cfg_porting.h bf-bsp-9.11.x-cbeddbbb/drivers/include/bf_bd_cfg/bf_bd_cfg_porting.h
+--- bf-bsp-9.11.x-cbeddbbb.orig/drivers/include/bf_bd_cfg/bf_bd_cfg_porting.h	2023-07-03 05:45:35.000000000 +0200
++++ bf-bsp-9.11.x-cbeddbbb/drivers/include/bf_bd_cfg/bf_bd_cfg_porting.h	2023-07-07 16:12:13.199885268 +0200
+@@ -94,7 +94,7 @@
+  *
+  * @return Status of the API call
+  */
+-#if SDE_VERSION_GT(970) /* since 9.9.x. */
++#if SDE_VERSION_GT(980) /* since 9.9.x. */
+ bf_status_t
+ bf_bd_cfg_mac_to_multi_serdes_map_get (
+     bf_pal_front_port_handle_t *port_hdl,
+diff -Naur bf-bsp-9.11.x-cbeddbbb.orig/drivers/include/bf_pltfm_types/bf_pltfm_types.h bf-bsp-9.11.x-cbeddbbb/drivers/include/bf_pltfm_types/bf_pltfm_types.h
+--- bf-bsp-9.11.x-cbeddbbb.orig/drivers/include/bf_pltfm_types/bf_pltfm_types.h	2023-07-03 05:45:35.000000000 +0200
++++ bf-bsp-9.11.x-cbeddbbb/drivers/include/bf_pltfm_types/bf_pltfm_types.h	2023-07-07 14:29:32.757611202 +0200
 @@ -31,7 +31,9 @@
  /* Mainline SDE version used by bsp, set 9.5.0 as default.
   * Valid value in [891,900,910,930,950,970,990,9110,9120,...].
@@ -47,9 +59,32 @@ diff -Naur bf-bsp-8.9.x-master.orig/drivers/include/bf_pltfm_types/bf_pltfm_type
  #ifdef INC_PLTFM_UCLI
  #include <bfutils/uCli/ucli.h>
  #include <bfutils/uCli/ucli_argparse.h>
-diff -Naur bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/cp2112_util/Makefile.am bf-bsp-8.9.x-master/platforms/asterfusion-bf/cp2112_util/Makefile.am
---- bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/cp2112_util/Makefile.am	2023-03-06 08:18:24.000000000 +0100
-+++ bf-bsp-8.9.x-master/platforms/asterfusion-bf/cp2112_util/Makefile.am	2023-03-16 17:17:02.998665644 +0100
+diff -Naur bf-bsp-9.11.x-cbeddbbb.orig/drivers/src/bf_bd_cfg/bf_bd_cfg_porting.c bf-bsp-9.11.x-cbeddbbb/drivers/src/bf_bd_cfg/bf_bd_cfg_porting.c
+--- bf-bsp-9.11.x-cbeddbbb.orig/drivers/src/bf_bd_cfg/bf_bd_cfg_porting.c	2023-07-03 05:45:35.000000000 +0200
++++ bf-bsp-9.11.x-cbeddbbb/drivers/src/bf_bd_cfg/bf_bd_cfg_porting.c	2023-07-07 16:15:30.024354446 +0200
+@@ -297,7 +297,7 @@
+     return BF_SUCCESS;
+ }
+ 
+-#if SDE_VERSION_GT(970) /* since 9.9.x. */
++#if SDE_VERSION_GT(980) /* since 9.9.x. */
+ bf_status_t
+ bf_bd_cfg_mac_to_multi_serdes_map_get (
+     bf_pal_front_port_handle_t *port_hdl,
+diff -Naur bf-bsp-9.11.x-cbeddbbb.orig/drivers/src/bf_port_mgmt/bf_pm_qsfp_mgmt.c bf-bsp-9.11.x-cbeddbbb/drivers/src/bf_port_mgmt/bf_pm_qsfp_mgmt.c
+--- bf-bsp-9.11.x-cbeddbbb.orig/drivers/src/bf_port_mgmt/bf_pm_qsfp_mgmt.c	2023-07-03 05:45:35.000000000 +0200
++++ bf-bsp-9.11.x-cbeddbbb/drivers/src/bf_port_mgmt/bf_pm_qsfp_mgmt.c	2023-07-07 16:01:34.510335990 +0200
+@@ -3137,6 +3137,7 @@
+                                fault_val);
+                 }
+             } else {  // tof 2
++	        ok = 1;
+                 //qsfp_fsm_check_tx_faults(conn_id, ch, &ok);
+                 //if (!ok) {
+                 //  LOG_DEBUG("QSFP    %2d : ch[%d] : FAULT in TX, retry..", conn_id, ch);
+diff -Naur bf-bsp-9.11.x-cbeddbbb.orig/platforms/asterfusion-bf/cp2112_util/Makefile.am bf-bsp-9.11.x-cbeddbbb/platforms/asterfusion-bf/cp2112_util/Makefile.am
+--- bf-bsp-9.11.x-cbeddbbb.orig/platforms/asterfusion-bf/cp2112_util/Makefile.am	2023-07-03 05:45:35.000000000 +0200
++++ bf-bsp-9.11.x-cbeddbbb/platforms/asterfusion-bf/cp2112_util/Makefile.am	2023-07-07 14:29:32.757611202 +0200
 @@ -19,10 +19,15 @@
  # Different SDE on different OS.
  # Default to OS <= 9 and SDE < 9.9.x. by tsihang, 2022-11-09.
@@ -67,9 +102,35 @@ diff -Naur bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/cp2112_util/Makefil
 +else
 +cp2112_util_LDADD =  -lbfsys -lusb-1.0 -lcurl -lcgos -li2c
 +endif
-diff -Naur bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/src/Makefile.am bf-bsp-8.9.x-master/platforms/asterfusion-bf/src/Makefile.am
---- bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/src/Makefile.am	2023-03-06 08:18:24.000000000 +0100
-+++ bf-bsp-8.9.x-master/platforms/asterfusion-bf/src/Makefile.am	2023-03-16 17:17:47.715123810 +0100
+diff -Naur bf-bsp-9.11.x-cbeddbbb.orig/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c bf-bsp-9.11.x-cbeddbbb/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c
+--- bf-bsp-9.11.x-cbeddbbb.orig/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c	2023-07-03 05:45:35.000000000 +0200
++++ bf-bsp-9.11.x-cbeddbbb/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c	2023-07-07 15:32:46.193916074 +0200
+@@ -939,8 +939,8 @@
+             /* First boot error, no chance to rescure, exit forcely. */
+             exit (0);
+         } else {
+-            char tlv_str[128];
+-            char tlv_header[128];
++            char tlv_str[lqe_valen];
++            char tlv_header[lqe_valen];
+             char *p;
+             while (fgets (tlv_str, lqe_valen, fp)) {
+                 p = strchr(tlv_str, 0x0A);
+diff -Naur bf-bsp-9.11.x-cbeddbbb.orig/platforms/asterfusion-bf/src/bf_pltfm_master_i2c/bf_pltfm_master_i2c.c bf-bsp-9.11.x-cbeddbbb/platforms/asterfusion-bf/src/bf_pltfm_master_i2c/bf_pltfm_master_i2c.c
+--- bf-bsp-9.11.x-cbeddbbb.orig/platforms/asterfusion-bf/src/bf_pltfm_master_i2c/bf_pltfm_master_i2c.c	2023-07-03 05:45:35.000000000 +0200
++++ bf-bsp-9.11.x-cbeddbbb/platforms/asterfusion-bf/src/bf_pltfm_master_i2c/bf_pltfm_master_i2c.c	2023-07-07 15:42:15.499399862 +0200
+@@ -579,7 +579,7 @@
+     struct tm *tmp_ptr;
+     struct stat file_stat;
+     char *dbgstr_ptr = debug_str;
+-    char rfile[128] = {0};
++    char rfile[512] = {0};
+     const char *dbg_file = LOG_DIR_PREFIX"/sio_debug.log";
+ 
+     if (!bf_sio_dbg_enabled ||
+diff -Naur bf-bsp-9.11.x-cbeddbbb.orig/platforms/asterfusion-bf/src/Makefile.am bf-bsp-9.11.x-cbeddbbb/platforms/asterfusion-bf/src/Makefile.am
+--- bf-bsp-9.11.x-cbeddbbb.orig/platforms/asterfusion-bf/src/Makefile.am	2023-07-03 05:45:35.000000000 +0200
++++ bf-bsp-9.11.x-cbeddbbb/platforms/asterfusion-bf/src/Makefile.am	2023-07-07 14:29:32.757611202 +0200
 @@ -114,7 +114,7 @@
  libasterfusionbf_driver_la_LIBADD = \
  libasterfusionbf_platform.la
@@ -79,9 +140,9 @@ diff -Naur bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/src/Makefile.am bf-
  libasterfusionbf_platform.la \
  libasterfusionbf_cp2112.la \
  libasterfusionbf_chss_mgmt.la \
-diff -Naur bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/tofino_spi_util/Makefile.am bf-bsp-8.9.x-master/platforms/asterfusion-bf/tofino_spi_util/Makefile.am
---- bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/tofino_spi_util/Makefile.am	2023-03-06 08:18:24.000000000 +0100
-+++ bf-bsp-8.9.x-master/platforms/asterfusion-bf/tofino_spi_util/Makefile.am	2023-03-16 17:17:02.998665644 +0100
+diff -Naur bf-bsp-9.11.x-cbeddbbb.orig/platforms/asterfusion-bf/tofino_spi_util/Makefile.am bf-bsp-9.11.x-cbeddbbb/platforms/asterfusion-bf/tofino_spi_util/Makefile.am
+--- bf-bsp-9.11.x-cbeddbbb.orig/platforms/asterfusion-bf/tofino_spi_util/Makefile.am	2023-07-03 05:45:35.000000000 +0200
++++ bf-bsp-9.11.x-cbeddbbb/platforms/asterfusion-bf/tofino_spi_util/Makefile.am	2023-07-07 14:29:32.757611202 +0200
 @@ -11,7 +11,7 @@
  # Different SDE on different OS.
  # Default to OS <= 9 and SDE < 9.9.x. by tsihang, 2022-11-09.
@@ -103,9 +164,9 @@ diff -Naur bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/tofino_spi_util/Mak
 +
  # For SDE version <  9.7.x
  #tofino_spi_util_LDADD += -lbf_switchd_lib
-diff -Naur bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/uart_util/Makefile.am bf-bsp-8.9.x-master/platforms/asterfusion-bf/uart_util/Makefile.am
---- bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/uart_util/Makefile.am	2023-03-06 08:18:24.000000000 +0100
-+++ bf-bsp-8.9.x-master/platforms/asterfusion-bf/uart_util/Makefile.am	2023-03-16 17:17:02.998665644 +0100
+diff -Naur bf-bsp-9.11.x-cbeddbbb.orig/platforms/asterfusion-bf/uart_util/Makefile.am bf-bsp-9.11.x-cbeddbbb/platforms/asterfusion-bf/uart_util/Makefile.am
+--- bf-bsp-9.11.x-cbeddbbb.orig/platforms/asterfusion-bf/uart_util/Makefile.am	2023-07-03 05:45:35.000000000 +0200
++++ bf-bsp-9.11.x-cbeddbbb/platforms/asterfusion-bf/uart_util/Makefile.am	2023-07-07 14:29:32.757611202 +0200
 @@ -17,10 +17,15 @@
  # Different SDE on different OS.
  # Default to OS <= 9 and SDE < 9.9.x. by tsihang, 2022-11-09.
@@ -123,9 +184,9 @@ diff -Naur bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/uart_util/Makefile.
 +else
 +uart_util_LDADD =  -lbfsys -lusb-1.0 -lcurl -lcgos -li2c
 +endif
-diff -Naur bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/utils/xt-cfgen.sh bf-bsp-8.9.x-master/platforms/asterfusion-bf/utils/xt-cfgen.sh
---- bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/utils/xt-cfgen.sh	2023-03-06 08:18:24.000000000 +0100
-+++ bf-bsp-8.9.x-master/platforms/asterfusion-bf/utils/xt-cfgen.sh	2023-03-17 08:59:22.546387315 +0100
+diff -Naur bf-bsp-9.11.x-cbeddbbb.orig/platforms/asterfusion-bf/utils/xt-cfgen.sh bf-bsp-9.11.x-cbeddbbb/platforms/asterfusion-bf/utils/xt-cfgen.sh
+--- bf-bsp-9.11.x-cbeddbbb.orig/platforms/asterfusion-bf/utils/xt-cfgen.sh	2023-07-03 05:45:35.000000000 +0200
++++ bf-bsp-9.11.x-cbeddbbb/platforms/asterfusion-bf/utils/xt-cfgen.sh	2023-07-07 14:29:32.757611202 +0200
 @@ -17,15 +17,13 @@
  enable_iic=1
  
@@ -161,9 +222,9 @@ diff -Naur bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/utils/xt-cfgen.sh b
  fi
  
  echo ""
-diff -Naur bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/utils/xt-setup.sh bf-bsp-8.9.x-master/platforms/asterfusion-bf/utils/xt-setup.sh
---- bf-bsp-8.9.x-master.orig/platforms/asterfusion-bf/utils/xt-setup.sh	2023-03-06 08:18:24.000000000 +0100
-+++ bf-bsp-8.9.x-master/platforms/asterfusion-bf/utils/xt-setup.sh	2023-03-17 09:30:54.478579129 +0100
+diff -Naur bf-bsp-9.11.x-cbeddbbb.orig/platforms/asterfusion-bf/utils/xt-setup.sh bf-bsp-9.11.x-cbeddbbb/platforms/asterfusion-bf/utils/xt-setup.sh
+--- bf-bsp-9.11.x-cbeddbbb.orig/platforms/asterfusion-bf/utils/xt-setup.sh	2023-07-03 05:45:35.000000000 +0200
++++ bf-bsp-9.11.x-cbeddbbb/platforms/asterfusion-bf/utils/xt-setup.sh	2023-07-07 14:29:32.757611202 +0200
 @@ -22,7 +22,7 @@
  
  install_cgosdrv()
