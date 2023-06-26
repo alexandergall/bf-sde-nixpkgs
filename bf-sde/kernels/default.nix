@@ -413,25 +413,25 @@ let
       additionalModules = additionalModulesDebian11;
     };
     Debian11_7 = {
-      kernelRelease = "5.10.0-23-amd64";
+      kernelRelease = "5.10.0-22-amd64";
       buildTree = mkDebian {
         spec = {
           snapshotTimestamp = "20230626T030930Z";
           arch = {
-            name = "linux-headers-5.10.0-23-amd64_5.10.179-1_amd64.deb";
-            sha256 = "1b351wcc8szf4icjnq656hmj6cfpbrq8jmi0f4k030ilgiwnqybk";
+            name = "linux-headers-5.10.0-22-amd64_5.10.178-3_amd64.deb";
+            sha256 = "00h8l01aia5chhjnvp084yly1944d58v8id4gfasi1zp8q0dpm0b";
           };
           common = {
-            name = "linux-headers-5.10.0-23-common_5.10.179-1_all.deb";
-            sha256 = "0cpxky9ngahz52rinqkbpk4nnz6x43s3yr86y13d9zh5bj5yzniw";
+            name = "linux-headers-5.10.0-22-common_5.10.178-3_all.deb";
+            sha256 = "1vkrwzbg4xbcldl52ilmj3hahxqwf1awddlbij7zsagsgi609vw1";
           };
           kbuild = {
-            name = "linux-kbuild-5.10_5.10.179-1_amd64.deb";
-            sha256 = "07zgpvns8zp6vbqg6g563lshkcysi9f82208n1g66x4df5j6qymy";
+            name = "linux-kbuild-5.10_5.10.178-3_amd64.deb";
+            sha256 = "0n3zkfbkbwa63rvkj4p2s4wmfds2dlrviyg28lk69n3k1s7r8kky";
           };
           source = {
-            name = "linux-source-5.10_5.10.179-1_all.deb";
-            sha256 = "07w379fq7nwy6bh6jn3x7k10ahf9i86ik5af2sswlirfbz29ky8h";
+            name = "linux-source-5.10_5.10.178-3_all.deb";
+            sha256 = "0n6hsnlbwj2qlajx7vrlanip8m849w7yazjixm5fc2rncwydj4sd";
           };
         };
         patchelfInputs = [ openssl_1_1.out elfutils ];
