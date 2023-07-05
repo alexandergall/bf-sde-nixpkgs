@@ -1,0 +1,15 @@
+diff -Naur target-syslibs-9.11.0.orig/include/target-sys/bf_sal/bf_sys_mem.h target-syslibs-9.11.0/include/target-sys/bf_sal/bf_sys_mem.h
+--- target-syslibs-9.11.0.orig/include/target-sys/bf_sal/bf_sys_mem.h	2022-10-26 10:59:28.000000000 +0200
++++ target-syslibs-9.11.0/include/target-sys/bf_sal/bf_sys_mem.h	2023-06-30 08:39:33.047086782 +0200
+@@ -28,7 +28,11 @@
+ extern "C" {
+ #endif
+ 
++#ifdef __KERNEL__
++#include <linux/stddef.h>
++#else
+ #include <stddef.h>
++#endif
+ 
+ /**
+  * @addtogroup bf_sal-mem

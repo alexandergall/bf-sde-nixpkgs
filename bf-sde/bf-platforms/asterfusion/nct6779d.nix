@@ -1,6 +1,6 @@
 { stdenv, nct6779d, kernelSpec ? null }:
 
-stdenv.mkDerivation {
+(kernelSpec.stdenv or stdenv).mkDerivation {
   pname = "nct6779d";
   version = "master";
   inherit (nct6779d) src patches;

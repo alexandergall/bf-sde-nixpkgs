@@ -1,0 +1,59 @@
+diff -Naur bf-platforms-9.12.0.orig/platforms/newport/kdrv/bf_fpga/bf_fpga_main.c bf-platforms-9.12.0/platforms/newport/kdrv/bf_fpga/bf_fpga_main.c
+--- bf-platforms-9.12.0.orig/platforms/newport/kdrv/bf_fpga/bf_fpga_main.c	2023-01-27 01:00:21.000000000 +0100
++++ bf-platforms-9.12.0/platforms/newport/kdrv/bf_fpga/bf_fpga_main.c	2023-07-05 11:28:48.048621353 +0200
+@@ -184,6 +184,7 @@
+  * It masks the msix on/off of generating MSI-X messages.
+  */
+ static void bf_msix_mask_irq(struct msi_desc *desc, int32_t state) {
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 17, 0)
+ #ifdef HAVE_MSI_DESC_MASKED
+   u32 mask_bits = desc->masked;
+ #else
+@@ -211,6 +212,24 @@
+     desc->msix_ctrl = mask_bits;
+   }
+ #endif
++#else /* KERNEL_VERSION >= 5.17.0 */
++  struct pci_msi_desc *pci_desc = &(desc->pci);
++  
++  u32 mask_bits = pci_desc->msix_ctrl;
++  unsigned offset = desc->msi_index * PCI_MSIX_ENTRY_SIZE +
++                    PCI_MSIX_ENTRY_VECTOR_CTRL;
++
++  if (state != 0) {
++    mask_bits &= ~PCI_MSIX_ENTRY_CTRL_MASKBIT;
++  } else {
++    mask_bits |= PCI_MSIX_ENTRY_CTRL_MASKBIT;
++  }
++  if (mask_bits != pci_desc->msix_ctrl) {
++    writel(mask_bits, pci_desc->mask_base + offset);
++    readl(pci_desc->mask_base);
++    pci_desc->msix_ctrl = mask_bits;
++  }
++#endif
+ }
+ 
+ /**
+@@ -236,8 +255,12 @@
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 2, 0)
+     list_for_each_entry(desc, &pdev->msi_list, list)
+         bf_msix_mask_irq(desc, irq_state);
+-#else
++#elif LINUX_VERSION_CODE < KERNEL_VERSION(5, 17, 0)
+     for_each_pci_msi_entry(desc, pdev) bf_msix_mask_irq(desc, irq_state);
++#else
++    msi_lock_descs(&(pdev->dev));
++    msi_for_each_desc(desc, &(pdev->dev), MSI_DESC_ALL) bf_msix_mask_irq(desc, irq_state);
++    msi_unlock_descs(&(pdev->dev));
+ #endif
+   }
+   pci_cfg_access_unlock(pdev);
+@@ -459,7 +482,7 @@
+   if (minor >= BF_FPGA_MAX_DEVICE_CNT) {
+     return (-EINVAL);
+   }
+-  if (mode == 0 && &bf_global[minor].async_queue == NULL) {
++  if (mode == 0 && bf_global[minor].async_queue == NULL) {
+     return 0; /* nothing to do */
+   }
+   return (fasync_helper(fd, filep, mode, &bf_global[minor].async_queue));

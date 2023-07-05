@@ -17,6 +17,21 @@ diff -Naur cgoslx-master.orig/CgosDrv/Lx/DrvOsaLx.c cgoslx-master/CgosDrv/Lx/Drv
  #define __cgolx_cur_state(s) current->state=(s);
  #else
  #define __cgolx_cur_state(s) current->__state=(s);
+diff -Naur cgoslx-master.orig/CgosDrv/Lx/DrvOsHdr.h cgoslx-master/CgosDrv/Lx/DrvOsHdr.h
+--- cgoslx-master.orig/CgosDrv/Lx/DrvOsHdr.h	2022-08-08 08:20:54.000000000 +0200
++++ cgoslx-master/CgosDrv/Lx/DrvOsHdr.h	2023-06-30 14:07:00.405289800 +0200
+@@ -32,7 +32,11 @@
+ #define AMD64
+ #endif
+ 
++#ifdef __KERNEL__
++#include <linux/nls.h>
++#else
+ #include <stddef.h>
++#endif
+ 
+ //***************************************************************************
+ 
 diff -Naur cgoslx-master.orig/Makefile cgoslx-master/Makefile
 --- cgoslx-master.orig/Makefile	2022-08-08 08:20:54.000000000 +0200
 +++ cgoslx-master/Makefile	2023-03-01 13:31:58.600559264 +0100

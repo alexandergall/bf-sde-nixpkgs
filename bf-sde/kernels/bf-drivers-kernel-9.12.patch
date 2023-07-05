@@ -1,0 +1,126 @@
+diff -Naur bf-drivers-9.12.0.orig/kdrv/bf_kdrv/bf_kdrv.c bf-drivers-9.12.0/kdrv/bf_kdrv/bf_kdrv.c
+--- bf-drivers-9.12.0.orig/kdrv/bf_kdrv/bf_kdrv.c	2023-01-27 00:48:52.000000000 +0100
++++ bf-drivers-9.12.0/kdrv/bf_kdrv/bf_kdrv.c	2023-07-06 12:46:30.882797760 +0200
+@@ -187,6 +187,7 @@
+  * It masks the msix on/off of generating MSI-X messages.
+  */
+ static void bf_msix_mask_irq(struct msi_desc *desc, int32_t state) {
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 17, 0)
+ #ifdef HAVE_MSI_DESC_MASKED
+   u32 mask_bits = desc->masked;
+ #else
+@@ -213,6 +214,24 @@
+     desc->msix_ctrl = mask_bits;
+   }
+ #endif
++#else /* KERNEL_VERSION >= 5.17.0 */
++  struct pci_msi_desc *pci_desc = &(desc->pci);
++  
++  u32 mask_bits = pci_desc->msix_ctrl;
++  unsigned offset = desc->msi_index * PCI_MSIX_ENTRY_SIZE +
++                    PCI_MSIX_ENTRY_VECTOR_CTRL;
++
++  if (state != 0) {
++    mask_bits &= ~PCI_MSIX_ENTRY_CTRL_MASKBIT;
++  } else {
++    mask_bits |= PCI_MSIX_ENTRY_CTRL_MASKBIT;
++  }
++  if (mask_bits != pci_desc->msix_ctrl) {
++    writel(mask_bits, pci_desc->mask_base + offset);
++    readl(pci_desc->mask_base);
++    pci_desc->msix_ctrl = mask_bits;
++  }
++#endif
+ }
+ 
+ /**
+@@ -238,8 +257,12 @@
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 2, 0)
+     list_for_each_entry(desc, &pdev->msi_list, list)
+         bf_msix_mask_irq(desc, irq_state);
+-#else
++#elif LINUX_VERSION_CODE < KERNEL_VERSION(5, 17, 0)
+     for_each_pci_msi_entry(desc, pdev) bf_msix_mask_irq(desc, irq_state);
++#else
++    msi_lock_descs(&(pdev->dev));
++    msi_for_each_desc(desc, &(pdev->dev), MSI_DESC_ALL) bf_msix_mask_irq(desc, irq_state);
++    msi_unlock_descs(&(pdev->dev));
+ #endif
+   }
+   pci_cfg_access_unlock(pdev);
+@@ -496,7 +519,7 @@
+   if (minor >= BF_MAX_DEVICE_CNT) {
+     return (-EINVAL);
+   }
+-  if (mode == 0 && &bf_global[minor].async_queue == NULL) {
++  if (mode == 0 && bf_global[minor].async_queue == NULL) {
+     bf_global[minor].pending_signal = false;
+     return 0; /* nothing to do */
+   }
+@@ -1303,6 +1326,7 @@
+ #endif /* LINUX_VERSION_CODE */
+     /* ** intentional no-break */
+     /* FALLTHRU */
++      __attribute__ ((__fallthrough__));
+     case BF_INTR_MODE_MSI:
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 14, 0)
+       num_irq = pci_enable_msi_block(pdev, BF_MSI_ENTRY_CNT);
+@@ -1342,6 +1366,7 @@
+     /* fall back to Legacy Interrupt, intentional no-break */
+     /* FALLTHRU */
+ 
++      __attribute__ ((__fallthrough__));
+     case BF_INTR_MODE_LEGACY:
+       if (pci_intx_mask_supported(pdev)) {
+         bfdev->info.irq_flags = IRQF_SHARED;
+@@ -1353,6 +1378,7 @@
+       printk(KERN_NOTICE " bf PCI INTx mask not supported\n");
+     /* fall back to no Interrupt, intentional no-break */
+     /* FALLTHRU */
++      __attribute__ ((__fallthrough__));
+     case BF_INTR_MODE_NONE:
+       bfdev->info.irq = 0;
+       bfdev->info.num_irq = 0;
+diff -Naur bf-drivers-9.12.0.orig/kdrv/bf_kpkt/bf_kpkt_net.c bf-drivers-9.12.0/kdrv/bf_kpkt/bf_kpkt_net.c
+--- bf-drivers-9.12.0.orig/kdrv/bf_kpkt/bf_kpkt_net.c	2023-01-27 00:48:52.000000000 +0100
++++ bf-drivers-9.12.0/kdrv/bf_kpkt/bf_kpkt_net.c	2023-07-05 14:44:18.563434938 +0200
+@@ -721,7 +721,11 @@
+   if (!is_valid_ether_addr(saddr->sa_data)) {
+     return -EADDRNOTAVAIL;
+   }
++#if LINUX_VERSION_CODE <= KERNEL_VERSION(5, 15, 0)
+   memcpy(netdev->dev_addr, saddr->sa_data, ETH_ALEN);
++#else
++  dev_addr_mod(netdev, 0, saddr->sa_data, ETH_ALEN);
++#endif
+   printk(KERN_WARNING "bf_kpkt %s: Setting MAC address to %pM\n", netdev->name, netdev->dev_addr);
+   return 0;
+ }
+@@ -740,9 +744,15 @@
+ 
+   netif_carrier_off(netdev);
+   /* set fake mac address */
++#if LINUX_VERSION_CODE <= KERNEL_VERSION(5, 15, 0)
+   memcpy(netdev->dev_addr, bf_pci_base_mac_addr, ETH_ALEN);
+   /* dev_id determines the last byte of interface mac address */
+   netdev->dev_addr[ETH_ALEN - 1] = adapter->dev_id;
++#else
++  dev_addr_mod(netdev, 0, bf_pci_base_mac_addr, ETH_ALEN);
++  /* NOTE: this seems wrong, since the dev_id is an int, i.e. 2 bytes */
++  dev_addr_mod(netdev, ETH_ALEN-1, &adapter->dev_id, 1);
++#endif
+   if (adapter->bf_kpkt_st == BF_KPKT_ST_DEV_ADD) {
+     bf_kpkt_up(adapter);
+   }
+@@ -1222,8 +1232,10 @@
+ 
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 10, 0)
+     netif_napi_add(netdev, &adapter->napi, bf_kpkt_poll, 64);
+-#else
++#elsif LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
+     netif_napi_add(netdev, &adapter->napi, bf_kpkt_poll, NAPI_POLL_WEIGHT);
++#else
++    netif_napi_add(netdev, &adapter->napi, bf_kpkt_poll);
+ #endif
+   }
+   /* setup the private structure */

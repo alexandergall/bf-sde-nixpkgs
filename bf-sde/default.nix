@@ -65,7 +65,7 @@ let
         ## in kernels/default.nix.
         kernel-modules = import ./kernels {
           bf-drivers-src = extractSource "bf-drivers";
-          inherit (SDE) callPackage;
+          inherit (SDE) version callPackage;
           inherit pkgs;
 
           ## Originally, the kernel-modules packages contained only
@@ -896,6 +896,7 @@ let
           p4-examples = [];
           ptf-modules = [ ptf-modules/run_ptf_tests.patch
                           ptf-modules/getmac.patch ];
+          target-syslibs = [ bf-syslibs/kernel.patch ];
         };
       };
       bsps = {
@@ -903,7 +904,10 @@ let
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "a688b7468db32ea48c5ed83b040743b29f5beec28b3861440ff157cc6a5128ea";
           patches = {
-            newport = [ bf-platforms/newport-eth-compliance.patch ];
+            newport = [
+              bf-platforms/newport-eth-compliance.patch
+              bf-platforms/newport-kernel.patch
+            ];
           };
         };
         netberg = fetchFromStore {
@@ -930,6 +934,7 @@ let
         outputHash = "3880d0ea8e245b0c64c517530c3185da960a032878070d80f4647f3bc15b4a9f";
         patches = {
           bf-drivers = [ bf-drivers/9.11-bfrt-INT64-data-type.patch ];
+          target-syslibs = [];
         };
       };
       bsps = {
@@ -944,6 +949,9 @@ let
       sde = fetchFromStore {
         name = "bf-sde-${version}.tgz";
         outputHash = "e6c8cb7083b0c51fcccc5ba175889906cb596d3f05514dfe31f44a4c9102ad57";
+        patches = {
+          target-syslibs = [];
+        };
       };
       bsps = {
         reference = fetchFromStore {
@@ -970,7 +978,10 @@ let
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "60999d78e9a854e3a23b82ad0b644199e4aca5d88ad8eecea156e65faed2c2d4";
           patches = {
-            newport = [ bf-platforms/newport-eth-compliance.patch ];
+            newport = [
+              bf-platforms/newport-eth-compliance.patch
+              bf-platforms/newport-kernel-9.12.patch
+            ];
           };
         };
         netberg = fetchFromStore {
@@ -1002,7 +1013,10 @@ let
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "bd0ebd2bd8a08494668641fee7a7b7430d89925327c016c2a78315262097f485";
           patches = {
-            newport = [ bf-platforms/newport-eth-compliance.patch ];
+            newport = [
+              bf-platforms/newport-eth-compliance.patch
+              bf-platforms/newport-kernel.patch
+            ];
           };
         };
         netberg = fetchFromStore {

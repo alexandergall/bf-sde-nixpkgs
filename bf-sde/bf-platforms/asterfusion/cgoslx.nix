@@ -1,6 +1,6 @@
 { lib, stdenv, cgoslx, kernelSpec ? null }:
 
-stdenv.mkDerivation {
+(kernelSpec.stdenv or stdenv).mkDerivation {
   pname = "cgoslx";
   version = "master";
   inherit (cgoslx) src patches;

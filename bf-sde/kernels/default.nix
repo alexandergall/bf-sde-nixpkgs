@@ -31,7 +31,7 @@
 ##     An optional attribute set of overrides for the derivation
 ##     returned by ./build-modules.nix.
 
-{ bf-drivers-src, pkgs, callPackage, drvsWithKernelModules }:
+{ bf-drivers-src, pkgs, version, callPackage, drvsWithKernelModules }:
 
 with pkgs;
 
@@ -448,6 +448,52 @@ let
         };
       additionalModules = additionalModulesDebian11;
     };
+    Debian12_0 = {
+      enabledForSDE = pkgs.lib.versionAtLeast version "9.11.0";
+      kernelRelease = "6.1.0-9-amd64";
+      stdenv = pkgs.gcc12Stdenv;
+      buildTree = mkDebian {
+        spec = {
+          snapshotTimestamp = "20230626T030930Z";
+          arch = {
+            name = "linux-headers-6.1.0-9-amd64_6.1.27-1_amd64.deb";
+            sha256 = "0nc4g0s4bxk39l8mvdk7wjh7h1fmqm1q0yxdk53bhx3jsa5r3v0d";
+          };
+          common = {
+            name = "linux-headers-6.1.0-9-common_6.1.27-1_all.deb";
+            sha256 = "1pqs4rwksayy0a6wj4mkdwlg3fl1733i8c7vb1w2bfkpzd9br3q4";
+          };
+          kbuild = {
+            name = "linux-kbuild-6.1_6.1.27-1_amd64.deb";
+            sha256 = "1n8xj83wh5gh4g3gfv7lwr519xl4m2419mpyvhjd113xp0qkf22f";
+          };
+          source = {
+            name = "linux-source-6.1_6.1.27-1_all.deb";
+            sha256 = "16pci1xmcakbp4yhjsg5nyqpi0in933abj5g7hc8qaw45z207lwx";
+          };
+        };
+        patchelfInputs = [ openssl_1_1.out elfutils ];
+      };
+      patches =
+        let
+          patch = [ ./bf-drivers-kernel-5.8.patch ];
+        in {
+          "9.1.1" = patch ++ [ ./bf-drivers-9.1.1.patch ];
+          "9.2.0" = patch;
+          "9.3.0" = patch;
+          "9.3.1" = patch;
+          "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+          "9.11.0" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.11.1" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.11.2" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.12.0" = [ ./bf-drivers-kernel-9.12.patch ];
+          "9.13.0" = [ ./bf-drivers-kernel-9.11.patch ];
+        };
+      additionalModules = additionalModulesDebian11;
+    };
   };
+  kernelEnabled = _: spec:
+    ! (spec.disable or false) &&
+    (spec.enabledForSDE or true);
 in
-builtins.mapAttrs mkModules (lib.filterAttrs (n: v: ! (v.disable or false)) kernels)
+builtins.mapAttrs mkModules (lib.filterAttrs kernelEnabled kernels)

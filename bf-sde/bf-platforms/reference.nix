@@ -9,7 +9,13 @@ let
           cmake, kernelSpec ? null, runtimeShell, kmod, coreutils }:
 
         assert kernelSpec != null -> newport;
-        stdenv.mkDerivation {
+        let
+          stdenv' = if kernelSpec != null
+                    then
+                      kernelSpec.stdenv or stdenv
+                    else
+                      stdenv;
+        in stdenv'.mkDerivation {
           pname = "bf-platforms-${baseboard}" + lib.optionalString (kernelSpec != null)
             "-kernel-modules-${kernelSpec.kernelRelease}";
           ## Note: src is the actual reference BSP archive, see

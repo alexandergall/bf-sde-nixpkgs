@@ -1,0 +1,45 @@
+diff -Naur oom-master.orig/optoe/optoe.c oom-master/optoe/optoe.c
+--- oom-master.orig/optoe/optoe.c	2021-08-12 23:55:22.000000000 +0200
++++ oom-master/optoe/optoe.c	2023-06-30 14:25:44.527560608 +0200
+@@ -124,6 +124,7 @@
+ #include <linux/slab.h>
+ #include <linux/sysfs.h>
+ #include <linux/types.h>
++#include <linux/version.h>
+ 
+ /* The maximum length of a port name */
+ #define MAX_PORT_NAME_LEN 20
+@@ -618,7 +619,11 @@
+ 	return optoe_read_write(optoe, buf, off, count, OPTOE_WRITE_OP);
+ }
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
+ static int optoe_remove(struct i2c_client *client)
++#else
++static void optoe_remove(struct i2c_client *client)
++#endif
+ {
+ 	struct optoe_data *optoe;
+ 
+@@ -634,7 +639,9 @@
+ 		i2c_unregister_device(optoe->optoe_dummy.client);
+ #endif
+ 	kfree(optoe);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
+ 	return 0;
++#endif
+ }
+ 
+ #ifndef LATEST_KERNEL
+@@ -702,7 +709,11 @@
+ 	nvmem_config.size = optoe->byte_len;
+ #ifdef LATEST_KERNEL
+ 	if (optoe->nvmem)
++#if LINUX_VERSION_CODE < KERNEL_VERSION(5, 18, 0)
+ 		devm_nvmem_unregister(dev, optoe->nvmem);
++#else
++		nvmem_unregister(optoe->nvmem);
++#endif
+ 	optoe->nvmem = devm_nvmem_register(dev, &nvmem_config);
+ #else
+ 	if (optoe->nvmem)

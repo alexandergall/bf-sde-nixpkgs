@@ -8,7 +8,8 @@ assert lib.assertMsg (baseboard != null -> ! builtins.elem baseboard spec.basebo
   "baseboard ${baseboard} is blacklisted for kernel ${kernelID}";
 let
   baseboard' = if baseboard == null then "" else baseboard;
-  driverModules = stdenv.mkDerivation {
+  stdenv' = spec.stdenv or stdenv;
+  driverModules = stdenv'.mkDerivation {
     name = "bf-sde-${version}-kernel-modules-${spec.kernelRelease}";
     src = buildSystem.cmakeFixupSrc {
       inherit src;
@@ -104,7 +105,7 @@ let
             cp $(realpath ${directory})/*.ko $dest
           '';
         buildDrv = name: modSpecs:
-          stdenv.mkDerivation {
+          stdenv'.mkDerivation {
             name = "additional-kernel-modules-${name}";
             src = spec.buildTree.source;
             buildPhase = map build modSpecs;
