@@ -682,10 +682,10 @@ let
         asterfusion = fetchFromStore {
           ## These tarballs were created from the Asterfusion Gitlab
           ## repositories
-          name = "bf-bsp-8.9.x-b4a4b6c3.tar.gz";
+          name = "bf-bsp-8.9.x-6686d64c.tar.gz";
           ## Run gitver.sh in the cloned BSP to get this version ID
-          asterfusion_version = "Git: r25 23.02-rc3";
-          outputHash = "887c8d618c10ce5b5622afbe95250ecd3818a3be14c0f4b7763c8ce2812e41a6";
+          asterfusion_version = "Git: r34 23.03-rc2-6-g6686d64";
+          outputHash = "f1f772db59baf8fbf6c49d57bc4e4b559452affd3920f9782812d35d6761ad04";
           patches = {
             asterfusion = [ bf-platforms/asterfusion/bsp.patch ];
           };
