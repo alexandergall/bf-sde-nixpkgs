@@ -491,6 +491,49 @@ let
         };
       additionalModules = additionalModulesDebian11;
     };
+    Debian12_1 = {
+      enabledForSDE = pkgs.lib.versionAtLeast version "9.11.0";
+      kernelRelease = "6.1.0-10-amd64";
+      stdenv = pkgs.gcc12Stdenv;
+      buildTree = mkDebian {
+        spec = {
+          snapshotTimestamp = "20230725T030258Z";
+          arch = {
+            name = "linux-headers-6.1.0-10-amd64_6.1.38-1_amd64.deb";
+            sha256 = "1sjby5li8rkqvziy6b00ic3zv2vfs5lrcfcj3vqiqcjxhb4kdy9x";
+          };
+          common = {
+            name = "linux-headers-6.1.0-10-common_6.1.38-1_all.deb";
+            sha256 = "06ns24kin2a703m40y8xbf44zbv73k6jbiv5kxln3yiid0i3m60q";
+          };
+          kbuild = {
+            name = "linux-kbuild-6.1_6.1.38-1_amd64.deb";
+            sha256 = "0sc2lwxwp0ishxpi46gc533zk11dfcigi1jh6736mcs4hp67kj02";
+          };
+          source = {
+            name = "linux-source-6.1_6.1.38-1_all.deb";
+            sha256 = "1ilkpajm20zjd4cx4ih0vqilxn62fil45qn5x8nn3f996vzldka3";
+          };
+        };
+        patchelfInputs = [ openssl_1_1.out elfutils ];
+      };
+      patches =
+        let
+          patch = [ ./bf-drivers-kernel-5.8.patch ];
+        in {
+          "9.1.1" = patch ++ [ ./bf-drivers-9.1.1.patch ];
+          "9.2.0" = patch;
+          "9.3.0" = patch;
+          "9.3.1" = patch;
+          "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+          "9.11.0" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.11.1" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.11.2" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.12.0" = [ ./bf-drivers-kernel-9.12.patch ];
+          "9.13.0" = [ ./bf-drivers-kernel-9.11.patch ];
+        };
+      additionalModules = additionalModulesDebian11;
+    };
   };
   kernelEnabled = _: spec:
     ! (spec.disable or false) &&
