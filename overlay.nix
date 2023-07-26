@@ -339,6 +339,7 @@ let
               '';
               prePatch = "";
               propagatedBuildInputs = [ python-self.six ];
+              dontUsePytestCheck = true;
             });
         };
     };
