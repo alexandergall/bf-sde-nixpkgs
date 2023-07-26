@@ -185,6 +185,7 @@ let
     ## directory.  The deb files are available for download and don't
     ## need to be stored in the bf-sde-nixpkgs repo.
     Debian10_8 = {
+      disable = true;
       kernelRelease = "4.19.0-14-amd64";
       buildTree = mkDebian {
         spec = {
@@ -213,6 +214,7 @@ let
       };
     };
     Debian10_9 = {
+      disable = true;
       kernelRelease = "4.19.0-16-amd64";
       buildTree = mkDebian {
         spec = {
@@ -241,6 +243,7 @@ let
       };
     };
     Debian10_10 = {
+      disable = true;
       kernelRelease = "4.19.0-17-amd64";
       buildTree = mkDebian {
         spec = {
