@@ -298,6 +298,7 @@ let
               postInstall = ''
                 touch $out/lib/${self.python2.libPrefix}/site-packages/google/__init__.py
               '';
+              dontUsePytestCheck = true;
             });
         };
     };
