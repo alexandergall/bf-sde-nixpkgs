@@ -208,12 +208,41 @@ let
             withPlottingSupport = false;
             withGraphicsSupport = false;
           };
+          pyperclip = python-super.pyperclip.overridePythonAttrs (_:  rec {
+            doCheck = false;
+          });
           ipaddress = python-self.buildPythonPackage rec {
             pname = "ipaddress";
             version = "1.0.23";
             src = python-super.fetchPypi {
               inherit pname version;
               sha256 = "1qp743h30s04m3cg3yk3fycad930jv17q7dsslj4mfw0jlvf1y5p";
+            };
+          };
+          netifaces = python-self.buildPythonPackage rec {
+            pname = "netifaces";
+            version = "0.11.0";
+            src = python-super.fetchPypi {
+              inherit pname version;
+              sha256 = "0cnajf5rl4w1sa72j921scbigr6zndig56cq8ggpx45jdqa7jfh4";
+            };
+          };
+          psutil = python-self.buildPythonPackage rec {
+            pname = "psutil";
+            version = "5.9.4";
+            src = python-super.fetchPypi {
+              inherit pname version;
+              sha256 = "0qjafyldjnp25rylh9sz77jvv14myhivwjll709lnpa3xcwrfzrx";
+            };
+            propagatedBuildInputs = with python-self; [ mock ];
+            doCheck = false;
+          };
+          tabulate = python-self.buildPythonPackage rec {
+            pname = "tabulate";
+            version = "0.8.10";
+            src = python-super.fetchPypi {
+              inherit pname version;
+              sha256 = "06gm2jqn8pljk5sz4hkycdls5cdh5pdklpqmf0kpihksvprz6mvc";
             };
           };
           backports_functools_lru_cache = python-self.buildPythonPackage (with python-super; rec {
