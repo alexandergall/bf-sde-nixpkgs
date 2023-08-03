@@ -354,7 +354,7 @@ let
     ## The Python version to use when building bf-drivers. Every
     ## derivation using bf-drivers as input must use the same version
     ## by referencing bf-drivers.pythonModule
-    python_bf_drivers = python2;
+    python_bf_drivers = python27Full;
     sde = {
       patches = {
         mainTools = [ sde/run_switchd.patch sde/run_bfshell.patch sde/run_p4_tests.patch ];

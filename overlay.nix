@@ -199,7 +199,7 @@ let
       '';
     })).override { stdenv = gccOverride; };
 
-    python2 = super.python2.override {
+    python27Full = super.python27Full.override {
       packageOverrides = python-self: python-super:
         (pythonCommon python-self python-super) // {
           scapy = python-super.scapy.override {
@@ -207,28 +207,6 @@ let
             withCryptography = false;
             withPlottingSupport = false;
             withGraphicsSupport = false;
-          };
-          pyperclip = python-super.pyperclip.overridePythonAttrs (_:  rec {
-            doCheck = false;
-          });
-          ply = python-super.ply.overrideAttrs (_: rec {
-            pname = "ply";
-            version = "3.9";
-
-            src = python-super.fetchPypi {
-              inherit pname version;
-              sha256 = "0gpl0yli3w03ipyqfrp3w5nf0iawhsq65anf5wwm2wf5p502jzhd";
-            };
-          });
-          mox = python-self.buildPythonPackage rec {
-            pname = "mox";
-            version = "0.5.3";
-            src = self.fetchurl {
-              url = "http://pymox.googlecode.com/files/${pname}-${version}.tar.gz";
-              sha256 = "4d18a4577d14da13d032be21cbdfceed302171c275b72adaa4c5997d589a5030";
-            };
-            # error: invalid command 'test'
-            doCheck = false;
           };
           ipaddress = python-self.buildPythonPackage rec {
             pname = "ipaddress";
@@ -238,50 +216,23 @@ let
               sha256 = "1qp743h30s04m3cg3yk3fycad930jv17q7dsslj4mfw0jlvf1y5p";
             };
           };
-          netifaces = python-self.buildPythonPackage rec {
-            pname = "netifaces";
-            version = "0.11.0";
-            src = python-super.fetchPypi {
+          backports_functools_lru_cache = python-self.buildPythonPackage (with python-super; rec {
+            pname = "backports.functools_lru_cache";
+            version = "1.6.4";
+            src = fetchPypi {
               inherit pname version;
-              sha256 = "0cnajf5rl4w1sa72j921scbigr6zndig56cq8ggpx45jdqa7jfh4";
+              sha256 = "d5ed2169378b67d3c545e5600d363a923b09c456dab1593914935a68ad478271";
             };
-          };
-          funcsigs = python-self.buildPythonPackage rec {
-            pname = "funcsigs";
-            version = "1.0.2";
-            src = python-super.fetchPypi {
-              inherit pname version;
-              sha256 = "0l4g5818ffyfmfs1a924811azhjj8ax9xd1cffr1mzd3ycn0zfx7";
-            };
+            nativeBuildInputs = [ setuptools-scm ];
+            nativeCheckInputs = [ pytestCheckHook ];
             doCheck = false;
-          };
-          mock = python-self.buildPythonPackage rec {
-            pname = "mock";
-            version = "3.0.5";
-            src = python-super.fetchPypi {
-              inherit pname version;
-              sha256 = "1hrp6j0yrx2xzylfv02qa8kph661m6yq4p0mc8fnimch9j4psrc3";
-            };
-            propagatedBuildInputs = with python-self; [ funcsigs six ];
-          };
-          psutil = python-self.buildPythonPackage rec {
-            pname = "psutil";
-            version = "5.9.4";
-            src = python-super.fetchPypi {
-              inherit pname version;
-              sha256 = "0qjafyldjnp25rylh9sz77jvv14myhivwjll709lnpa3xcwrfzrx";
-            };
-            propagatedBuildInputs = with python-self; [ mock ];
-            doCheck = false;
-          };
-          tabulate = python-self.buildPythonPackage rec {
-            pname = "tabulate";
-            version = "0.8.10";
-            src = python-super.fetchPypi {
-              inherit pname version;
-              sha256 = "06gm2jqn8pljk5sz4hkycdls5cdh5pdklpqmf0kpihksvprz6mvc";
-            };
-          };
+            pythonNamespaces = [ "backports" ];
+          });
+          wcwidth = python-super.wcwidth.overrideAttrs (oldAttrs: {
+            propagatedBuildInputs = oldAttrs.propagatedBuildInputs ++ [
+              python-self.backports_functools_lru_cache
+            ];
+          });
           grpcio =
             let
               grpc = self.grpc_1_17_0;
