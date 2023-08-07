@@ -245,23 +245,6 @@ let
               sha256 = "06gm2jqn8pljk5sz4hkycdls5cdh5pdklpqmf0kpihksvprz6mvc";
             };
           };
-          backports_functools_lru_cache = python-self.buildPythonPackage (with python-super; rec {
-            pname = "backports.functools_lru_cache";
-            version = "1.6.4";
-            src = fetchPypi {
-              inherit pname version;
-              sha256 = "d5ed2169378b67d3c545e5600d363a923b09c456dab1593914935a68ad478271";
-            };
-            nativeBuildInputs = [ setuptools-scm ];
-            nativeCheckInputs = [ pytestCheckHook ];
-            doCheck = false;
-            pythonNamespaces = [ "backports" ];
-          });
-          wcwidth = python-super.wcwidth.overrideAttrs (oldAttrs: {
-            propagatedBuildInputs = oldAttrs.propagatedBuildInputs ++ [
-              python-self.backports_functools_lru_cache
-            ];
-          });
           grpcio =
             let
               grpc = self.grpc_1_17_0;
