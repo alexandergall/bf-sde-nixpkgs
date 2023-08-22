@@ -115,6 +115,11 @@ let
         lib.optionalString (lib.versionOlder version "9.12.0") ''
         sed -i -e 's/from bfruntime_pb2_grpc/from bfrt_grpc.bfruntime_pb2_grpc/' src/bf_rt/bfruntime_grpc_client/python/client.py
       '') +
+        ## Satisfy protobuf dependencies for code generated from
+        ## protoc (via the grpcio python module)
+        ''
+          sed -i -e 's/CMAKE_CXX_STANDARD 11/CMAKE_CXX_STANDARD 17/' CMakeLists.txt
+        '' +
         ## Override the location of libpython provided by
         ## bf-utils.
         ''
