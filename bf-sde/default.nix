@@ -360,6 +360,7 @@ let
         mainTools = [ sde/run_switchd.patch sde/run_bfshell.patch sde/run_p4_tests.patch ];
         p4-examples = [ ./p4-16-examples/ptf.patch ];
         ptf-modules = [ ptf-modules/veth_setup_ethtool.patch ];
+        bf-diags = [ bf-diags/glibc-2.37-9.10.0.patch ];
       };
     };
   };
@@ -376,6 +377,7 @@ let
         outputHash = "be166d6322cb7d4f8eff590f6b0704add8de80e2f2cf16eb318e43b70526be11";
         patches = {
           ptf-modules = [ ptf-modules/veth_setup_ethtool-9.1.1.patch ];
+          bf-diags = [ bf-diags/glibc-2.37-9.1.0.patch ];
         };
       };
       bsps = {
@@ -396,6 +398,7 @@ let
         outputHash = "94cf6acf8a69928aaca4043e9ba2c665cc37d72b904dcadb797d5d520fb0dd26";
         patches = {
           ptf-modules = [ ptf-modules/veth_setup_ethtool-9.1.1.patch ];
+          bf-diags = [ bf-diags/glibc-2.37-9.1.0.patch ];
         };
       };
       bsps = {
@@ -416,6 +419,7 @@ let
         outputHash = "566994d074ba93908307890761f8d14b4e22fb8759085da3d71c7a2f820fe2ec";
         patches = {
           bf-drivers = [ ./bf-drivers/9.3.0-bfrtTable.py.patch ];
+          bf-diags = [ bf-diags/glibc-2.37-9.1.0.patch ];
         };
       };
       bsps = {
@@ -472,6 +476,7 @@ let
         outputHash = "daec162c2a857ae0175e57ab670b59341d39f3ac2ecd5ba99ec36afa15566c4e";
         patches = {
           p4-examples = [ ./p4-16-examples/9.4.0-ptf.patch ];
+          bf-diags = [ bf-diags/glibc-2.37-9.1.0.patch ];
         };
       };
       bsps = {
@@ -505,6 +510,7 @@ let
           mainTools = [ sde/run_switchd.patch sde/run_bfshell.patch
                         sde/run_p4_tests-9.5.0.patch ];
           p4-examples = [];
+          bf-diags = [ bf-diags/glibc-2.37-9.5.0.patch ];
         };
       };
       bsps = {
@@ -593,6 +599,7 @@ let
           mainTools = [ sde/run_switchd.patch sde/run_bfshell-9.6.0.patch
                         sde/run_p4_tests-9.6.0.patch ];
           p4-examples = [];
+          bf-diags = [ bf-diags/glibc-2.37-9.5.0.patch ];
         };
       };
       bsps = {
@@ -645,6 +652,7 @@ let
                           ## VM. This patch sets a static address in
                           ## this case.
                           ptf-modules/getmac.patch ];
+          bf-diags = [ bf-diags/glibc-2.37-9.5.0.patch ];
         };
       };
       bsps = {
@@ -776,6 +784,7 @@ let
           ptf-modules = [ ptf-modules/run_ptf_tests.patch
                           ptf-modules/veth_setup_ethtool.patch
                           ptf-modules/getmac.patch ];
+          bf-diags = [ bf-diags/glibc-2.37-9.5.0.patch ];
         };
       };
       bsps = {
@@ -809,6 +818,7 @@ let
           ptf-modules = [ ptf-modules/run_ptf_tests.patch
                           ptf-modules/veth_setup_ethtool.patch
                           ptf-modules/getmac.patch ];
+          bf-diags = [ bf-diags/glibc-2.37-9.9.0.patch ];
         };
       };
       bsps = {

@@ -1,0 +1,29 @@
+diff -Naur bf-diags-9.10.0.orig/api/src/diag_common.h bf-diags-9.10.0/api/src/diag_common.h
+--- bf-diags-9.10.0.orig/api/src/diag_common.h	2022-08-02 13:35:10.000000000 +0200
++++ bf-diags-9.10.0/api/src/diag_common.h	2023-09-28 17:29:05.051056739 +0200
+@@ -285,8 +285,8 @@
+   char eth_cpu_port_name[DIAG_ETH_CPU_PORT_NAME_LEN];
+   uint32_t cpu_ifindex;
+   int cpu_fd;
+-  struct sockaddr_ll s_addr;
+   pthread_t eth_cpu_driver_thread;
++  struct sockaddr_ll s_addr;
+ } diag_eth_cpu_info_t;
+ 
+ /* Device info */
+@@ -296,7 +296,6 @@
+   int num_active_pipes;
+   int cpu_port;
+   int cpu_port2;
+-  diag_eth_cpu_info_t eth_cpu_info;
+   bf_sku_chip_part_rev_t part_rev;
+   /* State info */
+   bf_diag_port_stats_t cpu_stats[BF_DIAG_MAX_PORTS + 1]
+@@ -318,6 +317,7 @@
+   uint8_t pgen_app_used[BF_PIPE_COUNT][DIAG_PGEN_APPS_MAX_LIMIT];
+   uint32_t num_pgen_app_used[BF_PIPE_COUNT];
+   uint32_t pgen_global_pkt_buf_offset[BF_PIPE_COUNT];
++  diag_eth_cpu_info_t eth_cpu_info;
+ } diag_dev_info_t;
+ 
+ /* Diag info */
