@@ -163,7 +163,7 @@ let
       ];
     });
 
-    protobuf3_6 = (super.protobuf3_19.overrideAttrs (_: rec {
+    protobuf3_6 = (super.protobuf3_20.overrideAttrs (_: rec {
       version = "3.6.1.3";
       src = self.fetchFromGitHub {
         owner = "protocolbuffers";
