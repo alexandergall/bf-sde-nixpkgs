@@ -1044,6 +1044,25 @@ let
       libcli = libcli1_10;
       python_bf_drivers = python3;
     };
+    v9_13_1 = lib.recursiveUpdate v9_13_0 rec {
+      version = "9.13.1";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "82868acb6cf13ef44aa8b4674222df2b7208d4e4d78a724550229ea023a8e781";
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "a6a3b8ab0164dfba1d97f41b33cc42f17c92925ca301d873800a075dcab6bca1";
+          patches = {
+            newport = [
+              bf-platforms/newport-eth-compliance.patch
+              bf-platforms/newport-kernel-9.13.1.patch
+            ];
+          };
+        };
+      };
+    };
   };
 
-in bf-sde // { latest = bf-sde.v9_13_0; }
+in bf-sde // { latest = bf-sde.v9_13_1; }

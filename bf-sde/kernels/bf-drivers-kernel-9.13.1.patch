@@ -1,0 +1,89 @@
+diff -Naur bf-drivers-9.13.1.orig/kdrv/bf_kdrv/bf_kdrv.c bf-drivers-9.13.1/kdrv/bf_kdrv/bf_kdrv.c
+--- bf-drivers-9.13.1.orig/kdrv/bf_kdrv/bf_kdrv.c	2023-10-02 22:19:19.000000000 +0200
++++ bf-drivers-9.13.1/kdrv/bf_kdrv/bf_kdrv.c	2023-10-06 14:41:49.924989076 +0200
+@@ -253,7 +253,9 @@
+ #elif LINUX_VERSION_CODE < KERNEL_VERSION(5, 17, 0)
+     for_each_pci_msi_entry(desc, pdev) bf_msix_mask_irq(desc, irq_state);
+ #else
++    msi_lock_descs(&pdev->dev);
+     msi_for_each_desc(desc, &pdev->dev, MSI_DESC_ALL) bf_msix_mask_irq(desc, irq_state);
++    msi_unlock_descs(&pdev->dev);
+ #endif
+   }
+   pci_cfg_access_unlock(pdev);
+@@ -510,7 +512,7 @@
+   if (minor >= BF_MAX_DEVICE_CNT) {
+     return (-EINVAL);
+   }
+-  if (mode == 0 && &bf_global[minor].async_queue == NULL) {
++  if (mode == 0 && bf_global[minor].async_queue == NULL) {
+     bf_global[minor].pending_signal = false;
+     return 0; /* nothing to do */
+   }
+@@ -1317,6 +1319,7 @@
+ #endif /* LINUX_VERSION_CODE */
+     /* ** intentional no-break */
+     /* FALLTHRU */
++      __attribute__ ((__fallthrough__));
+     case BF_INTR_MODE_MSI:
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 14, 0)
+       num_irq = pci_enable_msi_block(pdev, BF_MSI_ENTRY_CNT);
+@@ -1356,6 +1359,7 @@
+     /* fall back to Legacy Interrupt, intentional no-break */
+     /* FALLTHRU */
+ 
++      __attribute__ ((__fallthrough__));
+     case BF_INTR_MODE_LEGACY:
+       if (pci_intx_mask_supported(pdev)) {
+         bfdev->info.irq_flags = IRQF_SHARED;
+@@ -1367,6 +1371,7 @@
+       printk(KERN_NOTICE " bf PCI INTx mask not supported\n");
+     /* fall back to no Interrupt, intentional no-break */
+     /* FALLTHRU */
++      __attribute__ ((__fallthrough__));
+     case BF_INTR_MODE_NONE:
+       bfdev->info.irq = 0;
+       bfdev->info.num_irq = 0;
+diff -Naur bf-drivers-9.13.1.orig/kdrv/bf_kpkt/bf_kpkt_net.c bf-drivers-9.13.1/kdrv/bf_kpkt/bf_kpkt_net.c
+--- bf-drivers-9.13.1.orig/kdrv/bf_kpkt/bf_kpkt_net.c	2023-10-02 22:19:18.000000000 +0200
++++ bf-drivers-9.13.1/kdrv/bf_kpkt/bf_kpkt_net.c	2023-10-06 14:38:01.532501493 +0200
+@@ -721,7 +721,11 @@
+   if (!is_valid_ether_addr(saddr->sa_data)) {
+     return -EADDRNOTAVAIL;
+   }
++#if LINUX_VERSION_CODE <= KERNEL_VERSION(5, 15, 0)
+   memcpy(netdev->dev_addr, saddr->sa_data, ETH_ALEN);
++#else
++  dev_addr_mod(netdev, 0, saddr->sa_data, ETH_ALEN);
++#endif
+   printk(KERN_WARNING "bf_kpkt %s: Setting MAC address to %pM\n", netdev->name, netdev->dev_addr);
+   return 0;
+ }
+@@ -741,9 +745,14 @@
+ 
+   netif_carrier_off(netdev);
+   /* set fake mac address */
++#if LINUX_VERSION_CODE <= KERNEL_VERSION(5, 15, 0)
+   memcpy(netdev->dev_addr, bf_pci_base_mac_addr, ETH_ALEN);
+   /* dev_id determines the last byte of interface mac address */
+   memcpy(netdev->dev_addr + ETH_ALEN - 1, &last_byte, 1);
++#else
++  dev_addr_mod(netdev, 0, bf_pci_base_mac_addr, ETH_ALEN);
++  dev_addr_mod(netdev, ETH_ALEN - 1, &last_byte, 1);
++#endif
+   if (adapter->bf_kpkt_st == BF_KPKT_ST_DEV_ADD) {
+     bf_kpkt_up(adapter);
+   }
+@@ -1230,7 +1239,12 @@
+ #else
+     netif_napi_add(netdev, &adapter->napi, bf_kpkt_poll, NAPI_POLL_WEIGHT);
+ #endif
++#else
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)    
+     netif_napi_add(netdev, &adapter->napi, bf_kpkt_poll, NAPI_POLL_WEIGHT);
++#else
++    netif_napi_add(netdev, &adapter->napi, bf_kpkt_poll);
++#endif
+ #endif
+ #endif
+ 
