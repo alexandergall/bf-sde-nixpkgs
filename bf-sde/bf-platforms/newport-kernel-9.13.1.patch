@@ -1,0 +1,26 @@
+diff -Naur bf-platforms-9.13.1.orig/platforms/newport/kdrv/bf_fpga/bf_fpga_main.c bf-platforms-9.13.1/platforms/newport/kdrv/bf_fpga/bf_fpga_main.c
+--- bf-platforms-9.13.1.orig/platforms/newport/kdrv/bf_fpga/bf_fpga_main.c	2023-10-02 22:31:02.000000000 +0200
++++ bf-platforms-9.13.1/platforms/newport/kdrv/bf_fpga/bf_fpga_main.c	2023-10-06 15:05:18.408042100 +0200
+@@ -247,8 +247,12 @@
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 2, 0)
+     list_for_each_entry(desc, &pdev->msi_list, list)
+         bf_msix_mask_irq(desc, irq_state);
+-#else
++#elif LINUX_VERSION_CODE < KERNEL_VERSION(5, 17, 0)
+     for_each_pci_msi_entry(desc, pdev) bf_msix_mask_irq(desc, irq_state);
++#else
++    msi_lock_descs(&(pdev->dev));
++    msi_for_each_desc(desc, &(pdev->dev), MSI_DESC_ALL) bf_msix_mask_irq(desc, irq_state);
++    msi_unlock_descs(&(pdev->dev));
+ #endif
+   }
+   pci_cfg_access_unlock(pdev);
+@@ -470,7 +474,7 @@
+   if (minor >= BF_FPGA_MAX_DEVICE_CNT) {
+     return (-EINVAL);
+   }
+-  if (mode == 0 && &bf_global[minor].async_queue == NULL) {
++  if (mode == 0 && bf_global[minor].async_queue == NULL) {
+     return 0; /* nothing to do */
+   }
+   return (fasync_helper(fd, filep, mode, &bf_global[minor].async_queue));
