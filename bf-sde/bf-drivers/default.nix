@@ -119,6 +119,8 @@ let
         ## protoc (via the grpcio python module)
         ''
           sed -i -e 's/CMAKE_CXX_STANDARD 11/CMAKE_CXX_STANDARD 17/' CMakeLists.txt
+          sed -i -e 's/CMAKE_CXX_STANDARD 14/CMAKE_CXX_STANDARD 17/' third-party/CMakeLists.txt
+          sed -i -e 's/CMAKE_CXX_STANDARD 14/CMAKE_CXX_STANDARD 17/' src/bf_rt/CMakeLists.txt
         '' +
         ## Override the location of libpython provided by
         ## bf-utils.
