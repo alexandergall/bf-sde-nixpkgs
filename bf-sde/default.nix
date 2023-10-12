@@ -679,15 +679,26 @@ let
           name = "bf-platforms-netberg-7xx-bsp-9.7.0-220210.tgz";
           outputHash = "ad140a11fd39f7fbd835d6774d9b855f2ba693fd1d2e61b45a94aa30ed08a4f1";
         };
-        asterfusion = fetchFromStore {
-          ## These tarballs were created from the Asterfusion Gitlab
-          ## repositories
-          name = "bf-bsp-9.11.x-cbeddbbb.tar.gz";
+        asterfusion = {
+          src = fetchFromGitHub {
+            owner = "asterfusion";
+            repo = "bf-bsp-lts";
+            rev = "a5033f2";
+            sha256 = "0wrgmfzwvcdga1n0w17nr6lddj3hbvp9by9snac8097k3yzb2blj";
+          };
           ## Run gitver.sh in the cloned BSP to get this version ID
-          asterfusion_version = "Git: r4 23.05-rc1-2-gcbeddbb";
-          outputHash = "644ed1bd167cec3832e1d0ba42318da221dd1a1327ce74c8094e29bfabbcb680";
+          asterfusion_version = "Git: r40 23.09";
           patches = {
             asterfusion = [ bf-platforms/asterfusion/bsp.patch ];
+          };
+          nct6779d = {
+            src = fetchFromGitHub {
+              owner = "asterfusion";
+              repo = "nct6779d";
+              rev = "732b62e";
+              sha256 = "09x42rqsj9ra697jflrgkqj664pspq63akbrx6dw6kspcvswkf3a";
+            };
+            patches = [];
           };
           cgoslx = fetchFromStore {
             name = "cgoslx-facc4fb4.tar.gz";
@@ -695,11 +706,6 @@ let
             patches = [
                 bf-platforms/asterfusion/cgoslx.patch
             ];
-          };
-          nct6779d = fetchFromStore {
-            name = "nct6779d-0b64ec0b.tar.gz";
-            outputHash = "e33b38a5b23ec17b6bcc233cb59b3dc07f8c66c86c1d5b64e8503df95c3e078f";
-            patches = [];
           };
         };
       };
