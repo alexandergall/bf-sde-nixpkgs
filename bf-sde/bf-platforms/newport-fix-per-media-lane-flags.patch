@@ -1,0 +1,146 @@
+diff -Naur bf-platforms-9.11.2.orig/drivers/src/bf_port_mgmt/bf_pm_qsfp_mgmt.c bf-platforms-9.11.2/drivers/src/bf_port_mgmt/bf_pm_qsfp_mgmt.c
+--- bf-platforms-9.11.2.orig/drivers/src/bf_port_mgmt/bf_pm_qsfp_mgmt.c	2023-03-16 23:19:41.000000000 +0100
++++ bf-platforms-9.11.2/drivers/src/bf_port_mgmt/bf_pm_qsfp_mgmt.c	2023-10-24 13:30:30.039836330 +0200
+@@ -297,6 +297,7 @@
+   int bitnum;          // bit number to log
+   Sff_flag_type type;  // event or status
+   char desc[50];
++  bool media_lane;     // true if flag is per media lane
+   int fval_prev[BF_PLAT_MAX_QSFP + 1];
+   int fval_cur[BF_PLAT_MAX_QSFP + 1];
+ } qsfp_flag_log_t;
+@@ -387,6 +388,7 @@
+         0,
+         FLAG_TYPE_STATUS,
+         "FLAG_TX_LOS",
++        false,
+     },
+     {
+         FLAG_RX_LOS,
+@@ -394,6 +396,7 @@
+         0,
+         FLAG_TYPE_STATUS,
+         "FLAG_RX_LOS",
++        true,
+     },
+     {
+         FLAG_TX_ADAPT_EQ_FAULT,
+@@ -401,6 +404,7 @@
+         0,
+         FLAG_TYPE_EVENT,
+         "FLAG_TX_ADAPT_EQ_FAULT",
++        false,
+     },
+     {
+         FLAG_TX_FAULT,
+@@ -408,6 +412,7 @@
+         0,
+         FLAG_TYPE_EVENT,
+         "FLAG_TX_FAULT",
++        true,
+     },
+     {
+         FLAG_TX_LOL,
+@@ -415,6 +420,7 @@
+         0,
+         FLAG_TYPE_STATUS,
+         "FLAG_TX_LOL",
++        false,
+     },
+     {
+         FLAG_RX_LOL,
+@@ -422,6 +428,7 @@
+         0,
+         FLAG_TYPE_STATUS,
+         "FLAG_RX_LOL",
++        true,
+     },
+     {
+         FLAG_RX_PWR_HIGH_ALARM,
+@@ -429,6 +436,7 @@
+         0,
+         FLAG_TYPE_STATUS,
+         "FLAG_RX_PWR_HIGH_ALARM",
++        true,
+     },
+     {
+         FLAG_RX_PWR_LOW_ALARM,
+@@ -436,6 +444,7 @@
+         0,
+         FLAG_TYPE_STATUS,
+         "FLAG_RX_PWR_LOW_ALARM",
++        true,
+     },
+     {
+         FLAG_TX_BIAS_HIGH_ALARM,
+@@ -443,6 +452,7 @@
+         0,
+         FLAG_TYPE_STATUS,
+         "FLAG_TX_BIAS_HIGH_ALARM",
++        true,
+     },
+     {
+         FLAG_TX_BIAS_LOW_ALARM,
+@@ -450,6 +460,7 @@
+         0,
+         FLAG_TYPE_STATUS,
+         "FLAG_TX_BIAS_LOW_ALARM",
++        true,
+     },
+     {
+         FLAG_TX_PWR_HIGH_ALARM,
+@@ -457,6 +468,7 @@
+         0,
+         FLAG_TYPE_STATUS,
+         "FLAG_TX_PWR_HIGH_ALARM",
++        true,
+     },
+     {
+         FLAG_TX_PWR_LOW_ALARM,
+@@ -464,6 +476,7 @@
+         0,
+         FLAG_TYPE_STATUS,
+         "FLAG_TX_PWR_LOW_ALARM",
++        true,
+     },
+ };
+ 
+@@ -1422,6 +1435,7 @@
+ static void qsfp_log_lane_flags(int conn_id) {
+   int loopcnt, loopmax, flag_val, ln;
+   bool logflag;
++  dev_cfg_per_channel_t *dev_cfg;
+ 
+   loopmax = sizeof(ln_flag_log) / sizeof(qsfp_flag_log_t);
+ 
+@@ -1437,9 +1451,28 @@
+     ln_flag_log[loopcnt].fval_cur[conn_id] = 0;
+ 
+     for (ln = 0; ln < qsfp_state[conn_id].ch_cnt; ln++) {
+-      // get the current flag value for each lane from the cache
+-      flag_val =
++      // get the current flag value for each lane from the cache. we
++      // iterate over the host lanes but some of the flags are per
++      // media-lane. this should probably be handled better at a more
++      // fundamental level. as a workaround, we use the
++      // host-lane-to-media-lane mapping that is established when the
++      // application is selected. this happens only after the port is
++      // enabled.
++      if (ln_flag_log[loopcnt].media_lane) {
++        // media_ch is set to -1 after port-add but before
++        // port-enb. also check for host_intf_lanes to to cover the
++        // case when the port hasn't been added yet.
++        dev_cfg = &qsfp_state[conn_id].dev_cfg[ln];
++        if (dev_cfg->host_intf_nlanes > 0 && dev_cfg->media_ch != -1) {
++          flag_val =
++            bf_qsfp_get_flag(conn_id, ln_flag_log[loopcnt].flag, dev_cfg->media_ch, 0, NULL);
++        } else {
++          flag_val = 0;
++        }
++      } else {
++        flag_val =
+           bf_qsfp_get_flag(conn_id, ln_flag_log[loopcnt].flag, ln, 0, NULL);
++      }
+ 
+       // if set, add to bitmask for this flag
+       if (flag_val >= 0) {

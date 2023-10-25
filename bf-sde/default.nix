@@ -661,7 +661,10 @@ let
           outputHash = "87f91540c0947edff2694cea9beeca78f95062b0aaca812a81c238ff39343e46";
           patches = {
             default = [ bf-platforms/reference-get-media-type.patch ];
-            newport = [ bf-platforms/newport-eth-compliance.patch ];
+            newport = [
+              bf-platforms/newport-eth-compliance.patch
+              bf-platforms/newport-fix-per-media-lane-flags-9.7.0.patch
+            ];
           };
         };
         aps_bf2556 = fetchFromStore {
@@ -687,15 +690,26 @@ let
           name = "bf-platforms-netberg-7xx-bsp-9.7.0-220210.tgz";
           outputHash = "ad140a11fd39f7fbd835d6774d9b855f2ba693fd1d2e61b45a94aa30ed08a4f1";
         };
-        asterfusion = fetchFromStore {
-          ## These tarballs were created from the Asterfusion Gitlab
-          ## repositories
-          name = "bf-bsp-9.11.x-cbeddbbb.tar.gz";
+        asterfusion = {
+          src = fetchFromGitHub {
+            owner = "asterfusion";
+            repo = "bf-bsp-lts";
+            rev = "a5033f2";
+            sha256 = "0wrgmfzwvcdga1n0w17nr6lddj3hbvp9by9snac8097k3yzb2blj";
+          };
           ## Run gitver.sh in the cloned BSP to get this version ID
-          asterfusion_version = "Git: r4 23.05-rc1-2-gcbeddbb";
-          outputHash = "644ed1bd167cec3832e1d0ba42318da221dd1a1327ce74c8094e29bfabbcb680";
+          asterfusion_version = "Git: r40 23.09";
           patches = {
             asterfusion = [ bf-platforms/asterfusion/bsp.patch ];
+          };
+          nct6779d = {
+            src = fetchFromGitHub {
+              owner = "asterfusion";
+              repo = "nct6779d";
+              rev = "732b62e";
+              sha256 = "09x42rqsj9ra697jflrgkqj664pspq63akbrx6dw6kspcvswkf3a";
+            };
+            patches = [];
           };
           cgoslx = fetchFromStore {
             name = "cgoslx-facc4fb4.tar.gz";
@@ -703,11 +717,6 @@ let
             patches = [
                 bf-platforms/asterfusion/cgoslx.patch
             ];
-          };
-          nct6779d = fetchFromStore {
-            name = "nct6779d-0b64ec0b.tar.gz";
-            outputHash = "e33b38a5b23ec17b6bcc233cb59b3dc07f8c66c86c1d5b64e8503df95c3e078f";
-            patches = [];
           };
         };
       };
@@ -792,7 +801,10 @@ let
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "975fa33e37abffa81ff01c1142043907f05726e31efcce0475adec0f1a80f919";
           patches = {
-            newport = [ bf-platforms/newport-eth-compliance.patch ];
+            newport = [
+              bf-platforms/newport-eth-compliance.patch
+              bf-platforms/newport-fix-per-media-lane-flags-9.7.0.patch
+            ];
           };
         };
         inherit (v9_7_0.bsps) asterfusion;
@@ -826,7 +838,10 @@ let
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "f73aecac5eef505a56573c6c9c1d32e0fa6ee00218bc08e936fff966f8d2f87a";
           patches = {
-            newport = [ bf-platforms/newport-eth-compliance.patch ];
+            newport = [
+              bf-platforms/newport-eth-compliance.patch
+              bf-platforms/newport-fix-per-media-lane-flags.patch
+            ];
           };
         };
         netberg = fetchFromStore {
@@ -882,7 +897,10 @@ let
           name = "bf-reference-bsp-${version}.tgz";
           outputHash = "d222007fa6eee4e3a0441f09ed86b3b6f46df4c7d830b82b08bf6df7f88c4268";
           patches = {
-            newport = [ bf-platforms/newport-eth-compliance.patch ];
+            newport = [
+              bf-platforms/newport-eth-compliance.patch
+              bf-platforms/newport-fix-per-media-lane-flags.patch
+            ];
           };
         };
         inherit (v9_7_0.bsps) asterfusion;
@@ -917,6 +935,7 @@ let
             newport = [
               bf-platforms/newport-eth-compliance.patch
               bf-platforms/newport-kernel.patch
+              bf-platforms/newport-fix-per-media-lane-flags.patch
             ];
           };
         };
@@ -991,6 +1010,7 @@ let
             newport = [
               bf-platforms/newport-eth-compliance.patch
               bf-platforms/newport-kernel-9.12.patch
+              bf-platforms/newport-fix-per-media-lane-flags.patch
             ];
           };
         };
@@ -1026,6 +1046,7 @@ let
             newport = [
               bf-platforms/newport-eth-compliance.patch
               bf-platforms/newport-kernel.patch
+              bf-platforms/newport-fix-per-media-lane-flags.patch
             ];
           };
         };
@@ -1058,6 +1079,7 @@ let
             newport = [
               bf-platforms/newport-eth-compliance.patch
               bf-platforms/newport-kernel-9.13.1.patch
+              bf-platforms/newport-fix-per-media-lane-flags.patch
             ];
           };
         };
