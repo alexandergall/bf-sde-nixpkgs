@@ -254,7 +254,7 @@ let
             })).override { inherit grpc; };
           protobuf =
             let
-              protobuf' = python-super.protobuf.override { protobuf = self.protobuf3_6; };
+              protobuf' = python-super.protobuf3.override { protobuf = self.protobuf3_6; };
             in protobuf'.overridePythonAttrs (old: {
               prePatch = "";
               propagatedBuildInputs = [ python-self.six ];
@@ -296,7 +296,7 @@ let
           })).override { inherit grpc; };
           protobuf =
             let
-              protobuf' = python-super.protobuf.override { inherit protobuf; };
+              protobuf' = python-super.protobuf3.override { inherit protobuf; };
             in protobuf'.overridePythonAttrs (_: {
               preBuild = ''
                 sed -i -e 's/_2to3//' setup.py
