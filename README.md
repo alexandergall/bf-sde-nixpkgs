@@ -211,6 +211,7 @@ the `sha256` sums are as follows
 | bf-sde-9.11.2.tgz          | `e6c8cb7083b0c51fcccc5ba175889906cb596d3f05514dfe31f44a4c9102ad57` |
 | bf-sde-9.12.0.tgz          | `5f3c41c32064909d8dab1c5f91b6a268b5c13835e5cfa48ff6ef7a526c93ad38` |
 | bf-sde-9.13.0.tgz          | `cc1c45f6a536ba0b26f3ae46a3d7b013e9d80f31b4c23c621f419dfb586d92f4` |
+| bf-sde-9.13.1.tgz          | `82868acb6cf13ef44aa8b4674222df2b7208d4e4d78a724550229ea023a8e781` |
 
 #### <a name="BSPArchives"></a> BSP
 
@@ -263,6 +264,7 @@ Support](#baseboardPlatform))
 | `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.11.2.tgz`| 9.11.1| `f957ae2888289acc57271ad8d27e59075ddaaab723b38456382d25b8e3330331` |
 | `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.12.0.tgz`| 9.12.0| `60999d78e9a854e3a23b82ad0b644199e4aca5d88ad8eecea156e65faed2c2d4` |
 | `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.13.0.tgz`| 9.13.0| `bd0ebd2bd8a08494668641fee7a7b7430d89925327c016c2a78315262097f485` |
+| `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.13.1.tgz`| 9.13.1| `a6a3b8ab0164dfba1d97f41b33cc42f17c92925ca301d873800a075dcab6bca1` |
 | `aps_bf2556` `aps_bf6064` | APS Networks | `9.5.0_AOT1.5.1_SAL1.3.2.zip` | 9.4.0 | `2e56f51233c0eef1289ee219582ea0ec6d7455c3f78cac900aeb2b8214df0544`|
 | `aps_bf2556` `aps_bf6064` | APS Networks | `9.5.0_AOT1.5.4_SAL1.3.4.zip` | 9.5.0 | `510e5e18a91203fe6c4c0aabd807eb69ad53224500f7cb755f7c5b09c8e4525d`|
 | `aps_bf2556` `aps_bf6064` | APS Networks | `9.7.0_AOT1.6.1_SAL1.3.5_2.zip` | 9.7.0 9.7.1 9.7.2 9.7.3 | `4941987c4489d592de9b3676c79cb2011a22fe329425e8876fa8ae026fc959ad`|
@@ -271,6 +273,7 @@ Support](#baseboardPlatform))
 | `netberg`    | Netberg      | `bf-platforms-netberg-7xx-bsp-9.7.0-220210.tgz` | 9.7.0 9.7.1 9.7.2 9.7.3 | `ad140a11fd39f7fbd835d6774d9b855f2ba693fd1d2e61b45a94aa30ed08a4f1`|
 | `netberg`    | Netberg      | `bf-platforms-netberg-7xx-bsp-9.9.0-221113.tgz` | 9.9.0 9.9.1 | `def63b745be735a0acfb4cb1a1f2eaeea91d0424762a9ffe04257b5659028870`|
 | `netberg`    | Netberg      | `bf-platforms-netberg-7xx-bsp-9.11.0-221209.tgz` | 9.11.0 9.11.1 9.11.2 9.12.0 9.13.0 | `0a7bc5a9b152932dca7b9f269101a4d362ea07d87214c8ef594754a1234d7479`|
+| `asterfusion`| Asterfusion  | [Github](https://github.com/asterfusion/bf-bsp-lts) | 9.7.0 and later | Commit `a5033f2` |
 
 ### <a name="addArchives"></a>Add archives to the Nix store
 
@@ -376,12 +379,13 @@ https://github.com/alexandergall/bf-sde-nixpkgs/tree/master/bf-sde/bf-platforms/
 | `accton_wedge100bf_32x`  | EdegCore     | `accton`     |
 | `accton_wedge100bf_32qs` | EdegCore     | `accton`     |
 | `accton_wedge100bf_65x`  | EdegCore     | `accton`     |
-| `accton_as9516_32d`      | EdegCore     | `newport`     |
+| `accton_as9516_32d`      | EdegCore     | `newport`    |
 | `stordis_bf2556x_1t`     | APS Netwokrs | `aps_bf2556` |
 | `stordis_bf6064x_t`      | APS Netwokrs | `aps_bf6064` |
 | `inventec_d5264q28b`     | Inventec     | `inventec`   |
 | `inventec_d10064   `     | Inventec     | `inventec`   |
 | `netberg_aurora_710`     | Netberg      | `netberg`    |
+| `asterfusion_x312p`      | Asterfusion  | `asterfusion`|
 | `model`                  |              | `model`      |
 | `modelT2`                |              | `model`      |
 | `modelT3`                |              | `model`      |
