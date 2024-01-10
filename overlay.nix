@@ -291,9 +291,7 @@ let
     python39BfDrivers = grpc: protobuf: super.python39.override {
       packageOverrides = python-self: python-super:
         (pythonCommon python-self python-super) // {
-          grpcio = (python-super.grpcio.overrideAttrs (oldAttrs: {
-            inherit (grpc) patches;
-          })).override { inherit grpc; };
+          grpcio = python-super.grpcio.override { inherit grpc; };
           protobuf =
             let
               protobuf' = python-super.protobuf3.override { inherit protobuf; };
