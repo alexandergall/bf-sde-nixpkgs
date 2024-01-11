@@ -248,7 +248,15 @@ let
           grpcio =
             let
               grpc = self.grpc_1_17_0;
-            in (python-super.grpcio.overrideAttrs (oldAttrs: {
+            in (python-super.grpcio.overrideAttrs (oldAttrs: rec {
+              pname = "grpcio";
+              format = "setuptools";
+              version = "1.17.0";
+
+              src = python-super.fetchPypi {
+                inherit pname version;
+                hash = "sha256:1fv31lwqbgrcxrnfz4p950fc0rs3vhdgw8rqj0g3lyyfls4gmz0q";
+              };
               enableParallelBuilding = false;
               inherit (grpc) patches;
             })).override { inherit grpc; };
