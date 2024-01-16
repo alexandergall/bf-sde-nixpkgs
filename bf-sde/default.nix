@@ -951,7 +951,7 @@ let
       };
       ## p4studio requires grcp 1.40.0 and protobuf 3.15.8. We use
       ## slightly newer versions provided by the stock nixpkgs.
-      stdenv = gcc11Stdenv;
+      stdenv = gcc13Stdenv;
       thrift = thrift_0_14;
       libcli = libcli1_10;
       python_bf_drivers = python3;
@@ -1020,7 +1020,7 @@ let
         };
         inherit (v9_7_0.bsps) asterfusion;
       };
-      stdenv = gcc11Stdenv;
+      stdenv = gcc13Stdenv;
       thrift = thrift_0_14;
       libcli = libcli1_10;
       python_bf_drivers = python3;
@@ -1060,7 +1060,7 @@ let
         };
         inherit (v9_7_0.bsps) asterfusion;
       };
-      stdenv = gcc11Stdenv;
+      stdenv = gcc13Stdenv;
       thrift = thrift_0_14;
       libcli = libcli1_10;
       python_bf_drivers = python3;
