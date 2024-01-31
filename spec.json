@@ -24,7 +24,7 @@
         "schedulingshares": 100,
         "enableemail": false,
         "emailoverride": "",
-        "keepnr": 1,
+        "keepnr": 0,
         "inputs": {
             "src": { "type": "git", "value": "https://github.com/alexandergall/bf-sde-nixpkgs.git nixpkgs-master", "emailresponsible": false },
 	    "nixpkgs": { "type": "git", "value": "https://github.com/NixOS/nixpkgs.git", "emailresponsible": false }
@@ -55,7 +55,7 @@
         "schedulingshares": 100,
         "enableemail": false,
         "emailoverride": "",
-        "keepnr": 1,
+        "keepnr": 0,
         "inputs": {
             "src": { "type": "git", "value": "https://github.com/alexandergall/bf-sde-nixpkgs.git nixpkgs-master", "emailresponsible": false },
 	    "nixpkgs": { "type": "git", "value": "https://github.com/NixOS/nixpkgs.git", "emailresponsible": false }
