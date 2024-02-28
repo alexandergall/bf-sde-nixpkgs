@@ -47,6 +47,66 @@ diff -Naur bf-bsp-lts-a5033f2.orig/drivers/include/bf_pltfm_types/bf_pltfm_types
  #ifdef INC_PLTFM_UCLI
  #include <bfutils/uCli/ucli.h>
  #include <bfutils/uCli/ucli_argparse.h>
+diff -Naur bf-bsp-lts-a5033f2.orig/drivers/src/bf_qsfp/sff.c bf-bsp-lts-a5033f2/drivers/src/bf_qsfp/sff.c
+--- bf-bsp-lts-a5033f2.orig/drivers/src/bf_qsfp/sff.c	2023-09-27 03:54:02.000000000 +0200
++++ bf-bsp-lts-a5033f2/drivers/src/bf_qsfp/sff.c	2024-02-28 16:55:45.769085014 +0100
+@@ -520,10 +520,8 @@
+     /* handle NULL fields, they should actually be space-padded */
+     const char *empty = "                ";
+     if (*vendor) {
+-        strncpy (se->info.vendor, (char *)vendor,
+-                 strlen ((char *)vendor) >= 16 ? 16 : strlen ((
+-                             char *)vendor));
+-        make_printable__ (se->info.vendor,
++        strncpy (se->info.vendor, (char *)vendor, sizeof(se->info.vendor) - 1);
++          make_printable__ (se->info.vendor,
+                           sizeof (se->info.vendor));
+         se->info.vendor[16] = '\0';
+     } else {
+@@ -532,9 +530,7 @@
+     }
+ 
+     if (*model) {
+-        strncpy (se->info.model, (char *)model,
+-                 strlen ((char *)model) >= 16 ? 16 : strlen ((
+-                             char *)model));
++        strncpy (se->info.model, (char *)model, sizeof(se->info.model) - 1);
+         make_printable__ (se->info.model,
+                           sizeof (se->info.model));
+         se->info.model[16] = '\0';
+@@ -544,9 +540,7 @@
+     }
+ 
+     if (*serial) {
+-        strncpy (se->info.serial, (char *)serial,
+-                 strlen ((char *)serial) >= 16 ? 16 : strlen ((
+-                             char *)serial));
++        strncpy (se->info.serial, (char *)serial, sizeof(se->info.serial) - 1);
+         make_printable__ (se->info.serial,
+                           sizeof (se->info.serial));
+         se->info.serial[16] = '\0';
+@@ -556,9 +550,7 @@
+     }
+ 
+     if (*date) {
+-        strncpy (se->info.date, (char *)date,
+-                 strlen ((char *)date) >= 8 ? 8 : strlen ((
+-                             char *)date));
++        strncpy (se->info.date, (char *)date, sizeof(se->info.date) - 1);
+         make_printable__ (se->info.date,
+                           sizeof (se->info.date));
+         se->info.date[8] = '\0';
+@@ -568,9 +560,7 @@
+     }
+ 
+     if (*rev) {
+-        strncpy (se->info.rev, (char *)rev,
+-                 strlen ((char *)rev) >= 4 ? 4 : strlen ((
+-                             char *)rev));
++        strncpy (se->info.rev, (char *)rev, sizeof(se->info.rev) - 1);
+         make_printable__ (se->info.rev,
+                           sizeof (se->info.rev));
+         se->info.rev[4] = '\0';
 diff -Naur bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/cp2112_util/Makefile.am bf-bsp-lts-a5033f2/platforms/asterfusion-bf/cp2112_util/Makefile.am
 --- bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/cp2112_util/Makefile.am	2023-09-27 03:54:02.000000000 +0200
 +++ bf-bsp-lts-a5033f2/platforms/asterfusion-bf/cp2112_util/Makefile.am	2023-10-12 10:14:36.970150314 +0200
@@ -69,7 +129,7 @@ diff -Naur bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/cp2112_util/Makefile
 +endif
 diff -Naur bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c bf-bsp-lts-a5033f2/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c
 --- bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c	2023-09-27 03:54:02.000000000 +0200
-+++ bf-bsp-lts-a5033f2/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c	2023-10-12 10:14:36.974150334 +0200
++++ bf-bsp-lts-a5033f2/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c	2024-02-28 16:26:35.713022594 +0100
 @@ -860,8 +860,8 @@
              /* First boot error, no chance to rescure, exit forcely. */
              exit (0);
@@ -81,6 +141,39 @@ diff -Naur bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/src/bf_pltfm_chss_mg
              char *p;
              while (fgets (tlv_str, lqe_valen, fp)) {
                  p = strchr(tlv_str, 0x0A);
+@@ -895,7 +895,7 @@
+ 
+     for (i = 0; i < (int)ARRAY_LENGTH (tlvs); i ++) {
+         tlv = &tlvs[i];
+-        if (!tlv->content) {
++        if (tlv->content[0] == 0) {
+             continue;
+         }
+         switch (tlv->code) {
+diff -Naur bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_chss_mgmt_tmp.c bf-bsp-lts-a5033f2/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_chss_mgmt_tmp.c
+--- bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_chss_mgmt_tmp.c	2023-09-27 03:54:02.000000000 +0200
++++ bf-bsp-lts-a5033f2/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_chss_mgmt_tmp.c	2024-02-28 16:45:07.838149973 +0100
+@@ -577,7 +577,7 @@
+ 
+     /* Read from cache. */
+     /* Fixed compiled errors with gcc-8 in debian 10 */
+-    strncpy (info, (char *)&sensors_out[0], info_size > strlen ((char *)&sensors_out[0]) ? strlen ((char *)&sensors_out[0]) : (info_size - 1));
++    strncpy (info, sensors_out, info_size > sizeof(sensors_out) ? sizeof(sensors_out) : (info_size - 1));
+ 
+     return BF_PLTFM_SUCCESS;
+ }
+diff -Naur bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/src/bf_pltfm_master_i2c/bf_pltfm_master_i2c.c bf-bsp-lts-a5033f2/platforms/asterfusion-bf/src/bf_pltfm_master_i2c/bf_pltfm_master_i2c.c
+--- bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/src/bf_pltfm_master_i2c/bf_pltfm_master_i2c.c	2023-09-27 03:54:02.000000000 +0200
++++ bf-bsp-lts-a5033f2/platforms/asterfusion-bf/src/bf_pltfm_master_i2c/bf_pltfm_master_i2c.c	2024-02-28 16:21:05.043481298 +0100
+@@ -648,7 +648,7 @@
+                 if (strcmp (ptr->d_name, ".") == 0 || strcmp (ptr->d_name, "..") == 0) {
+                     continue;
+                 } else if (ptr->d_type == 8) {
+-                    if (ptr->d_name != NULL && strstr(ptr->d_name, "sio_debug") != NULL) {
++                    if (strstr(ptr->d_name, "sio_debug") != NULL) {
+                         sprintf (rfile, "%s/%s", LOG_DIR_PREFIX, ptr->d_name);
+                         stat (rfile, &file_stat);
+                         tmpcal[file_num++] = file_stat.st_ctime;
 diff -Naur bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/src/bf_pltfm_uart/bf_pltfm_uart.c bf-bsp-lts-a5033f2/platforms/asterfusion-bf/src/bf_pltfm_uart/bf_pltfm_uart.c
 --- bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/src/bf_pltfm_uart/bf_pltfm_uart.c	2023-09-27 03:54:02.000000000 +0200
 +++ bf-bsp-lts-a5033f2/platforms/asterfusion-bf/src/bf_pltfm_uart/bf_pltfm_uart.c	2023-10-12 10:36:14.840420078 +0200
