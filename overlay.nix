@@ -271,6 +271,15 @@ let
               '';
               dontUsePytestCheck = true;
             });
+          wcwidth = python-super.wcwidth.overridePythonAttrs (_: rec {
+            pname = "wcwidth";
+            version = "0.2.6";
+            disabled = false;
+            src = builtins.trace "FOO" python-self.fetchPypi {
+              inherit pname version;
+              hash = "sha256-pSIHgKQE2+M1N4mHCXjkcs/kd3YfBu5VB3JW5QmxVtA=";
+            };
+          });
         };
     };
 
