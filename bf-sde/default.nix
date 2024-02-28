@@ -1085,6 +1085,26 @@ let
         };
       };
     };
+    v9_13_2 = lib.recursiveUpdate v9_13_0 rec {
+      version = "9.13.2";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "0e1a293450b5548bb4b5086bf8f18f6ddc9ddde08b6a80cee3290271478fee38";
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "1d6ef9bf431868a6a5399e2e746afd3d876759cf9e9e8486d5624a3a29bf4c31";
+          patches = {
+            newport = [
+              bf-platforms/newport-eth-compliance.patch
+              bf-platforms/newport-kernel-9.13.2.patch
+              bf-platforms/newport-fix-per-media-lane-flags.patch
+            ];
+          };
+        };
+      };
+    };
   };
 
-in bf-sde // { latest = bf-sde.v9_13_1; }
+in bf-sde // { latest = bf-sde.v9_13_2; }

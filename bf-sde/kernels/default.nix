@@ -304,6 +304,7 @@ let
           "9.3.0" = patch;
           "9.3.1" = patch;
           "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+          "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
         };
       additionalModules = additionalModulesDebian11;
     };
@@ -340,6 +341,7 @@ let
           "9.3.0" = patch;
           "9.3.1" = patch;
           "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+          "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
         };
       additionalModules = additionalModulesDebian11;
     };
@@ -376,6 +378,7 @@ let
           "9.3.0" = patch;
           "9.3.1" = patch;
           "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+          "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
         };
       additionalModules = additionalModulesDebian11;
     };
@@ -412,6 +415,7 @@ let
           "9.3.0" = patch;
           "9.3.1" = patch;
           "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+          "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
         };
       additionalModules = additionalModulesDebian11;
     };
@@ -448,6 +452,7 @@ let
           "9.3.0" = patch;
           "9.3.1" = patch;
           "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+          "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
         };
       additionalModules = additionalModulesDebian11;
     };
@@ -492,6 +497,7 @@ let
           "9.12.0" = [ ./bf-drivers-kernel-9.12.patch ];
           "9.13.0" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
+          "9.13.2" = [ ./bf-drivers-kernel-9.13.2.patch ];
         };
       additionalModules = additionalModulesDebian11;
     };
@@ -536,6 +542,7 @@ let
           "9.12.0" = [ ./bf-drivers-kernel-9.12.patch ];
           "9.13.0" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
+          "9.13.2" = [ ./bf-drivers-kernel-9.13.2.patch ];
         };
       additionalModules = additionalModulesDebian11;
     };
@@ -580,6 +587,52 @@ let
           "9.12.0" = [ ./bf-drivers-kernel-9.12.patch ];
           "9.13.0" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
+          "9.13.2" = [ ./bf-drivers-kernel-9.13.2.patch ];
+        };
+      additionalModules = additionalModulesDebian11;
+    };
+    Debian12_5 = {
+      enabledForSDE = pkgs.lib.versionAtLeast version "9.11.0";
+      kernelRelease = "6.1.0-18-amd64";
+      stdenv = pkgs.gcc12Stdenv;
+      buildTree = mkDebian {
+        spec = {
+          snapshotTimestamp = "20240220T150546Z";
+          arch = {
+            name = "linux-headers-6.1.0-18-amd64_6.1.76-1_amd64.deb";
+            sha256 = "1hkpryaysiivdrmh7w9f2rv5bn7qcnbg4pdvp36livsckgv0gjjp";
+          };
+          common = {
+            name = "linux-headers-6.1.0-18-common_6.1.76-1_all.deb";
+            sha256 = "15svcq9iqbmncyaya965a1xaa3x79pb1wicp56ps8iqxkwiwzavv";
+          };
+          kbuild = {
+            name = "linux-kbuild-6.1_6.1.76-1_amd64.deb";
+            sha256 = "142yyf27cpidabkm0r44dd0j0kwf9h1d7jrlcpy3sjrf2wv66iaj";
+          };
+          source = {
+            name = "linux-source-6.1_6.1.76-1_all.deb";
+            sha256 = "091cvp003q85f10220qaznglamqc2avg28y7jpyiw2173mh218ny";
+          };
+        };
+        patchelfInputs = [ openssl_1_1.out elfutils ];
+      };
+      patches =
+        let
+          patch = [ ./bf-drivers-kernel-5.8.patch ];
+        in {
+          "9.1.1" = patch ++ [ ./bf-drivers-9.1.1.patch ];
+          "9.2.0" = patch;
+          "9.3.0" = patch;
+          "9.3.1" = patch;
+          "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+          "9.11.0" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.11.1" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.11.2" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.12.0" = [ ./bf-drivers-kernel-9.12.patch ];
+          "9.13.0" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
+          "9.13.2" = [ ./bf-drivers-kernel-9.13.2.patch ];
         };
       additionalModules = additionalModulesDebian11;
     };

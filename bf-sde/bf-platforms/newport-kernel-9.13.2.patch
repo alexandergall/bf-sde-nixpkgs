@@ -1,0 +1,42 @@
+diff -Naur bf-platforms-9.13.2.orig/platforms/newport/kdrv/bf_fpga/bf_fpga_main.c bf-platforms-9.13.2/platforms/newport/kdrv/bf_fpga/bf_fpga_main.c
+--- bf-platforms-9.13.2.orig/platforms/newport/kdrv/bf_fpga/bf_fpga_main.c	2024-02-07 15:06:27.000000000 +0100
++++ bf-platforms-9.13.2/platforms/newport/kdrv/bf_fpga/bf_fpga_main.c	2024-02-22 14:23:52.075668028 +0100
+@@ -188,6 +188,9 @@
+ #if RHEL_RELEASE_CODE >= RHEL_RELEASE_VERSION(9, 2)
+ #define NEW_RHEL
+ #endif
++#if RHEL_RELEASE_CODE == RHEL_RELEASE_VERSION(9, 2)
++#define NEW_RHEL_9_2
++#endif
+ #endif
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(5, 15, 0) && !defined(NEW_RHEL)
+   u32 mask_bits = desc->masked;
+@@ -204,7 +207,7 @@
+ #else
+   u32 mask_bits = desc->pci.msix_ctrl;
+   u32 *desc_mask_bits = &desc->pci.msix_ctrl;
+-#if defined(NEW_RHEL) && RHEL_RELEASE_CODE == RHEL_RELEASE_VERSION(9, 2)
++#if defined(NEW_RHEL_9_2)
+   unsigned offset = desc->pci.msi_attrib.entry_nr * PCI_MSIX_ENTRY_SIZE +
+ #else
+   unsigned offset = desc->msi_index * PCI_MSIX_ENTRY_SIZE +
+@@ -255,8 +258,10 @@
+ #elif LINUX_VERSION_CODE < KERNEL_VERSION(5, 17, 0) && !defined(RHEL93)
+     for_each_pci_msi_entry(desc, pdev) bf_msix_mask_irq(desc, irq_state);
+ #else
++    msi_lock_descs(&(pdev->dev));
+     msi_for_each_desc(desc, &pdev->dev, MSI_DESC_ALL)
+         bf_msix_mask_irq(desc, irq_state);
++    msi_unlock_descs(&(pdev->dev));
+ #endif
+   }
+   pci_cfg_access_unlock(pdev);
+@@ -478,7 +483,7 @@
+   if (minor >= BF_FPGA_MAX_DEVICE_CNT) {
+     return (-EINVAL);
+   }
+-  if (mode == 0 && &bf_global[minor].async_queue == NULL) {
++  if (mode == 0 && bf_global[minor].async_queue == NULL) {
+     return 0; /* nothing to do */
+   }
+   return (fasync_helper(fd, filep, mode, &bf_global[minor].async_queue));
