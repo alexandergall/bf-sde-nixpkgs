@@ -117,7 +117,7 @@ diff -Naur bf-drivers-9.12.0.orig/kdrv/bf_kpkt/bf_kpkt_net.c bf-drivers-9.12.0/k
  #if LINUX_VERSION_CODE < KERNEL_VERSION(3, 10, 0)
      netif_napi_add(netdev, &adapter->napi, bf_kpkt_poll, 64);
 -#else
-+#elsif LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
++#elif LINUX_VERSION_CODE < KERNEL_VERSION(6, 1, 0)
      netif_napi_add(netdev, &adapter->napi, bf_kpkt_poll, NAPI_POLL_WEIGHT);
 +#else
 +    netif_napi_add(netdev, &adapter->napi, bf_kpkt_poll);
