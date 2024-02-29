@@ -307,6 +307,8 @@ let
           "9.11.0" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.11.1" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.11.2" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.12.0" = [ ./bf-drivers-kernel-9.12.patch ];
+          "9.13.0" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
           "9.13.2" = [ ./bf-drivers-kernel-9.13.2.patch ];
         };
@@ -348,6 +350,7 @@ let
           "9.11.0" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.11.1" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.11.2" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.13.0" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
           "9.13.2" = [ ./bf-drivers-kernel-9.13.2.patch ];
         };
@@ -389,6 +392,7 @@ let
           "9.11.0" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.11.1" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.11.2" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.13.0" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
           "9.13.2" = [ ./bf-drivers-kernel-9.13.2.patch ];
         };
@@ -430,6 +434,7 @@ let
           "9.11.0" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.11.1" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.11.2" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.13.0" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
           "9.13.2" = [ ./bf-drivers-kernel-9.13.2.patch ];
         };
@@ -471,6 +476,7 @@ let
           "9.11.0" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.11.1" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.11.2" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.13.0" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
           "9.13.2" = [ ./bf-drivers-kernel-9.13.2.patch ];
         };
