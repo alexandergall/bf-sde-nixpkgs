@@ -304,6 +304,9 @@ let
           "9.3.0" = patch;
           "9.3.1" = patch;
           "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+          "9.11.0" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.11.1" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.11.2" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
           "9.13.2" = [ ./bf-drivers-kernel-9.13.2.patch ];
         };
@@ -342,6 +345,9 @@ let
           "9.3.0" = patch;
           "9.3.1" = patch;
           "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+          "9.11.0" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.11.1" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.11.2" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
           "9.13.2" = [ ./bf-drivers-kernel-9.13.2.patch ];
         };
@@ -380,6 +386,9 @@ let
           "9.3.0" = patch;
           "9.3.1" = patch;
           "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+          "9.11.0" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.11.1" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.11.2" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
           "9.13.2" = [ ./bf-drivers-kernel-9.13.2.patch ];
         };
@@ -418,6 +427,9 @@ let
           "9.3.0" = patch;
           "9.3.1" = patch;
           "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+          "9.11.0" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.11.1" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.11.2" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
           "9.13.2" = [ ./bf-drivers-kernel-9.13.2.patch ];
         };
@@ -456,6 +468,9 @@ let
           "9.3.0" = patch;
           "9.3.1" = patch;
           "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+          "9.11.0" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.11.1" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.11.2" = [ ./bf-drivers-kernel-9.11.patch ];
           "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
           "9.13.2" = [ ./bf-drivers-kernel-9.13.2.patch ];
         };
