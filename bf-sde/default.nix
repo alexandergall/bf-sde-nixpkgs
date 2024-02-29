@@ -946,6 +946,11 @@ let
         aps_bf6064 = fetchFromStore {
           name = "apsn-bsp-bf6064x-t_${version}-r1.tgz";
           outputHash = "3a52f660d7bb585c3591facad047dc7cdea6303fd3cc96d8d7baf34a545e9889";
+          patches = {
+            default = [
+              bf-platforms/aps/bf-platforms-9.11.0.patch
+            ];
+          };
         };
         inherit (v9_7_0.bsps) asterfusion;
       };
@@ -1057,6 +1062,11 @@ let
         aps_bf6064 = fetchFromStore {
           name = "apsn-bsp-bf6064x-t_${version}-beta1.tgz";
           outputHash = "1dbe3c691acdffa52fa80907a170a3d2bc219fd9f5033e331d7fec6dda94d282";
+          patches = {
+            default = [
+              bf-platforms/aps/bf-platforms-9.11.0.patch
+            ];
+          };
         };
         inherit (v9_7_0.bsps) asterfusion;
       };

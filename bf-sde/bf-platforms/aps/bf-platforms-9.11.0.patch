@@ -1,0 +1,19 @@
+diff -Naur bf-platforms-9.13.0.orig/common/src/ipmi.c bf-platforms-9.13.0/common/src/ipmi.c
+--- bf-platforms-9.13.0.orig/common/src/ipmi.c	2023-05-17 18:52:10.000000000 +0200
++++ bf-platforms-9.13.0/common/src/ipmi.c	2024-02-29 13:09:50.485253560 +0100
+@@ -245,7 +245,7 @@
+     va_start(vargs, count);
+ 
+     uint8_t * raw_args = prepare_arg_buffer(count, vargs);
+-    if (vargs == NULL) {
++    if (raw_args == NULL) {
+         return NULL;
+     }
+ 
+@@ -285,4 +285,4 @@
+     snprintf(to_populate, FRU_DUMP_PATH_SZ, "%s", template);
+ 
+     return fd;
+-}
+\ No newline at end of file
++}
