@@ -275,7 +275,7 @@ let
             pname = "wcwidth";
             version = "0.2.6";
             disabled = false;
-            src = builtins.trace "FOO" python-self.fetchPypi {
+            src = python-self.fetchPypi {
               inherit pname version;
               hash = "sha256-pSIHgKQE2+M1N4mHCXjkcs/kd3YfBu5VB3JW5QmxVtA=";
             };
@@ -320,6 +320,53 @@ let
               propagatedBuildInputs = [ python-self.six ];
               dontUsePytestCheck = true;
             });
+          pikepdf = python-super.pikepdf.override {
+            lxml = python-self.callPackage (
+              { stdenv, lib, buildPythonPackage, fetchFromGitHub
+              , cython
+              , libxml2
+              , libxslt
+              , zlib
+              , xcodebuild
+              }:
+
+              buildPythonPackage rec {
+                pname = "lxml";
+                version = "4.9.3-3";
+                format = "setuptools";
+                src = fetchFromGitHub {
+                  owner = pname;
+                  repo = pname;
+                  rev = "refs/tags/lxml-${version}";
+                  hash = "sha256-Vrizi+6jUUEx7qODU4PAH5ZmvBIyT9H18+QpYB0m1f4=";
+                };
+                nativeBuildInputs = [ libxml2.dev libxslt.dev cython ] ++ lib.optionals stdenv.isDarwin [ xcodebuild ];
+                buildInputs = [ libxml2 libxslt zlib ];
+                doCheck = false;
+                pythonImportsCheck = [ "lxml" "lxml.etree" ];
+              }
+            ) {};
+          };
+          ipython8_15 = python-super.ipython.overridePythonAttrs (_: rec {
+            pname = "ipython";
+            version = "8.15.0";
+            disabled = false;
+            src = python-self.fetchPypi {
+              inherit pname version;
+              sha256 = "07lzbvnj6gyyxmz1rph2rv6f4cw3dxs823qm6bsypvj9d6zbbbib";
+            };
+          });
+          scapy = python-super.scapy.override {
+            ipython = python-super.ipython.overridePythonAttrs (_: rec {
+              pname = "ipython";
+              version = "8.15.0";
+              disabled = false;
+              src = python-self.fetchPypi {
+                inherit pname version;
+                sha256 = "07lzbvnj6gyyxmz1rph2rv6f4cw3dxs823qm6bsypvj9d6zbbbib";
+              };
+            });
+          };
         };
     };
 
