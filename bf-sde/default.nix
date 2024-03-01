@@ -1090,6 +1090,10 @@ let
       sde = fetchFromStore {
         name = "bf-sde-${version}.tgz";
         outputHash = "0e1a293450b5548bb4b5086bf8f18f6ddc9ddde08b6a80cee3290271478fee38";
+        patches = {
+          mainTools = [ sde/run_switchd-9.13.2.patch sde/run_bfshell-9.7.0.patch
+                        sde/run_p4_tests-9.7.0.patch ];
+        };
       };
       bsps = {
         reference = fetchFromStore {
