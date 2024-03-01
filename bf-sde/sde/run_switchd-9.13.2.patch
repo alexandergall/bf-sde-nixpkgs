@@ -1,0 +1,71 @@
+diff -Naur bf-sde-9.13.2.orig/run_switchd.sh bf-sde-9.13.2/run_switchd.sh
+--- bf-sde-9.13.2.orig/run_switchd.sh	2024-02-07 15:06:05.000000000 +0100
++++ bf-sde-9.13.2/run_switchd.sh	2024-03-01 08:39:31.865528381 +0100
+@@ -1,5 +1,6 @@
+ #!/bin/bash
+ # Start running switchd application program
++set -e
+ 
+ function print_help() {
+   echo "USAGE: $(basename ""$0"") {-p <...> | -c <...>} [OPTIONS -- SWITCHD_OPTIONS]"
+@@ -55,8 +56,7 @@
+         if [ $hp -eq 0 ]; then
+             add_hugepage
+         else
+-            nl=$(egrep -c vm.nr_hugepages /etc/sysctl.conf)
+-            if [ $nl -eq 0 ]; then
++            if ! egrep vm.nr_hugepages /etc/sysctl.conf; then
+                 add_hugepage
+             else
+                 sudo sed -i 's/vm.nr_hugepages.*/vm.nr_hugepages = 196/' /etc/sysctl.conf
+@@ -66,9 +66,13 @@
+     fi
+ }
+ 
+-OLD_STTY_SETTINGS=`stty -g`
++if [ -t 0 ]; then
++    OLD_STTY_SETTINGS=`stty -g`
++fi
+ function finish {
+-   stty $OLD_STTY_SETTINGS
++    if [ -n "$OLD_STTY_SETTINGS" ]; then
++        stty $OLD_STTY_SETTINGS
++    fi
+    exit
+ }
+ trap finish EXIT
+@@ -183,7 +187,7 @@
+     echo "Detected custom conf file $(<$CUSTOM_CONF_FILE)"
+     TARGET_CONFIG_FILE=$SDE_INSTALL/share/p4/targets/$CHIP_ARCH/$(<$CUSTOM_CONF_FILE)
+   else
+-    TARGET_CONFIG_FILE=$SDE_INSTALL/share/p4/targets/$CHIP_ARCH/$P4_NAME.conf
++    TARGET_CONFIG_FILE=${P4_INSTALL:-$SDE_INSTALL}/share/p4/targets/$CHIP_ARCH/$P4_NAME.conf
+   fi
+ fi
+ 
+@@ -192,8 +196,8 @@
+ echo "Using TARGET_CONFIG_FILE ${TARGET_CONFIG_FILE}"
+ 
+ export PATH=$SDE_INSTALL/bin:$PATH
+-OS_REL=`awk -F= '/^NAME/{print $2}' /etc/os-release`
+-if [[ $OS_REL =~ "CentOS" ]]; then
++test -f /etc/os-release && . /etc/os-release
++if [[ "$NAME" =~ "CentOS" ]]; then
+     export LD_LIBRARY_PATH=$SDE_INSTALL/lib:$SDE_INSTALL/lib64:$LD_LIBRARY_PATH:/usr/local/lib:/usr/local/lib64
+ else
+     export LD_LIBRARY_PATH=$SDE_INSTALL/lib:$LD_LIBRARY_PATH:/usr/local/lib
+diff -Naur bf-sde-9.13.2.orig/run_tofino_model.sh bf-sde-9.13.2/run_tofino_model.sh
+--- bf-sde-9.13.2.orig/run_tofino_model.sh	2024-02-07 15:06:05.000000000 +0100
++++ bf-sde-9.13.2/run_tofino_model.sh	2024-03-01 08:36:16.532680790 +0100
+@@ -159,9 +159,9 @@
+     if [[ $TARGET_CONFIG_FILE == "" ]]; then
+       if [[ -f $CUSTOM_CONF_FILE ]]; then
+         echo "Detected custom conf file $(<$CUSTOM_CONF_FILE)"
+-        TARGET_CONFIG_FILE=$SDE_INSTALL/share/p4/targets/${CHIP_ARCH}/$(<$CUSTOM_CONF_FILE)
++        TARGET_CONFIG_FILE=${P4_INSTALL:-$SDE_INSTALL}/share/p4/targets/${CHIP_ARCH}/$(<$CUSTOM_CONF_FILE)
+       else
+-        TARGET_CONFIG_FILE=$SDE_INSTALL/share/p4/targets/${CHIP_ARCH}/${P4_NAME}.conf
++        TARGET_CONFIG_FILE=${P4_INSTALL:-$SDE_INSTALL}/share/p4/targets/${CHIP_ARCH}/${P4_NAME}.conf
+       fi
+     fi
+     [[ ! -r $TARGET_CONFIG_FILE ]] && echo "Target config file not found" && exit 1

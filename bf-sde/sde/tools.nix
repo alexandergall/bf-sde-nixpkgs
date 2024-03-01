@@ -28,7 +28,7 @@ stdenv.mkDerivation {
       --replace sudo /usr/bin/sudo \
       --replace /usr/local/lib: ""
     wrap $out/bin/run_switchd.sh \
-      "${lib.strings.makeBinPath [ coreutils utillinux findutils gnugrep gnused procps bash gawk ]}"
+      "${lib.strings.makeBinPath [ coreutils utillinux findutils gnugrep gnused procps bash ]}"
 
     substitute run_bfshell.sh $out/bin/run_bfshell.sh \
       --subst-var-by PYTHON ${python.libPrefix}
