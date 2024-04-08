@@ -347,7 +347,7 @@ let
               }
             ) {};
           };
-          ipython8_15 = python-super.ipython.overridePythonAttrs (_: rec {
+          ipython8_15 = python-super.ipython.overridePythonAttrs (oldAttrs: rec {
             pname = "ipython";
             version = "8.15.0";
             disabled = false;
@@ -355,17 +355,11 @@ let
               inherit pname version;
               sha256 = "07lzbvnj6gyyxmz1rph2rv6f4cw3dxs823qm6bsypvj9d6zbbbib";
             };
+            propagatedBuildInputs = oldAttrs.propagatedBuildInputs ++
+                                    [ python-self.backcall ];
           });
           scapy = python-super.scapy.override {
-            ipython = python-super.ipython.overridePythonAttrs (_: rec {
-              pname = "ipython";
-              version = "8.15.0";
-              disabled = false;
-              src = python-self.fetchPypi {
-                inherit pname version;
-                sha256 = "07lzbvnj6gyyxmz1rph2rv6f4cw3dxs823qm6bsypvj9d6zbbbib";
-              };
-            });
+            ipython = python-self.ipython8_15;
           };
         };
     };
