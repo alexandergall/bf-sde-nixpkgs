@@ -14,7 +14,7 @@ import nixpkgs ( attrs // {
       ## 23.05 is the first release that disables python2 by default.
       ## It's still there and as long as it works we raise it from the
       ## dead.
-      "python-2.7.18.7"
+      "python-2.7.18.8"
 
       ## OpenSSL 1.1 will be EOL by the end of 2023 but we only use it
       ## to patch some binaries in the Debian kbuild environment
