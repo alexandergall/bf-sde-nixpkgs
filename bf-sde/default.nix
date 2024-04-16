@@ -921,7 +921,7 @@ let
           mainTools = [ sde/run_switchd-9.11.0.patch sde/run_bfshell-9.7.0.patch
                         sde/run_p4_tests-9.7.0.patch ];
           mainCMake = [ sde/P4Build.cmake.patch ];
-          p4-examples = [];
+          p4-examples = [ ./p4-16-examples/random-sample.patch ];
           ptf-modules = [ ptf-modules/run_ptf_tests.patch
                           ptf-modules/getmac.patch ];
           target-syslibs = [ bf-syslibs/kernel.patch ];
@@ -998,7 +998,7 @@ let
           mainTools = [ sde/run_switchd-9.11.0.patch sde/run_bfshell-9.7.0.patch
                         sde/run_p4_tests-9.7.0.patch ];
           mainCMake = [ sde/P4Build.cmake-9.12.0.patch ];
-          p4-examples = [];
+          p4-examples = [ ./p4-16-examples/random-sample.patch ];
           ptf-modules = [ ptf-modules/run_ptf_tests.patch ];
         };
       };
@@ -1034,7 +1034,7 @@ let
           mainTools = [ sde/run_switchd-9.11.0.patch sde/run_bfshell-9.7.0.patch
                         sde/run_p4_tests-9.7.0.patch ];
           mainCMake = [ sde/P4Build.cmake-9.12.0.patch ];
-          p4-examples = [];
+          p4-examples = [ ./p4-16-examples/random-sample.patch ];
           ptf-modules = [ ptf-modules/run_ptf_tests.patch ];
         };
       };
