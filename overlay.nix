@@ -323,7 +323,7 @@ let
           pikepdf = python-super.pikepdf.override {
             lxml = python-self.callPackage (
               { stdenv, lib, buildPythonPackage, fetchFromGitHub
-              , cython
+              , cython_0
               , libxml2
               , libxslt
               , zlib
@@ -340,7 +340,7 @@ let
                   rev = "refs/tags/lxml-${version}";
                   hash = "sha256-Vrizi+6jUUEx7qODU4PAH5ZmvBIyT9H18+QpYB0m1f4=";
                 };
-                nativeBuildInputs = [ libxml2.dev libxslt.dev cython ] ++ lib.optionals stdenv.isDarwin [ xcodebuild ];
+                nativeBuildInputs = [ libxml2.dev libxslt.dev cython_0 ] ++ lib.optionals stdenv.isDarwin [ xcodebuild ];
                 buildInputs = [ libxml2 libxslt zlib ];
                 doCheck = false;
                 pythonImportsCheck = [ "lxml" "lxml.etree" ];
@@ -355,10 +355,12 @@ let
               inherit pname version;
               sha256 = "07lzbvnj6gyyxmz1rph2rv6f4cw3dxs823qm6bsypvj9d6zbbbib";
             };
-            propagatedBuildInputs = oldAttrs.propagatedBuildInputs ++
-                                    [ python-self.backcall ];
+            propagatedBuildInputs = [ python-self.backcall ];
           });
           scapy = python-super.scapy.override {
+            ipython = python-self.ipython8_15;
+          };
+          python-dotenv = python-super.python-dotenv.override {
             ipython = python-self.ipython8_15;
           };
         };
