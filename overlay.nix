@@ -265,6 +265,7 @@ let
               protobuf' = python-super.protobuf3.override { protobuf = self.protobuf3_6; };
             in protobuf'.overridePythonAttrs (old: {
               prePatch = "";
+              postPatch = "";
               propagatedBuildInputs = [ python-self.six ];
               postInstall = ''
                 touch $out/lib/${self.python2.libPrefix}/site-packages/google/__init__.py
