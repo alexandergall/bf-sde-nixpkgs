@@ -609,6 +609,22 @@ The build artifacts and logfiles are written to
 `$HOME/.bf-sde/<sde-version>`.  Please use `p4_build.sh --help` to see
 available options.
 
+NOTE: for reasons that are not entirely clear, the `p4_build.sh`
+script is not part of the SDE. Traditionally, it has been part of the
+material distributed to the attendees of the P4 training courses
+(formerly known as the Barefoot Academy). For SDE 9.6 and older, the
+`p4_build.sh` script included here was taken from a course held in
+2019 (it includes the comment "Designed for SDE-8.4.0"), wich was
+attended by the author. Since the course material was only made
+available to the attendees, the script contained in the Nix package
+could never be updated. When the build process was changed from GNU
+autotools to `CMake` in SDE 9.7.0, the script no longer
+worked. However, the SDE then contained a barebone `cmake` file for
+compiling P4 programs. For SDE versions 9.7.0 and newer, the
+`p4_build.sh` script is a minimal wrapper around that `cmake` file
+that has the same semantics as the pre-9.7.0 script.  Users who
+attended a more recent training need to be aware that the script might
+differ substantially from what they were used to in their training.
 
 ### <a name="runOnASIC"></a>Run on ASIC
 
