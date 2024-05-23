@@ -281,6 +281,10 @@ let
               hash = "sha256-pSIHgKQE2+M1N4mHCXjkcs/kd3YfBu5VB3JW5QmxVtA=";
             };
           });
+          thrift = python-super.thrift.overridePythonAttrs {
+            disabled = false;
+            propagatedBuildInputs = [ python-self.six ];
+          };
         };
     };
 
