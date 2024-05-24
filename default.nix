@@ -15,6 +15,7 @@ import nixpkgs ( attrs // {
       ## It's still there and as long as it works we raise it from the
       ## dead.
       "python-2.7.18.7"
+      "python-2.7.18.7-env"
 
       ## OpenSSL 1.1 will be EOL by the end of 2023 but we only use it
       ## to patch some binaries in the Debian kbuild environment
