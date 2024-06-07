@@ -1107,6 +1107,10 @@ let
             ];
           };
         };
+        netberg = fetchFromStore {
+          name = "bf-platforms-netberg-7xx-bsp-9.13.2-240517.tgz";
+          outputHash = "9b09f926d4233db75017f28678265deb16a3aa72483317a40180977053d5a987";
+        };
       };
     };
     v9_13_3 = lib.recursiveUpdate v9_13_0 rec {
@@ -1130,6 +1134,10 @@ let
               bf-platforms/newport-fix-per-media-lane-flags.patch
             ];
           };
+        };
+        netberg = fetchFromStore {
+          name = "bf-platforms-netberg-7xx-bsp-9.13.2-240517.tgz";
+          outputHash = "9b09f926d4233db75017f28678265deb16a3aa72483317a40180977053d5a987";
         };
       };
     };

@@ -38,19 +38,24 @@ let
           preConfigure =
             if (lib.versionOlder version "9.9.0") then ''
               tar xf bf-platforms*
-            '' else ''
-              rm packages/bf-platforms*.tgz
-              cd packages/bf-platforms*
-              mv ../../cmake .
-              mv CMakeLists.txt CMakeLists.txt.orig
-              mv ../../CMakeLists.txt .
-              cat CMakeLists.txt.orig >>CMakeLists.txt
-            '' + ''
-            substituteInPlace platforms/netberg-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c \
-              --replace eth0 mgmt0
-            substituteInPlace platforms/netberg-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c \
-              --replace "grep -i '%s'" "grep -i '%s' 2>&1"
-          '';
+            '' else
+              (lib.optionalString (lib.versionAtLeast version "9.13.2") ''
+                pushd packages
+                tar xf *.tgz
+                popd
+              '' + ''
+                rm packages/bf-platforms*.tgz
+                cd packages/bf-platforms*
+                mv ../../cmake .
+                mv CMakeLists.txt CMakeLists.txt.orig
+                mv ../../CMakeLists.txt .
+                cat CMakeLists.txt.orig >>CMakeLists.txt
+              '' + ''
+                substituteInPlace platforms/netberg-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c \
+                  --replace eth0 mgmt0
+                substituteInPlace platforms/netberg-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c \
+                  --replace "grep -i '%s'" "grep -i '%s' 2>&1"
+              '');
         };
     in callPackage derivation {};
 
