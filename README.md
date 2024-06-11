@@ -276,7 +276,8 @@ Support](#baseboardPlatform))
 | `inventec`   | Inventec     | `bf-platform_SRC_9.7.0.2.1.tgz`           | 9.7.0 9.7.1 9.7.2 9.7.3 | `8391d5e791ae8b453711a79ed6f6d4372bd9ed6076b3ff54c649b69775b8d9c9`|
 | `netberg`    | Netberg      | `bf-platforms-netberg-7xx-bsp-9.7.0-220210.tgz` | 9.7.0 9.7.1 9.7.2 9.7.3 | `ad140a11fd39f7fbd835d6774d9b855f2ba693fd1d2e61b45a94aa30ed08a4f1`|
 | `netberg`    | Netberg      | `bf-platforms-netberg-7xx-bsp-9.9.0-221113.tgz` | 9.9.0 9.9.1 | `def63b745be735a0acfb4cb1a1f2eaeea91d0424762a9ffe04257b5659028870`|
-| `netberg`    | Netberg      | `bf-platforms-netberg-7xx-bsp-9.11.0-221209.tgz` | 9.11.0 9.11.1 9.11.2 9.12.0 9.13.0 | `0a7bc5a9b152932dca7b9f269101a4d362ea07d87214c8ef594754a1234d7479`|
+| `netberg`    | Netberg      | `bf-platforms-netberg-7xx-bsp-9.11.0-221209.tgz` | 9.11.0 9.11.1 9.11.2 9.12.0 9.13.0 9.13.1 | `0a7bc5a9b152932dca7b9f269101a4d362ea07d87214c8ef594754a1234d7479`|
+| `netberg`    | Netberg      | `bf-platforms-netberg-7xx-bsp-9.13.2-240517.tgz` | 9.13.2 9.13.3 | `9b09f926d4233db75017f28678265deb16a3aa72483317a40180977053d5a987`|
 | `asterfusion`| Asterfusion  | [Github](https://github.com/asterfusion/bf-bsp-lts) | 9.7.0 and later | Commit `a5033f2` |
 
 ### <a name="addArchives"></a>Add archives to the Nix store
