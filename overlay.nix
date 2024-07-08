@@ -288,7 +288,7 @@ let
         };
     };
 
-    python3 = super.python3.override {
+    python311 = super.python311.override {
       packageOverrides = python-self: python-super:
         (pythonCommon python-self python-super) // {
           jsl = python-super.buildPythonPackage rec {

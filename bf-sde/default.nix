@@ -959,7 +959,7 @@ let
       stdenv = gcc13Stdenv;
       thrift = thrift_0_14;
       libcli = libcli1_10;
-      python_bf_drivers = python3;
+      python_bf_drivers = python311;
     };
     v9_11_1 = lib.recursiveUpdate v9_11_0 rec {
       version = "9.11.1";
@@ -1028,7 +1028,7 @@ let
       stdenv = gcc13Stdenv;
       thrift = thrift_0_14;
       libcli = libcli1_10;
-      python_bf_drivers = python3;
+      python_bf_drivers = python311;
     };
     v9_13_0 = rec {
       version = "9.13.0";
@@ -1073,7 +1073,7 @@ let
       stdenv = gcc13Stdenv;
       thrift = thrift_0_14;
       libcli = libcli1_10;
-      python_bf_drivers = python3;
+      python_bf_drivers = python311;
     };
     v9_13_1 = lib.recursiveUpdate v9_13_0 rec {
       version = "9.13.1";
