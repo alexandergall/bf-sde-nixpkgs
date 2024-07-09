@@ -209,6 +209,12 @@ let
             withGraphicsSupport = false;
           };
           pyperclip = python-super.pyperclip.overridePythonAttrs (_:  rec {
+            pname = "pyperclip";
+            version = "1.8.2";
+            src = python-super.fetchPypi {
+              inherit pname version;
+              sha256 = "0mxzm43z2anr55gyz7awagvam4d5c2rlxhp9hjyg0d29n2l58lhh";
+            };
             doCheck = false;
           });
           ipaddress = python-self.buildPythonPackage rec {
