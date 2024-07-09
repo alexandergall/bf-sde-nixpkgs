@@ -1,4 +1,4 @@
-{ pname, version, src, patches, buildSystem, lib, stdenv, python3,
+{ pname, version, src, patches, buildSystem, lib, stdenv, python311,
   thrift, boost, libpcap, cmake, autoconf, automake, libtool, p4c,
   bf-syslibs, bf-utils, bf-utils-tofino, bf-drivers }:
 
@@ -12,7 +12,7 @@ stdenv.mkDerivation {
   };
 
   buildInputs = [ thrift boost libpcap p4c bf-syslibs.dev bf-utils
-                  bf-drivers.dev python3 ]
+                  bf-drivers.dev python311 ]
   ++ (lib.optional buildSystem.isCmake [ cmake autoconf automake libtool ])
   ++ (lib.optional (lib.versionAtLeast version "9.9.0") [ bf-utils-tofino.dev ]);
   outputs = [ "out" "dev" ];

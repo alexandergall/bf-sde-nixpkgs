@@ -1,4 +1,4 @@
-{ pname, version, src, patches, buildSystem, lib, stdenv, python3,
+{ pname, version, src, patches, buildSystem, lib, stdenv, python311,
   cmake, autoconf, automake, libtool, libffi, zlib, sqlite, libedit,
   expat, bf-drivers-src, bf-syslibs }:
 
@@ -38,7 +38,7 @@ stdenv.mkDerivation {
      else
        [ "-DCPYTHON=ON" ]);
 
-  buildInputs = [ bf-syslibs.dev python3 ]
+  buildInputs = [ bf-syslibs.dev python311 ]
                 ++ lib.optionals buildSystem.isCmake
                   ([ cmake autoconf automake libtool ] ++
                    (lib.optionals (lib.versionAtLeast version "9.7.0")

@@ -1,9 +1,9 @@
-{ pname, version, src, patches, stdenv, python3, autoPatchelfHook, zlib }:
+{ pname, version, src, patches, stdenv, python311, autoPatchelfHook, zlib }:
 
 stdenv.mkDerivation {
   inherit pname version src patches;
 
-  buildInputs = [ autoPatchelfHook zlib python3.pkgs.wrapPython ];
+  buildInputs = [ autoPatchelfHook zlib python311.pkgs.wrapPython ];
 
   installPhase = ''
     mkdir $out
@@ -15,7 +15,7 @@ stdenv.mkDerivation {
     fi
   '';
 
-  pythonPath = with python3.pkgs; [ packaging jsonschema jsl ];
+  pythonPath = with python311.pkgs; [ packaging jsonschema jsl ];
   postFixup = ''
     wrapPythonPrograms
   '';

@@ -1,6 +1,6 @@
 ## Build the SDE modules for a specific kernel
 
-{ lib, stdenv, buildEnv, python2, python3, runtimeShell, kmod,
+{ lib, stdenv, buildEnv, python2, python311, runtimeShell, kmod,
   coreutils, version, buildSystem, src, kernelID, spec, bf-syslibs,
   cmake, drvsWithKernelModules, baseboard ? null }:
 
@@ -26,7 +26,7 @@ let
     patches = (spec.patches.all or []) ++
               (spec.patches.${version} or []);
     buildInputs = [ bf-syslibs python2 kmod ]
-                  ++ lib.optionals (lib.versionAtLeast version "9.12") [ python3 ]
+                  ++ lib.optionals (lib.versionAtLeast version "9.12") [ python311 ]
                   ++ lib.optional buildSystem.isCmake cmake;
 
     preConfigure = lib.optionalString (lib.versionAtLeast version "9.12") ''
