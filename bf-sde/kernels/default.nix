@@ -534,6 +534,7 @@ let
           "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
           "9.13.2" = [ ./bf-drivers-kernel-9.13.2.patch ];
           "9.13.3" = [ ./bf-drivers-kernel-9.13.2.patch ];
+          "9.13.4" = [ ./bf-drivers-kernel-9.13.2.patch ];
         };
       additionalModules = additionalModulesDebian11;
     };
@@ -580,6 +581,7 @@ let
           "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
           "9.13.2" = [ ./bf-drivers-kernel-9.13.2.patch ];
           "9.13.3" = [ ./bf-drivers-kernel-9.13.2.patch ];
+          "9.13.4" = [ ./bf-drivers-kernel-9.13.2.patch ];
         };
       additionalModules = additionalModulesDebian11;
     };
@@ -626,6 +628,7 @@ let
           "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
           "9.13.2" = [ ./bf-drivers-kernel-9.13.2.patch ];
           "9.13.3" = [ ./bf-drivers-kernel-9.13.2.patch ];
+          "9.13.4" = [ ./bf-drivers-kernel-9.13.2.patch ];
         };
       additionalModules = additionalModulesDebian11;
     };
@@ -672,6 +675,7 @@ let
           "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
           "9.13.2" = [ ./bf-drivers-kernel-9.13.2.patch ];
           "9.13.3" = [ ./bf-drivers-kernel-9.13.2.patch ];
+          "9.13.4" = [ ./bf-drivers-kernel-9.13.2.patch ];
         };
       additionalModules = additionalModulesDebian11;
     };
@@ -718,6 +722,7 @@ let
           "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
           "9.13.2" = [ ./bf-drivers-kernel-9.13.2.patch ];
           "9.13.3" = [ ./bf-drivers-kernel-9.13.2.patch ];
+          "9.13.4" = [ ./bf-drivers-kernel-9.13.2.patch ];
         };
       additionalModules = additionalModulesDebian11;
     };
