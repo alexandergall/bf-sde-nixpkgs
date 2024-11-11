@@ -728,7 +728,54 @@ let
     };
     Debian12_7 = {
       enabledForSDE = pkgs.lib.versionAtLeast version "9.11.0";
-      kernelRelease = "6.1.0-22-amd64";
+      kernelRelease = "6.1.0-25-amd64";
+      stdenv = pkgs.gcc12Stdenv;
+      buildTree = mkDebian {
+        spec = {
+          snapshotTimestamp = "20241108T203442Z";
+          arch = {
+            name = "linux-headers-6.1.0-25-amd64_6.1.106-3_amd64.deb";
+            sha256 = "1bazm5mx0n4l5fg8aay8vxxi3dg3xc35j1npi2h4c3m7ggjqwcv0";
+          };
+          common = {
+            name = "linux-headers-6.1.0-25-common_6.1.106-3_all.deb";
+            sha256 = "1iazyv8r2an32991fnnsj760w7aj920pqmxb31riqisq0w9dqcrp";
+          };
+          kbuild = {
+            name = "linux-kbuild-6.1_6.1.106-3_amd64.deb";
+            sha256 = "0shrkdg0241f6aqkvq9nmbp18g4hxbalj8hs7wj07xn3jcrmj89p";
+          };
+          source = {
+            name = "linux-source-6.1_6.1.106-3_all.deb";
+            sha256 = "10xfbn0r8qmx7wrhdmyca0r12xqz6zcp040ndcafjnc0jn0bp7n8";
+          };
+        };
+        patchelfInputs = [ elfutils ];
+      };
+      patches =
+        let
+          patch = [ ./bf-drivers-kernel-5.8.patch ];
+        in {
+          "9.1.1" = patch ++ [ ./bf-drivers-9.1.1.patch ];
+          "9.2.0" = patch;
+          "9.3.0" = patch;
+          "9.3.1" = patch;
+          "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+          "9.11.0" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.11.1" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.11.2" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.12.0" = [ ./bf-drivers-kernel-9.12.patch ];
+          "9.13.0" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
+          "9.13.2" = [ ./bf-drivers-kernel-9.13.2.patch ];
+          "9.13.3" = [ ./bf-drivers-kernel-9.13.2.patch ];
+          "9.13.4" = [ ./bf-drivers-kernel-9.13.2.patch ];
+        };
+      additionalModules = additionalModulesDebian11;
+    };
+    Debian12_8 = {
+      enabledForSDE = pkgs.lib.versionAtLeast version "9.11.0";
+      kernelRelease = "6.1.0-27-amd64";
       stdenv = pkgs.gcc12Stdenv;
       buildTree = mkDebian {
         spec = {
