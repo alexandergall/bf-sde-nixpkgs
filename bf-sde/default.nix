@@ -1141,6 +1141,34 @@ let
         };
       };
     };
+    v9_13_4 = lib.recursiveUpdate v9_13_0 rec {
+      version = "9.13.4";
+      sde = fetchFromStore {
+        name = "bf-sde-${version}.tgz";
+        outputHash = "1515fae8ec3abe644099c6cf3b9843bc1daaba1a6c39b3f57eb7b4edb5959669";
+        patches = {
+          mainTools = [ sde/run_switchd-9.13.2.patch sde/run_bfshell-9.7.0.patch
+                        sde/run_p4_tests-9.7.0.patch ];
+        };
+      };
+      bsps = {
+        reference = fetchFromStore {
+          name = "bf-reference-bsp-${version}.tgz";
+          outputHash = "5bef42bcb885aaa59b237552e1f44789a74ebfc270b4d5685ba0dcf3f52e4381";
+          patches = {
+            newport = [
+              bf-platforms/newport-eth-compliance.patch
+              bf-platforms/newport-kernel-9.13.2.patch
+              bf-platforms/newport-fix-per-media-lane-flags.patch
+            ];
+          };
+        };
+        netberg = fetchFromStore {
+          name = "bf-platforms-netberg-7xx-bsp-9.13.2-240517.tgz";
+          outputHash = "9b09f926d4233db75017f28678265deb16a3aa72483317a40180977053d5a987";
+        };
+      };
+    };
   };
 
-in bf-sde // { latest = bf-sde.v9_13_3; }
+in bf-sde // { latest = bf-sde.v9_13_4; }
