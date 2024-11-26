@@ -1899,19 +1899,20 @@ in the top-level directory of the `bf-sde-nixpkgs` working tree with
 the following contents
 
 ```nix
-{ kernelRelease }:
+{ platform ? "accton_wedge100bf_32x", kernelRelease }:
 
 let
   pkgs = import ./. {};
   packet-broker = pkgs.bf-sde.latest.buildP4Program {
+    inherit platform;
     pname = "packet-broker";
     version = "0.1";
     platform = "accton_wedge100bf_32x";
     src = pkgs.fetchFromGitHub {
       owner = "alexandergall";
       repo = "packet-broker";
-      rev = "366999";
-      sha256 = "1rfm286mxkws8ra92xy4jwplmqq825xf3fhwary3lgvbb59zayr9";
+      rev = "d35769";
+      sha256 = "1rpk5avp0d1gv3dgqykm5nlwhn5vm05z8hhkxzspyi52crwfw239";
     };
     p4Name = "packet_broker";
     requiredKernelModule = "bf_kpkt";
@@ -1923,8 +1924,10 @@ This is really all it takes.  The rest of this chapter gives a more
 detailed explanation of what is going on behind the scenes.
 
 Let's go over the most important elements of this expression. The
-first line identifies the expression as a function which takes one
-argument called `kernelRelease`.
+first line identifies the expression as a function which takes an
+attribute set as argument that must contain exactly two attributes
+called `platform` and `kernelRelease`, where `plaform` is set to the
+value `"accton_wedge100bf_32x"` if omitted.
 
 The `let...in` construct binds expressions to names (i.e. it creates
 local variables) and makes them available in the scope of the
@@ -1959,7 +1962,11 @@ utility function.
 
 The `platform` argument selects the platform for which to build the
 program (`accton_wedge100bf_32x` in this case). This determines which
-BSP has to be included in the runtime environment.
+BSP has to be included in the runtime environment.  The `inherit
+platform` construct is simply syntactic sugar for the expression
+`platform = platform`, where the lhs is the literal name of the
+attribute and the rhs is the value of the attribute which happens to
+be stored in a variable of the same name.
 
 The `requiredKernelModule` argument indicates to the function that
 this P4 program requires the `bf_kpkt` kernel module to be present
@@ -2128,45 +2135,26 @@ cannot happen with Nix.
 
 ### <a name="buildForModel"></a> Building for the Tofino Model
 
-For illustration purposes, let's see how we can modify the build
-recipe to create a version that runs on the Tofino ASIC emulation
-instead of actual hardware.  We need to make only a few modifications
-
-   * Select `model` as the target platform
-   * Remove `requiredKernelModule`
-   * Don't build a wrapper
-
-The following expression does this:
-
-```Nix
-let
-  pkgs = import ./. {};
-  packet-broker = pkgs.bf-sde.latest.buildP4Program {
-    pname = "packet-broker";
-    version = "0.1";
-    platform = "model";
-    src = pkgs.fetchFromGitHub {
-      owner = "alexandergall";
-      repo = "packet-broker";
-      rev = "366999";
-      sha256 = "1rfm286mxkws8ra92xy4jwplmqq825xf3fhwary3lgvbb59zayr9";
-    };
-    p4Name = "packet_broker";
-  };
-in packet-broker
-```
-
-After building
+The Tofino ASIC emulation (aka Tofino model) is implemented as a
+special type of platform that does not require any kernel
+modules. Instead of loading a kernel module, the wrapper script starts
+the Tofino model binary and creates `veth` devices before launching
+`bf_switchd`. We can use the same Nix expression as before, but now we
+also supply the `platform` argument to override the default:
 
 ```
-$ nix-build packet-broker.nix
+$ nix-build packet-broker.nix --argstr platform model --argstr kernelRelease none
 [...]
-/nix/store/x61bsdzhz21axlpxgrf2q2kn6yrkr59f-packet-broker-0.1
+/nix/store/z3z239vfm7sdjrckv95gsnj3smpkc92f-packet_broker-module-wrapper
 ```
 
-it can be started just like before.  The script creates `veth`
-interfaces to provide access to the virtual ports, starts the Tofino
-model in the background and finally launches `bf_switchd`.
+We have to specify the `kernelRelease` argument because it is
+required. In fact, the build expression still calls the
+`moduleWrapper` function and passes the `kernelRelease` to it. Under
+the hood, the `moduleWrapper` function knows that the `model` platform
+does not depend on any kernel and silently discards the value of
+`kernelRelease`. The reason for this is precisely so we can use the
+same expression to build either for the model or an actual platform.
 
 ## <a name="packagingCP"></a>Packaging a Control-Plane Program for BfRuntime
 
@@ -2223,8 +2211,8 @@ in python.pkgs.buildPythonApplication {
   src = pkgs.fetchFromGitHub {
     owner = "alexandergall";
     repo = "packet-broker";
-    rev = "366999";
-    sha256 = "1rfm286mxkws8ra92xy4jwplmqq825xf3fhwary3lgvbb59zayr9";
+    rev = "d35769";
+    sha256 = "1rpk5avp0d1gv3dgqykm5nlwhn5vm05z8hhkxzspyi52crwfw239";
   };
 
   propagatedBuildInputs = [
