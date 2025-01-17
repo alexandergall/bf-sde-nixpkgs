@@ -169,9 +169,8 @@ The lists of kernel modules and platforms supported by an application
 must be subsets of the corresponding lists supported by the version
 of the SDE on which the application is based.
 
-<a name="sliceFunction"/>
-The generic support functions assume that the Nix packaging for an
-application provides a function of the form
+<a name="sliceFunction"/>The generic support functions assume that the
+Nix packaging for an application provides a function of the form
 
 ```
   slice = kernelModules: platform:
@@ -350,7 +349,7 @@ https://github.com/alexandergall/onie-debian-nix-installer.git and
 takes the following arguments
 
    * `nixProfile`
-   * `partialSlice`
+   * `slice`
    * `platforms`
    * `version`
    * `component`
@@ -359,17 +358,61 @@ takes the following arguments
    * `fileTree`
    * `binaryCaches`
    * `users`
+   * `withSdeEnv`
+   * `activate`
 
 The `nixProfile` argument is the name of the Nix profile (usually a
 path in `/nix/var/nix/profiles`) where the release will be installed
-to.
-
-The `partialSlice` argument must be the same `slice` function that was
-used in the call of `mkRelease`, but partially evaluated with the same
-kernel module used in the `bootstrapProfile`.
+to. If set to `null`, no profile is created. This option exists to
+create an ONIE installer that contains only the development environmet
+(see the `withSdeEnv` option below). It is non-sensical to use with an
+actual release, because even tough the packages would still be
+installed in the Nix store, they would not be protected from being
+garbage collected. But since a GC is performed at the end of the
+installation on the target system (in order to remove all slices that
+don't match the selected platform and kernel), they would be removed
+before the target is booted for the first time.
 
 The `platforms` argument must be a list of platform names that the
-installer should support.
+installer should support. Note that the pseudo-platforms for the
+Tofino ASIC emulation (platform names starting with `model`) are not
+supported on ONIE images. Model pseudo-platforms may be present in
+`platforms` but will be filtered out by `mkOnieInstaller`.
+
+The `withSdeEnv` argument is a boolean. When set to `true`, the ONIE
+installer contains an instance of the
+[`envCommand`](../../README.md#envcommand) support function
+installed in the default profile
+`/nix/var/nix/profiles/default`. I.e. the default search path for all
+users will contain a command named `sde-env-<version>` identical to
+what would be created by the procedure to [manually install the SDE
+shell](../../README.md#p4-program-development-with-the-sde-shell). The
+default is `false`.
+
+As a side note, it is possible to create an installer that only
+contains the SDE shell without an actual release of a P4 application
+by supplying `nixProfile = null` and a dummy slice function, e.g.
+
+```
+mkOnieInstaller {
+  nixProfile = null;
+  slice = _: _: {};
+  withSdeEnv = true;
+  ...
+}
+```
+
+Setting `withSdeEnv` in this expression to `false` creates an
+installer that only contains a plain Debian system with the Nix
+package manager installed but not any artifacts related to the SDE.
+
+The `activate` argument is a boolean. When set to `true`, which is the
+default, the installed slice will be activated during the installation
+process by calling the service's `release-manager` with the
+`--activate` option. When set to `false`, the service has to be
+activated by other means (e.g. manually) after the newly installed
+systems has booted for the first time. If `nixProfile` is `null`, this
+option has no effect.
 
 The remaining arguments are passed to the underlying function from the
 Git repository cited above, which is also called
@@ -395,6 +438,16 @@ be on hold, i.e. it will not be upgraded by the standard `apt` or
 kernel, which would render the NOS unusable due to a mismatch of the
 SDE kernel modules.  If this is not desired, an override to the
 `holdPackages` attribute is required.
+
+When the `slice` function is evaluated by `mkOnieInstaller`, the
+`kernelModules` argument has to be chosen to match the kernel in the
+bootstrap profile. For this purpose, `bootstrapProfile` must contain a
+file named `kernelID.nix` that contains a Nix expression that
+evaluates to the unique ID of the kernel in the SDE's [kernel
+definitions](../kernels/default.nix). Note that the `kernelID.nix`
+file must be created manually after creating the profile with the
+[`mk-profile.sh`
+utility](https://github.com/alexandergall/onie-debian-nix-installer#usage).
 
 To support multiple platforms, the installer actually installs all
 slices for the requested platforms in temporary profiles. Suppose that

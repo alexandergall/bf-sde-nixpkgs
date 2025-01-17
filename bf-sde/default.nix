@@ -310,7 +310,7 @@ let
 
         ## Support functions to create installers and a generic
         ## release manager for SDE-based P4 applications.
-        support = import ./support pkgs;
+        support = import ./support self nixpkgsSrc pkgs;
       };
 
       ## This is the full SDE, equivalent to what p4studio
