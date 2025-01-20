@@ -820,6 +820,53 @@ let
         };
       additionalModules = additionalModulesDebian11;
     };
+    Debian12_9 = {
+      enabledForSDE = pkgs.lib.versionAtLeast version "9.11.0";
+      kernelRelease = "6.1.0-29-amd64";
+      stdenv = pkgs.gcc12Stdenv;
+      buildTree = mkDebian {
+        spec = {
+          snapshotTimestamp = "20250120T023918Z";
+          arch = {
+            name = "linux-headers-6.1.0-29-amd64_6.1.123-1_amd64.deb";
+            sha256 = "0zmqghr6g2sk8sbrdj0w84vhknnyxy1rxsf3hvb5vjhavmi394bz";
+          };
+          common = {
+            name = "linux-headers-6.1.0-29-common_6.1.123-1_all.deb";
+            sha256 = "0aak2wzj2fpz469z15sz520k8p4h2mi27zcfpirpxpm5libzfl6p";
+          };
+          kbuild = {
+            name = "linux-kbuild-6.1_6.1.123-1_amd64.deb";
+            sha256 = "0c5zbc69pj7qbgkbqacxh9j0562cbxri4vnrni3cfsapkvs8lqrh";
+          };
+          source = {
+            name = "linux-source-6.1_6.1.123-1_all.deb";
+            sha256 = "1lg8s38297lxwp0gk2mcyvkbflbdbjvcqw5yc7qn90ffpdm9d1bb";
+          };
+        };
+        patchelfInputs = [ elfutils ];
+      };
+      patches =
+        let
+          patch = [ ./bf-drivers-kernel-5.8.patch ];
+        in {
+          "9.1.1" = patch ++ [ ./bf-drivers-9.1.1.patch ];
+          "9.2.0" = patch;
+          "9.3.0" = patch;
+          "9.3.1" = patch;
+          "9.6.0" = [ ./bf-drivers-bf-knet-9.6.0.patch ];
+          "9.11.0" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.11.1" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.11.2" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.12.0" = [ ./bf-drivers-kernel-9.12.patch ];
+          "9.13.0" = [ ./bf-drivers-kernel-9.11.patch ];
+          "9.13.1" = [ ./bf-drivers-kernel-9.13.1.patch ];
+          "9.13.2" = [ ./bf-drivers-kernel-9.13.2.patch ];
+          "9.13.3" = [ ./bf-drivers-kernel-9.13.2.patch ];
+          "9.13.4" = [ ./bf-drivers-kernel-9.13.2.patch ];
+        };
+      additionalModules = additionalModulesDebian11;
+    };
   };
   kernelEnabled = _: spec:
     ! (spec.disable or false) &&
