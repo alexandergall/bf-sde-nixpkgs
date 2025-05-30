@@ -17,10 +17,10 @@ of the support functions are [detailed below](#API)
 In this document, the term _application_ refers to a collection of
 packages that implement a particular network function based on a P4
 program written for the Tofino-series of networking ASICs that makes
-use of the Nix packaging of the Intel Tofino SDE.  Typically, the
-application is installed on a device whose sole purpose is to provide
-an instance of that network function. In that case we speak of an
-_appliance_.
+use of the Nix packaging of the open-source Tofino SDE.  Typically,
+the application is installed on a device whose sole purpose is to
+provide an instance of that network function. In that case we speak of
+an _appliance_.
 
 The application is assumed to contain everything needed for a
 complete, ready-to use installation. Typically, this includes the

@@ -4,8 +4,8 @@
 let
   mkBaseboard = baseboard: {}:
     let
-      derivation = { stdenv, autoreconfHook, makeWrapper, libusb, curl, bf-syslibs,
-                     bf-drivers, bf-utils, bf-utils-tofino, i2c-tools, coreutils,
+      derivation = { stdenv, autoreconfHook, makeWrapper, libusb, curl, target-syslibs,
+                     bf-drivers, target-utils, bf-utils, i2c-tools, coreutils,
                      kmod, gnugrep, gawk, thrift, boost }:
 
         let
@@ -17,9 +17,8 @@ let
           inherit version src;
           patches = (patches.default or []) ++ (patches.${baseboard} or []);
           buildInputs = [ autoreconfHook makeWrapper libusb curl
-                          bf-syslibs thrift boost bf-drivers bf-utils
-                          i2c-tools cgos ] ++
-                          lib.optional (lib.versionAtLeast version "9.9.0") bf-utils-tofino;
+                          target-syslibs thrift boost bf-drivers target-utils
+                          bf-utils i2c-tools cgos];
           outputs = [ "out" "dev" ];
           passthru = {
             inherit cgos;
@@ -27,6 +26,11 @@ let
               inherit nct6779d;
             };
           };
+          CFLAGS = lib.optionals (lib.versionAtLeast stdenv.cc.version "12.0") [
+            "-Wno-error=address"
+            "-Wno-error=stringop-overflow"
+            "-Wno-error=stringop-truncation"
+          ];
           configureFlags = [
             "--enable-thrift"
             "--with-sde-version=${builtins.replaceStrings [ "." ] [ "" ] version}"
@@ -38,7 +42,7 @@ let
             #define VERSION_NUMBER "${asterfusion_version}"
             #endif
             EOF
-            SDE_VERSION=$(cat ${bf-drivers}/share/VERSION | sed -e 's/\.//g')
+            SDE_VERSION=$(echo ${version} | sed -e 's/\.//g')
             NIX_CFLAGS_COMPILE="-DSDE_VERSION=$SDE_VERSION -DOS_VERSION=10 $NIX_CFLAGS_COMPILE"
           '';
           postInstall = ''

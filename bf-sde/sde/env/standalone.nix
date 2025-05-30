@@ -4,7 +4,7 @@
 ## install the SDE on a system that does not have access to a binary
 ## cache.
 
-{ bf-sde, nixpkgsSrc, lib, closureInfo, runCommand,
+{ bf-sde, nixpkgs, p4lang-nixpkgs, lib, closureInfo, runCommand,
   coreutils, gnutar, gawk, gnugrep, gnused, xz, rsync,
   utillinux, nix, bashInteractive }:
 
@@ -29,8 +29,9 @@ let
       ## envCommand contains a copy of the bf-sde-nixpkgs Git
       ## repository, but not the nixpkgs expression pinned in the
       ## top-level default.nix. To be self-contained, we must include
-      ## a copy of that as well, provided by nixpkgsSrc.
-      ++ [ bf-sde.envCommand nixpkgsSrc ]
+      ## a copy of that as well, provided by nixpkgs. The same goes for
+      ## p4lang-nixpkgs.
+      ++ [ bf-sde.envCommand nixpkgs p4lang-nixpkgs ]
       ## nix-shell via envCommand also requires the man, doc, info and
       ## dev outputs of bashInteractive when it is run. These
       ## dependencies are not part of the mkShell inputDerivation.  We

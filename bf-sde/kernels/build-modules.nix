@@ -1,7 +1,7 @@
 ## Build the SDE modules for a specific kernel
 
-{ lib, stdenv, buildEnv, python2, python3, runtimeShell, kmod,
-  coreutils, version, buildSystem, src, kernelID, spec, bf-syslibs,
+{ lib, stdenv, buildEnv, python3, runtimeShell, kmod,
+  coreutils, version, buildSupport, src, kernelID, spec, target-syslibs,
   cmake, drvsWithKernelModules, baseboard ? null }:
 
 assert lib.assertMsg (baseboard != null -> ! builtins.elem baseboard spec.baseboardBlacklist)
@@ -11,7 +11,7 @@ let
   stdenv' = spec.stdenv or stdenv;
   driverModules = stdenv'.mkDerivation {
     name = "bf-sde-${version}-kernel-modules-${spec.kernelRelease}";
-    src = buildSystem.cmakeFixupSrc {
+    src = buildSupport.fixupSrc {
       inherit src;
       ## Only copy the cmake directory from the top-level. The driver
       ## package is not really self-contained even in standalone mode.
@@ -25,25 +25,15 @@ let
 
     patches = (spec.patches.all or []) ++
               (spec.patches.${version} or []);
-    buildInputs = [ bf-syslibs python2 kmod ]
-                  ++ lib.optionals (lib.versionAtLeast version "9.12") [ python3 ]
-                  ++ lib.optional buildSystem.isCmake cmake;
+    buildInputs = [ cmake target-syslibs python3 kmod ];
 
-    preConfigure = lib.optionalString (lib.versionAtLeast version "9.12") ''
+    preConfigure = ''
       sed -i '/project/a list(APPEND CMAKE_MODULE_PATH "\''${CMAKE_CURRENT_SOURCE_DIR}/cmake")' CMakeLists.txt
     '';
 
-    configureFlags = lib.optionals (! buildSystem.isCmake) [
-      " --with-kdrv=yes"
-      "enable_thrift=no"
-      "enable_grpc=no"
-      "enable_bfrt=no"
-      "enable_p4rt=no"
-      "enable_pi=no"
-    ];
     KDIR = "${spec.buildTree}";
 
-    cmakeFlags = lib.optionals buildSystem.isCmake [
+    cmakeFlags = [
         "-DSTANDALONE=ON"
         "-DTHRIFT-DRIVER=OFF"
         "-DGRPC=OFF"
@@ -55,17 +45,13 @@ let
         "-DKDIR=${spec.buildTree}"
     ];
 
-    buildFlags = lib.optionals buildSystem.isCmake [
+    buildFlags = [
       "bf_kdrv"
       "bf_knet"
       "bf_kpkt"
     ];
 
-    preBuild = lib.optionalString (! buildSystem.isCmake) ''
-      cd kdrv
-    '';
-
-    installPhase = lib.optionalString buildSystem.isCmake ''
+    installPhase = ''
       (cd kdrv && make install)
       for dir in bf_kdrv bf_knet bf_kpkt; do
         (cd kdrv/$dir && make install)
@@ -73,7 +59,7 @@ let
       runHook postInstall
     '';
 
-    postInstall = lib.optionalString buildSystem.isCmake ''
+    postInstall = ''
       ## Cmake installs a bunch of files directly, i.e.
       ## not as part of any install targets. We can only
       ## get rid of them once all passes of "make" have

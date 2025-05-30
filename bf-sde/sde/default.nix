@@ -5,9 +5,7 @@
 ## variables.
 ##
 ## The runtime version only contains the components necessary to run
-## compiled P4 programs (see ../build-p4-program.nix). It respects the
-## rules concerning the distribution of SDE components to third
-## parties imposed by Intel.
+## compiled P4 programs.
 ##
 ## If called without kernelID, the environment does not contain any
 ## kernel modules. Otherwise, the kernel modules for the given kernel
@@ -15,20 +13,20 @@
 ## modules and related tools (if any).
 
 { runtime ? false, baseboard, version, src, patches, passthru ? {},
-  lib, stdenv, buildEnv, callPackage, bf-syslibs, bf-drivers,
-  bf-drivers-runtime, bf-utils, bf-platforms, p4c, tofino-model,
-  ptf-modules, ptf-utils, ptf-utils-runtime, kernelID ? null,
-  kernel-modules }:
+  lib, stdenv, buildEnv, callPackage, target-syslibs, bf-drivers,
+  bf-drivers-runtime, target-utils, bf-platforms, p4c, tofino-model,
+  ptf-modules, ptf-utils, ptf-utils-runtime, kernelID ? null, kernel-modules
+}:
 
 let
   paths =
     (if runtime then
       ## ptf-utils-runtime is required by run_bfshell.sh
-      [ bf-syslibs bf-drivers-runtime bf-utils ptf-utils-runtime ]
+      [ target-syslibs bf-drivers-runtime target-utils ptf-utils-runtime ]
       ++ lib.optional (baseboard == "model") tofino-model
      else
-       [ bf-syslibs bf-drivers bf-drivers.dev bf-utils bf-utils.dev
-         p4c tofino-model ptf-modules ptf-utils ])
+       [ target-syslibs bf-drivers target-utils p4c
+         tofino-model ptf-modules ptf-utils ])
     ++ lib.optional (baseboard != null)
       (assert lib.asserts.assertMsg (builtins.hasAttr baseboard bf-platforms)
         "Baseboard ${baseboard} not supported by SDE ${version}";
@@ -45,23 +43,15 @@ let
     phases = [ "unpackPhase" "patchPhase" "installPhase" ];
     installPhase = ''
       mkdir $out
-      cp *manifest $out
-
-    '' + lib.optionalString (! runtime)
-      (if (lib.versionOlder version "9.7.0") then ''
-         mkdir -p $out/pkgsrc/p4-build
-         tar -C $out/pkgsrc/p4-build -xf packages/p4-build* --strip-component 1
-         chmod a+x $out/pkgsrc/p4-build/tools/*
-        ''
-       else ''
-         mkdir $out/p4_build
-         cp p4studio/CMakeLists.txt $out/p4_build
-         cp -r cmake $out/p4_build
-       '') + ''
-
+      mkdir -p $out/share
+      ## This is displayed by the "version" command in bfshell
+      echo ${version} >$out/share/VERSION
+    '' + lib.optionalString (! runtime) ''
+      mkdir $out/p4_build
+      cp p4studio/CMakeLists.txt $out/p4_build
+      cp -r cmake $out/p4_build
       mkdir -p $out/pkgsrc/p4-examples
-      tar -C $out/pkgsrc/p4-examples -xf packages/p4-examples* \
-          --wildcards "p4-examples*/tofino*" --strip-components 1
+      cp -r pkgsrc/p4-examples/tofino* $out/pkgsrc/p4-examples
     '';
   };
   maybeRuntime = lib.optionalString runtime "-runtime";
@@ -73,9 +63,6 @@ let
   sdeEnv = buildEnv {
     name = "bf-sde" + maybeBaseboard + maybeRuntime + "-env-${version}";
     paths = paths ++ [ addToEnv ];
-
-    ## bfrt Python modules overlap in bfUtils and bfDrivers
-    ignoreCollisions = lib.versionAtLeast version "9.3.0";
   };
   tools = callPackage ./tools.nix {
     inherit src version sdeEnv runtime baseboard;

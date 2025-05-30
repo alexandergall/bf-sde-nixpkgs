@@ -44,10 +44,6 @@ assert requiredKernelModule != null -> lib.assertOneOf "kernel module"
 
 assert target != null -> lib.assertOneOf "target" target [ "tofino" "tofino2" ];
 
-assert lib.versionOlder bf-sde.version "9.7.0" ->
-       lib.assertMsg (target == "tofino")
-         "Target \"${target}\" not supported in SDEs prior to 9.7.0";
-
 let
   targetFlag = {
     tofino = "-DTOFINO=ON";
@@ -118,34 +114,13 @@ let
       ''
         set -e
         export P4_INSTALL=$out
-      '' +
-      (if lib.versionOlder bf-sde.version "9.7.0"
-       then
-         ''
-           export SDE_BUILD=$TEMP
-           export SDE_LOGS=$TEMP
-           mkdir $out
-           path=${path}
-           exec_name="${p4Name}"
-           if [ "${p4Name}" != "${execName}" ]; then
-             ln -s ${p4Name}.p4 $path/${execName}.p4
-             exec_name=${execName}
-           fi
-           echo "Building \"${p4Name}.p4\" as \"${execName}\" with p4c flags \"$buildFlags\""
-           ${bf-sde}/bin/p4_build.sh $buildFlags $path/$exec_name.p4
-         ''
-       else (
-         ''
-           echo "Building \"${p4Name}.p4\" as \"${execName}\" for target \"${target}\" with p4c flags \"$buildFlags\""
-           ${bf-sde}/bin/p4_build.sh --p4-name=${execName} --p4c-flags="$buildFlags" \
-             --cmake-flags ${targetFlag} $(realpath ${path}/${p4Name}.p4)
-           rm -rf $out/build
-         '' + lib.optionalString pureArtifacts ''
-           find $out/share \( -name source.json -o -name frontend-ir.json \) -exec rm {} \;
-         ''
-       )
-      );
-
+        echo "Building \"${p4Name}.p4\" as \"${execName}\" for target \"${target}\" with p4c flags \"$buildFlags\""
+        ${bf-sde}/bin/p4_build.sh --p4-name=${execName} --p4c-flags="$buildFlags" \
+          --cmake-flags ${targetFlag} $(realpath ${path}/${p4Name}.p4)
+        rm -rf $out/build
+       '' + lib.optionalString pureArtifacts ''
+         find $out/share \( -name source.json -o -name frontend-ir.json \) -exec rm {} \;
+       '';
     installPhase = ''true'';
   };
 

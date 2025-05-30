@@ -11,7 +11,8 @@
     ## Very extensive test
     #"selector_resize"
     "tna_action_profile"
-    "tna_action_selector"
+    ## Takes a long time to complete
+    #"tna_action_selector"
     "tna_alpm"
     "tna_bridged_md"
     "tna_checksum"

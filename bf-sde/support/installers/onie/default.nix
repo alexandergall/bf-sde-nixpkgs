@@ -1,4 +1,4 @@
-{ self, nixpkgsSrc, lib, callPackage, fetchgit, writeShellScript, runCommand }:
+{ self, nixpkgs, lib, callPackage, fetchgit, writeShellScript, runCommand }:
 
 { nixProfile, slice, platforms, version, component, NOS,
   bootstrapProfile, fileTree, binaryCaches, users ? {},
@@ -33,7 +33,7 @@ let
     (foldl' (paths: platform: paths ++ (platformRootPaths platform)) [] platforms')
     ++ lib.optionals withSdeEnv (
       (map mkSdeEnvInputDrv platforms')
-      ++ [ self.envCommand nixpkgsSrc ]
+      ++ [ self.envCommand nixpkgs ]
     );
   installProfile = platform:
     let
@@ -60,7 +60,7 @@ let
     lib.optionals withSdeEnv (
       (map mkSdeEnvGcRoot platforms') ++
       lib.singleton (writeShellScript "install-env-command" ''
-         ln -s ${nixpkgsSrc} /nix/var/nix/gcroots/per-user/root/
+         ln -s ${nixpkgs} /nix/var/nix/gcroots/per-user/root/
          HOME=/tmp
          /nix/var/nix/profiles/default/bin/nix-env -i ${self.envCommand} --option sandbox false
       '')

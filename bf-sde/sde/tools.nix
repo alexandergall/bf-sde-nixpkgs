@@ -28,7 +28,10 @@ stdenv.mkDerivation {
       --replace sudo /usr/bin/sudo \
       --replace /usr/local/lib: ""
     wrap $out/bin/run_switchd.sh \
-      "${lib.strings.makeBinPath [ coreutils utillinux findutils gnugrep gnused procps bash ]}"
+      "${lib.strings.makeBinPath [ coreutils utillinux findutils gnugrep gnused procps bash
+                                   ## XXX add bf-driver's python for switchd to use the proper modules for bfrtcli
+                                   python
+                                 ]}"
 
     substitute run_bfshell.sh $out/bin/run_bfshell.sh \
       --subst-var-by PYTHON ${python.libPrefix}
@@ -45,45 +48,39 @@ stdenv.mkDerivation {
     wrap $out/bin/run_tofino_model.sh \
       "${lib.strings.makeBinPath [ coreutils utillinux findutils ]}:/usr/bin"
 
-    '' + lib.optionalString (! runtime) (''
+    '' + lib.optionalString (! runtime) (
+      ## A test script could need additional Python modules at runtime.
+      ## The bare ptf command has an option --pypath for this purpose,
+      ## but it is hidden behind the run_p4_test.sh wrapper. We could
+      ## simply set PYTHONPATH directly before running run_p4_test.sh,
+      ## but this could interfere with other Python programs run in the
+      ## same environment.  To isolate the additional modules, we use
+      ## PTF_PYTHONPATH and translate it to PYTHONPATH in the wrapper.
+      ''
+        substitute run_p4_tests.sh $out/bin/run_p4_tests.sh --replace sudo /usr/bin/sudo
+      '' +
+      ## Remove the discovery of the SDE's Python path. Nix takes care
+      ## of this already
+      ''
+        sed -i -e '/sdepythonpath/d' $out/bin/run_p4_tests.sh
+      '' +
+      ''
+        chmod a+x $out/bin/run_p4_tests.sh
+        wrap $out/bin/run_p4_tests.sh \
+          "${lib.strings.makeBinPath [ coreutils utillinux gawk python ]}" \
+          --run "PATH=\$PATH:\$PTF_PATH" \
+          --run "export PYTHONPATH=\$PTF_PYTHONPATH:\$PYTHONPATH"
 
-    ## A test script could need additional Python modules at runtime.
-    ## The bare ptf command has an option --pypath for this purpose,
-    ## but it is hidden behind the run_p4_test.sh wrapper. We could
-    ## simply set PYTHONPATH directly before running run_p4_test.sh,
-    ## but this could interfere with other Python programs run in the
-    ## same environment.  To isolate the additional modules, we use
-    ## PTF_PYTHONPATH and translate it to PYTHONPATH in the wrapper.
-    substitute run_p4_tests.sh $out/bin/run_p4_tests.sh --replace sudo /usr/bin/sudo
-  '' + (lib.optionalString (lib.versionAtLeast version "9.12")
-    ## We don't need the Python dependency discovery introduced in
-    ## 9.12.0
-  ''
-    sed -i -e '/sdepythonpath/d' $out/bin/run_p4_tests.sh
-  '') + ''
-    chmod a+x $out/bin/run_p4_tests.sh
-    wrap $out/bin/run_p4_tests.sh \
-      "${lib.strings.makeBinPath [ coreutils utillinux gawk python ]}" \
-      --run "PATH=\$PATH:\$PTF_PATH" \
-      --run "export PYTHONPATH=\$PTF_PYTHONPATH:\$PYTHONPATH"
-
-    copy ${./set_port_map.sh} set_port_map.sh \
-      "${lib.strings.makeBinPath [ coreutils jq ]}"
-
-  '' + (if (lib.versionOlder version "9.7.0") then
-          ''
-            ## This script was copied from the tools provided for
-            ## the BF Academy courses.
-            copy ${./p4_build.sh} p4_build.sh \
-              "$out/bin:${lib.strings.makeBinPath [ coreutils utillinux gnugrep gnused gawk
-                                           less findutils gcc gnumake which python jq ]}"
-
-          ''
-        else
-          ''
-            copy ${./p4_build-cmake} p4_build.sh \
-              "$out/bin:${lib.strings.makeBinPath [ sdeEnv coreutils utillinux cmake gnumake
-                                           gcc findutils gnused python jq ]}"
-          '')
+        copy ${./set_port_map.sh} set_port_map.sh \
+          "${lib.strings.makeBinPath [ coreutils jq ]}"
+      '' +
+      ## Wrapper around the P4Build cmake file. This is not part of the
+      ## original SDE. TODO: maybe we should drop this to not confuse
+      ## people.
+      ''
+        copy ${./p4_build.sh} p4_build.sh \
+          "$out/bin:${lib.strings.makeBinPath [ sdeEnv coreutils utillinux cmake gnumake
+                                                gcc findutils gnused python jq ]}"
+      ''
     );
 }

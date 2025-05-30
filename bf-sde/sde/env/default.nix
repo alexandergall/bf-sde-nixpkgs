@@ -1,5 +1,5 @@
 { version, stdenv, lib, coreutils, gnused, utillinux, nix,
-  runCommand, git }:
+  runCommand, git, withAsic }:
 
 let
   ## Note: copy the Git repo to avoid the "unsafe repository" problem
@@ -34,10 +34,12 @@ in stdenv.mkDerivation {
     mkdir -p $out/bin
     cmd=$out/bin/sde-env-${version}
     export VERSION=${version}
+    export WITH_ASIC=${lib.boolToString withAsic}
     substitute ${./sde-env.sh} $cmd \
       --subst-var-by PATH ${lib.strings.makeBinPath [ coreutils gnused utillinux nix ]} \
       --subst-var-by SDE_NIXEXPR ${src} \
-      --subst-var VERSION
+      --subst-var VERSION \
+      --subst-var WITH_ASIC
     chmod a+x $cmd
   '';
 }

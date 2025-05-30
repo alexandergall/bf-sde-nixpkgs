@@ -86,7 +86,7 @@ in pkgs.mkShell {
 
     cat <<EOF
 
-    Intel Tofino SDE ${sde.version} on platform "${platform}"
+    Open P4Studio Tofino SDE ${sde.version} on platform "${platform}"
   '' + pkgs.lib.optionalString bspLess ''
 
      Running in BSP-less mode with board port mapping $TOFINO_PORT_MAP
@@ -95,9 +95,9 @@ in pkgs.mkShell {
     ${greetings.${platform} or greetings.asic}
     Build artifacts and logs are stored in $P4_INSTALL
 
-    Use "exit" or CTRL-D to exit this shell.
+    Use "exit" or CTRL-d to exit this shell.
     EOF
-    PS1="\n\[\033[1;32m\][nix-shell(\[\033[31m\]SDE-${sde.version}\[\033[1;32m\]):\w]\$\[\033[0m\] "
+    PS1="\n\[\033[1;32m\][nix-shell(\[\033[31m\]SDE ${sde.version}\[\033[1;32m\]):\w]\$\[\033[0m\] "
   '' + pkgs.lib.optionalString (baseboard == "newport") ''
     echo
     echo "(Re-)Loading bf_fpga kernel module for ${platform}"

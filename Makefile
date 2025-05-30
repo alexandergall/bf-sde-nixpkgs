@@ -1,9 +1,10 @@
 .DEFAULT_GOAL = none
 .ONESHELL:
+SHELL = /bin/bash
 
 NIX_PATH =
-
 NIX_EVAL = nix-instantiate --eval -E
+WITH_ASIC =
 
 none:
 
@@ -19,16 +20,21 @@ define check_version
 	versionTr=v$$(echo $$version | tr \. _)
 endef
 
+ifdef WITH_ASIC
+	ARGS = --arg withAsic true
+endif
+
 VERSION = "latest"
 
 install:
 	@set -e
+	set -o pipefail
 	$(check_version)
 	if nix-env -q --installed | grep sde-env-$$version >/dev/null; then
 	  echo "Version $$version is already installed"
 	  exit 0
 	fi
-	nix-env -j auto -f . -A bf-sde.$$versionTr.envCommand -i --preserve-installed
+	nix-env -j auto -f . -A bf-sde.$$versionTr.envCommand -i --preserve-installed $(ARGS)
 
 install-all:
 	@set -e
@@ -53,7 +59,7 @@ list-versions:
 standalone:
 	@set -e
 	$(check_version)
-	path=$$(nix-build -j auto --no-out-link -A bf-sde.$$versionTr.envStandalone)
+	path=$$(nix-build -j auto --no-out-link -A bf-sde.$$versionTr.envStandalone $(ARGS))
 	dest=~/sde-env-$$version-standalone-installer
 	cat <<EOF >$$dest
 	#!/bin/sh

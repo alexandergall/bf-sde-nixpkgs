@@ -33,8 +33,8 @@ in {
     target = "tofino";
   };
   ## Instead of using "model" and overriding the target in the call to
-  ## buildP4Program(), one can use one of the following platforms to
-  ## have the target selected automatically.
+  ## buildP4Program(), one can use the following pseudo-platform to
+  ## select the tofino2 target automatically.
   modelT2 = {
     baseboard = "model";
     target = "tofino2";

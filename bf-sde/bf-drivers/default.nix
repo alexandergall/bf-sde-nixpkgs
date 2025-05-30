@@ -1,89 +1,33 @@
-{ pname, version, src, patches, buildSystem, stdenv, python, thrift,
-  openssl, boost, pkg-config, grpc, protobuf, zlib, bf-syslibs,
-  bf-utils, bf-utils-tofino, lib, autoreconfHook, cmake, libedit,
+{ pname, version, src, patches, lib, buildSupport, stdenv, cmake,
+  python, thrift, protobuf, grpc, target-syslibs, target-utils,
+  bf-utils, libedit, boost,
 
-## The runtime version of the package doesn't include the gencli and
-## generate_tofino_pd components.  They are not used at runtime but,
-## more importantly, they are not allowed to be distributed to third
-## parties by Intel.
+## The runtime version of the package doesn't include the tools
+## related to the PD API and doesn't include any header files
   runtime ? false }:
 
-assert stdenv.isx86_64 || stdenv.isi686;
-
 let
-
-  ## This is a copy of toPythonModule from
-  ## pkgs/top-level/python-packages.nix. The problem with the original
-  ## (i.e. python.pkgs.toPyhtonModule) is that it uses the
-  ## non-overriden python, not the modified one from overlay.nix.
-  ## However, we use python from bf-driver's passthru to build python
-  ## stuff that depends on bf-drivers and need to see the overrides
-  ## there. Hence this copy that *does* use the overridden python.
-  toPythonModule = drv:
-    drv.overrideAttrs( oldAttrs: {
-      passthru = (oldAttrs.passthru or {}) // {
-        pythonModule = python;
-        pythonPath = [ ];
-        requiredPythonModules = python.pkgs.requiredPythonModules drv.propagatedBuildInputs;
-      };
-    });
-  ## The location of C header files for the Python version that comes
-  ## embedded in bf-utils to provide the bfrt_python shell in
-  ## bf_switchd. Some bf_rt components in bf-drivers need to be
-  ## compiled with those headers.
-  bfUtilsPythonInclude = "${bf-utils.dev}/include/${bf-utils.pythonLibPrefix}";
   bf-drivers = stdenv.mkDerivation {
     pname = pname + lib.optionalString runtime "-runtime";
     inherit version patches;
-    src = buildSystem.cmakeFixupSrc {
+    src = buildSupport.fixupSrc {
       inherit src;
       cmakeRules = ''
-        find_package(Thrift REQUIRED)
         include_directories(include)
         include_directories(.)
-        set(PYTHON_SITE lib/${python.libPrefix}/site-packages)
-        find_library(BF_PYTHON_LIBRARY NAMES ${bf-utils.pythonLibPrefix} lib${bf-utils.pythonLibPrefix})
-      '' + lib.optionalString (lib.versionAtLeast version "9.7.0") ''
-        set(PYTHON_EXECUTABLE python3)
-      '';
-      ## Include the path for Python.h and add explicit linking to
-      ## libedit.  libedit is included as third-party component in
-      ## bf-utils. The standard monolithic build of the SDE links
-      ## bf-drivers to libedit of the source tree inside bf-utils.
-      ## Our modular build can't do that (and libedit is not in the
-      ## output path of bf-utils), so we add the standard libedit to
-      ## the dependencies.
-      postCmakeRules = ''
-        target_include_directories(bfshell_plugin_debug_o PUBLIC ${bfUtilsPythonInclude})
-        target_include_directories(bfshell_plugin_bf_rt_o PUBLIC ${bfUtilsPythonInclude})
-        cmake_policy(SET CMP0079 NEW)
-        target_link_libraries(bf_switchd edit)
-        target_link_libraries(driver PUBLIC edit)
-        install(FILES VERSION DESTINATION share)
-      '' + lib.optionalString (lib.versionAtLeast version "9.9.0") ''
-        target_include_directories(lld_o PUBLIC ${libedit.dev}/include)
       '';
     };
+    nativeBuildInputs = [ cmake python.pkgs.wrapPython thrift  libedit boost ];
+    buildInputs = [ python protobuf grpc target-syslibs target-utils bf-utils ];
 
-    propagatedBuildInputs = with python.pkgs; [ grpcio ];
-    buildInputs = [ thrift openssl boost pkg-config grpc protobuf zlib
-                    bf-syslibs.dev bf-utils bf-utils.dev python.pkgs.wrapPython ]
-                  ++ lib.optional (runtime && ! buildSystem.isCmake) autoreconfHook
-                  ++ lib.optionals buildSystem.isCmake [ cmake libedit python ]
-                  ++ lib.optional (lib.versionAtLeast version "9.9.0") bf-utils-tofino.dev;
+    ## Runtime dependencies of the Python modules contained in this
+    ## package, e.g. bfrt_grpc.
+    propagatedBuildInputs = with python.pkgs; [ grpcio six ];
+
     outputs = [ "out" ] ++ lib.optional (! runtime) "dev";
     enableParallelBuilding = true;
 
-    configureFlags = lib.optionals (! buildSystem.isCmake) [
-      "enable_thrift=yes"
-      "enable_grpc=yes"
-      "enable_bfrt=yes"
-      "enable_p4rt=no"
-      "enable_pi=no"
-      "--without-kdrv"
-    ];
-
-    cmakeFlags = lib.optionals buildSystem.isCmake [
+    cmakeFlags = [
       "-DTHRIFT-DRIVER=ON"
       "-DGRPC=ON"
       "-DBFRT=ON"
@@ -94,119 +38,34 @@ let
       "-DASIC=OFF"
     ];
 
-    buildFlags = lib.optionals (! buildSystem.isCmake) [
-      "CFLAGS+=-I${bfUtilsPythonInclude}"
-    ];
-
-    preConfigure =
-      if (! buildSystem.isCmake) then
-        ## Intel prohibits the inclusion of pd_api_gen in the runtime
-        ## environment.
-        lib.optionalString runtime ''
-          substituteInPlace Makefile.am --replace "SUBDIRS = third-party include src pd_api_gen doc" "SUBDIRS = third-party include src doc"
-        ''
-      else
-        lib.optionalString (lib.versionAtLeast version "9.11.0") (''
-          sed -i -e 's/emulatorflag \''${CMAKE_C_FLAGS}/emulatorflag "\''${CMAKE_C_FLAGS}"/' CMakeLists.txt
-        '' +
-        ## There is a glitch that only exists in 9.11, where client.py
-        ## is missing a prefix in an import statement. Prior and later
-        ## SDEs don't have that.
-        lib.optionalString (lib.versionOlder version "9.12.0") ''
-        sed -i -e 's/from bfruntime_pb2_grpc/from bfrt_grpc.bfruntime_pb2_grpc/' src/bf_rt/bfruntime_grpc_client/python/client.py
-      '') +
-        ## Satisfy protobuf dependencies for code generated from
-        ## protoc (via the grpcio python module)
-        ''
-          sed -i -e 's/CMAKE_CXX_STANDARD 11/CMAKE_CXX_STANDARD 17/' CMakeLists.txt
-          sed -i -e 's/CMAKE_CXX_STANDARD 14/CMAKE_CXX_STANDARD 17/' third-party/CMakeLists.txt
-          sed -i -e 's/CMAKE_CXX_STANDARD 14/CMAKE_CXX_STANDARD 17/' src/bf_rt/CMakeLists.txt
-        '' +
-        ## Override the location of libpython provided by
-        ## bf-utils.
-        ''
-          for dir in src/bf_rt src/lld; do
-              echo -e '\nset_property(TARGET bfpythonlib PROPERTY IMPORTED_LOCATION ''${BF_PYTHON_LIBRARY})' >>$dir/CMakeLists.txt
-          done
-        '' +
-        ## Disable installation of bf_rt_python files, see the comment
-        ## in ../bf-utils/default.nix for details
-        ''
-          sed -i -e 's/^.*bf_rt_python.*$//' src/bf_rt/CMakeLists.txt
-        '' +
-        ## Disable bfrt_examples
-        ''
-          sed -i -e 's/^.*bfrt_examples.*//' bf_switchd/CMakeLists.txt
-        '' +
-        ## Don't install module load/unload scripts, they are part of the kernel
-        ## module packages
-        ''
-          sed -i -e 's/^.*mod_.*load.*$//' CMakeLists.txt
-        '' + lib.optionalString runtime
-          ## See above
-          ''
-            sed -i -e 's/^.*pd_api_gen.*$//' CMakeLists.txt
-          '';
-
-    ## Non-cmake builds: install the precompiled avago library and
-    ## make it available to the builder.  Also disable building of
-    ## bfrt examples.
-    preBuild =
-      let
-        arch = if stdenv.isx86_64
-          then
-            lib.optionalString (lib.versionOlder version "9.6.0") ".x86_64"
-          else
-            ".i686";
-      in lib.optionalString (! buildSystem.isCmake) ''
-        mkdir -p $out/lib
-        cp libavago${arch}.a $out/lib/libavago.a
-        cp libavago${arch}.so $out/lib/libavago.so
-        ln -sr $out/lib/libavago.so $out/lib/libavago.so.0
-        ln -sr $out/lib/libavago.so $out/lib/libavago.so.0.0.0
-        NIX_LDFLAGS="$NIX_LDFLAGS -L$out/lib"
-
-        substituteInPlace bf_switchd/Makefile \
-          --replace "DIST_SUBDIRS = . bfrt_examples" "DIST_SUBDIRS = ." \
-          --replace "am__append_1 = bfrt_examples" "am__append_1 ="
-      '';
-
-    ## Remove the included tenjin module. For some reason it causes
-    ## "NameError: global name 'six' is not defined"
-    ## when generate_tofino_pd is run.
-    postInstall = ''
-      sitePath=$out/lib/${python.libPrefix}/site-packages
-    '' + lib.optionalString (! runtime) ''
-      rm $sitePath/tofino_pd_api/tenjin.*
+    preConfigure = ''
+      sed -i -e 's/emulatorflag \''${CMAKE_C_FLAGS}/emulatorflag "\''${CMAKE_C_FLAGS}"/' CMakeLists.txt
     '' +
+    ## Don't install module load/unload scripts, they are part of the kernel
+    ## module packages
+    ''
+      sed -i -e 's/^.*mod_.*load.*$//' CMakeLists.txt
+    '' +
+    ## Remove lines preceeding the #!. A copyright notice was placed
+    ## there, probably by mistake.
+    ''
+      sed -i -e '/^#!/,$!d' pd_api_gen/split_pd_thrift.py
+      sed -i -e '/^#!/,$!d' tools/bf_switchd_dev_status.py
+    '' + lib.optionalString runtime
+      ## See above
+    ''
+      sed -i -e 's/^.*pd_api_gen.*$//' CMakeLists.txt
+    '';
 
-    ## Work around a long-standing issue with implicit relative
-    ## imports of python modules in code generated by protoc when
-    ## using Python3, see
-    ## https://github.com/protocolbuffers/protobuf/issues/1491.
-    ##
-    ## In our case, bfruntime_pb2_grpc.py contains the statement
-    ##
-    ## import bfruntime_pb2 as bfruntime__pb2
-    ##
-    ## where bfruntime_pb2 is located in the same directory. This
-    ## fails with Python3, which requires a parent directory, i.e.
-    ##
-    ## from . import bfruntime_pb2 as bfruntime__pb2
-    ##
-    ## For more recent versions of Python3, the dot no longer works in
-    ## this context either and needs to be replaced by the name of the
-    ## containing package.
-    lib.optionalString python.isPy3 (
-      if (lib.versionOlder version "9.11") then ''
-        sed -i -e 's/import bfruntime_pb2/from . import bfruntime_pb2/' $sitePath/tofino/bfrt_grpc/bfruntime_pb2_grpc.py
-      '' else
-        ## 9.12 already has the fix with "from ."
-        if (lib.versionOlder version "9.12") then ''
-          sed -i -e 's/import bfruntime_pb2/from bfrt_grpc import bfruntime_pb2/' $sitePath/tofino/bfrt_grpc/bfruntime_pb2_grpc.py
-        '' else ''
-          sed -i -e 's/from . import bfruntime_pb2/from bfrt_grpc import bfruntime_pb2/' $sitePath/tofino/bfrt_grpc/bfruntime_pb2_grpc.py
-        '') +
+    postInstall = ''
+        sitePath=$out/lib/${python.libPrefix}/site-packages
+      '' + (lib.optionalString (! runtime)
+        ## Remove the included tenjin module. For some reason it
+        ## causes "NameError: global name 'six' is not defined" when
+        ## generate_tofino_pd is run.
+        ''
+          rm $sitePath/tofino_pd_api/tenjin.*
+       '') +
 
     ## Link the directories in site-packages/tofino and
     ## site-packages/tofino_pd_api to site-packages. This allows
@@ -214,48 +73,57 @@ let
     ## tofino_pd_api directories to the search path. This should be
     ## fine as long as it doesn't create conflicts, which is currently
     ## not the case.
-    ##
-    ## Also, turn google/rpc into a "google" namespace package by
-    ## adding a .pth file, creating a link to google in the top-level
-    ## site-packages directory and removing __init__.py.  To make this
-    ## work, all portions of the name space have to be added with
-    ## site.addsite(), for example by adding bf-drivers and the
-    ## protobuf Python package to a Python environment (just adding
-    ## them to PYTHONPATH is not sufficient).
     ''
       for obj in $sitePath/tofino/* ${lib.optionalString (! runtime) "$sitePath/tofino_pd_api/*"}; do
         ln -sr $obj $sitePath
       done
-      cp ${./rpc-nspkg.pth} $sitePath/rpc-nspkg.pth
-      rm -f $sitePath/tofino/google/__init__.py*
-    '' +
-
-    lib.optionalString buildSystem.isCmake ''
       python -m compileall $sitePath
-    '' +
+    '' + (lib.optionalString runtime
+      ## The runtime version doesn't have a "dev" output.
+      ''
+        rm -rf $out/include
+      '');
 
-    ## The runtime version doesn't have a "dev" output.
-    lib.optionalString runtime ''
-      rm -rf $out/include
-    '' +
-
-    ## This utility was part of the ptf-utils package up to 9.7.0
-    lib.optionalString (lib.versionAtLeast version "9.8.0") ''
-      chmod a+x $out/lib/${python.libPrefix}/site-packages/p4testutils/bf_switchd_dev_status.py
-    '';
-
-    ## Declare the set of modules to be used by wrapPythonPrograms.
-    pythonPath = with python.pkgs; [ tenjin six ];
-    postFixup = lib.optionalString (! runtime && lib.versionAtLeast version "9.6.0") ''
-      [ -f $out/bin/split_pd_thrift.py ] && chmod a+x $out/bin/split_pd_thrift.py
-    '' + ''
+    ## Apart from Python modules, this package also provides a few
+    ## Python scripts that need to be wrapped to find their
+    ## dependencies. We have to do this manually because we're not
+    ## using buildPythonApplication. There are 4 such objects.
+    ##
+    ## bin/{gencli,generate_tofino_pd}.py are themselves wrappers
+    ## around like-named scripts in $sitePath/tofino_pd_api. They are
+    ## wrapped with wrapPythonPrograms.
+    ##
+    ## $sitePath/p4testutils/bf_switchd_dev_status.py doesn't require
+    ## any non-default modules. A patchShebangs suffices.
+    ##
+    ## $sitePath/bfrtcli.py is used to start a Python shell from
+    ## bf_switchd via the Python C API, i.e. it is never executed by
+    ## itself and doesn't need to be wrapped fully. We use
+    ## patchPythonScript to only set the search path.
+    ##
+    ## wrapPythonPrograms and patchPythonScript use the modules
+    ## specified in pythonPath. We set this to the union of all
+    ## modules used by these scripts.
+    pythonPath = with python.pkgs; [
+      ## generate_tofino_pd, gencli
+      tenjin six
+      ## bfrtcli
+      traitlets prompt_toolkit ipython tabulate netaddr
+    ];
+    postFixup = (lib.optionalString (! runtime) ''
+      chmod a+x $out/bin/split_pd_thrift.py
+      chmod a-x $sitePath/tofino_pd_api/{gencli.py,generate_tofino_pd.py}
+    '') + ''
+      sitePath=$out/lib/${python.libPrefix}/site-packages
+      chmod a+x $sitePath/p4testutils/bf_switchd_dev_status.py
+      patchShebangs $sitePath/p4testutils/
       wrapPythonPrograms
-    '' + lib.optionalString (lib.versionAtLeast version "9.8.0") ''
-      wrapPythonProgramsIn $out/lib/${python.libPrefix}/site-packages/p4testutils "$pythonPath"
+      patchPythonScript $sitePath/bfrtcli.py
+      python -m compileall $sitePath
     '';
   };
 
-## This turns the derivation into a Python Module,
-## i.e. $out/lib/python*/site-packages will be included in all of the
-## Nix Python wrapper magic
-in toPythonModule bf-drivers
+## Turn the derivation into a Python Module, i.e. inject all Python
+## modules referenced in propagatedBuildInputs into the environment of
+## Python packages that declare bf-drivers as inputs.
+in python.pkgs.toPythonModule bf-drivers

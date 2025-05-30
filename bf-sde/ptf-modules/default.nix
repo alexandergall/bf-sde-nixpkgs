@@ -1,4 +1,5 @@
-{ pname, version, src, patches, bf-drivers, makeWrapper }:
+{ pname, version, buildSupport, src, patches, bf-drivers, bf-pktpy,
+  lib, stdenv, cmake, thrift }:
 
 ## The PTF itself does not depend on bf-drivers, but some of the tests
 ## run by it do.  We are supposed to pass additional modules on to the
@@ -10,23 +11,47 @@
 ## when a package is added inside a Python wrapper, which uses
 ## NIX_PYTHONPATH and some magic in a Nix-specific
 ## sitecustomize.py. That's what happens here with bf-drivers as
-## propagated build input.
+## propagated build input or with wrapPythonProgramsIn.
 
 ## Make sure we use the same Python version as bf-drivers to make the
 ## tests depending on the modules from bf-drivers work.
 let
   python = bf-drivers.pythonModule;
-in python.pkgs.buildPythonApplication rec {
-  inherit pname version src patches;
-
+in python.pkgs.toPythonModule (stdenv.mkDerivation {
+  inherit pname version patches;
+  src = buildSupport.fixupSrc {
+    inherit src;
+    preambleOverride = true;
+    ## bf-ptf does not have a CMakeLists.txt. It is built
+    ## directly from the top-level. The following rules are
+    ## copied from there with appropriate modifications.
+    cmakeRules = ''
+      cmake_minimum_required(VERSION 3.5)
+      project(none LANGUAGES C)
+      set(PYTHON_SITE lib/${python.libPrefix}/site-packages)
+      install(PROGRAMS \''${CMAKE_CURRENT_SOURCE_DIR}/ptf/ptf DESTINATION bin)
+      install(DIRECTORY \''${CMAKE_CURRENT_SOURCE_DIR}/ptf/src/ DESTINATION \''${PYTHON_SITE})
+    '';
+  };
   ## Pass interpreter on to dependent packages
   passthru = {
     inherit python;
   };
+  buildInputs = [ python python.pkgs.wrapPython cmake thrift ];
 
-  propagatedBuildInputs = [ bf-drivers ] ++ (with python.pkgs; [ scapy thrift protobuf ]);
-  buildInputs = [ makeWrapper ];
+  postInstall = ''
+    python -m compileall $out/lib/${python.libPrefix}/site-packages
+  '';
 
-  catchConflicts = false;
-  preConfigure = ''pushd ptf'';
-}
+  ## wrapPythonProgramsIn must be able to see the nix-support
+  ## directory to follow propagated build inputs and nix-support
+  ## is part of the "dev" output.
+  pythonPath = [ bf-drivers.dev bf-pktpy ]
+               ## Note: the global thrift shadows that from "with
+               ## python.pkgs", hence the full path below
+               ++ (with python.pkgs; [ python.pkgs.thrift scapy-helper protobuf getmac ]);
+  postFixup = ''
+    wrapPythonProgramsIn $out/bin "$out/bin $pythonPath"
+  '';
+
+})

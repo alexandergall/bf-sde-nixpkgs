@@ -1,0 +1,26 @@
+diff -Naur open-p4studio.orig/cmake/PythonDependencies.cmake open-p4studio/cmake/PythonDependencies.cmake
+--- open-p4studio.orig/cmake/PythonDependencies.cmake	2025-02-13 09:52:11.056320917 +0100
++++ open-p4studio/cmake/PythonDependencies.cmake	2025-02-13 10:28:56.282113709 +0100
+@@ -30,21 +30,5 @@
+     )
+ endif()
+ 
+-if(NOT DEFINED SDE_PYTHON_THIRD_PARTY_DEPENDENCIES)
+-    execute_process(
+-        COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_LIST_DIR}/sdepythonpath.py" --sde-install "${CMAKE_INSTALL_PREFIX}" --sde-dependencies "${SDE_DEPENDENCIES}"
+-        OUTPUT_VARIABLE SDE_PYTHON_THIRD_PARTY_DEPENDENCIES
+-        RESULT_VARIABLE SDE_PYTHON_THIRD_PARTY_DEPENDENCIES_RET
+-        OUTPUT_STRIP_TRAILING_WHITESPACE
+-    )
+-    if (NOT SDE_PYTHON_THIRD_PARTY_DEPENDENCIES_RET EQUAL 0)
+-        message(FATAL_ERROR "Cannot determine path to SDE Python third-party dependencies")
+-    endif ()
+-endif()
+-
+-set(PYTHON_COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH="${SDE_PYTHON_THIRD_PARTY_DEPENDENCIES}:${SDE_GENERATED_PYTHON_DIR}" ${PYTHON_EXECUTABLE})
+-install(PROGRAMS "${CMAKE_CURRENT_LIST_DIR}/sdepythonpath.py" DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
+-
+ set(SDE_PYTHON_DEPENDENCIES_DIR ${SDE_GENERATED_PYTHON_DIR})
+-
+-set(CMAKE_PROGRAM_PATH ${SDE_PYTHON_THIRD_PARTY_DEPENDENCIES}/bin)
++set(PYTHON_COMMAND ${PYTHON_EXECUTABLE})

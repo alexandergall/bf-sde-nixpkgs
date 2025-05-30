@@ -1,4 +1,4 @@
-{ pname, version, patches, src, stdenv, autoPatchelfHook, libcli }:
+{ pname, version, patches, src, stdenv, autoPatchelfHook, libcli_1_10 }:
 
 let
   arch = if stdenv.isx86_64
@@ -12,10 +12,10 @@ let
 in stdenv.mkDerivation {
   inherit pname version src;
 
-  buildInputs = [ autoPatchelfHook libcli ];
+  buildInputs = [ autoPatchelfHook libcli_1_10 ];
 
   installPhase = ''
     mkdir -p $out/bin
-    cp tofino-model.${arch}.bin $out/bin/tofino-model
+    cp bin/tofino-model.${arch}.bin $out/bin/tofino-model
   '';
 }

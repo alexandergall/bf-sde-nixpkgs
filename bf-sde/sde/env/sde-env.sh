@@ -124,6 +124,6 @@ if [[ ! $platform =~ ^model.* ]]; then
     kernelArg="--argstr kernelRelease $(uname -r)"
 fi
 PATH=$origPath
-nix-shell -j auto $pureMode -I nixpkgs=$sdeNixexpr -E "with import <nixpkgs> {}; bf-sde.${version}.mkShell" \
+nix-shell -j auto $pureMode -I nixpkgs=$sdeNixexpr -E "with import <nixpkgs> { withAsic = @WITH_ASIC@; }; bf-sde.${version}.mkShell" \
           $kernelArg --argstr platform $platform \
           --arg inputFn "$INPUT_FN" --argstr runCommand "$runCommand"
