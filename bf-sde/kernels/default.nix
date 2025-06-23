@@ -139,7 +139,7 @@ let
         patchelfInputs = [ elfutils ];
       };
       patches = {
-        "9.13.4" = [ ./bf-drivers-kernel-9.13.2.patch ];
+        "9.13.4" = [ ./bf-drivers-kernel.patch ];
       };
       additionalModules = additionalModulesDebian;
     };
@@ -169,7 +169,7 @@ let
         patchelfInputs = [ elfutils ];
       };
       patches = {
-        "9.13.4" = [ ./bf-drivers-kernel-9.13.2.patch ];
+        "9.13.4" = [ ./bf-drivers-kernel.patch ];
       };
       additionalModules = additionalModulesDebian;
     };
@@ -199,7 +199,7 @@ let
         patchelfInputs = [ elfutils ];
       };
       patches = {
-        "9.13.4" = [ ./bf-drivers-kernel-9.13.2.patch ];
+        "9.13.4" = [ ./bf-drivers-kernel.patch ];
       };
       additionalModules = additionalModulesDebian;
     };
@@ -229,7 +229,7 @@ let
         patchelfInputs = [ elfutils ];
       };
       patches = {
-        "9.13.4" = [ ./bf-drivers-kernel-9.13.2.patch ];
+        "9.13.4" = [ ./bf-drivers-kernel.patch ];
       };
       additionalModules = additionalModulesDebian;
     };
@@ -259,7 +259,7 @@ let
         patchelfInputs = [ elfutils ];
       };
       patches = {
-        "9.13.4" = [ ./bf-drivers-kernel-9.13.2.patch ];
+        "9.13.4" = [ ./bf-drivers-kernel.patch ];
       };
       additionalModules = additionalModulesDebian;
     };
@@ -289,7 +289,7 @@ let
         patchelfInputs = [ elfutils ];
       };
       patches = {
-        "9.13.4" = [ ./bf-drivers-kernel-9.13.2.patch ];
+        "9.13.4" = [ ./bf-drivers-kernel.patch ];
       };
       additionalModules = additionalModulesDebian;
     };
@@ -319,7 +319,7 @@ let
         patchelfInputs = [ elfutils ];
       };
       patches = {
-        "9.13.4" = [ ./bf-drivers-kernel-9.13.2.patch ];
+        "9.13.4" = [ ./bf-drivers-kernel.patch ];
       };
       additionalModules = additionalModulesDebian;
     };
@@ -349,7 +349,7 @@ let
         patchelfInputs = [ elfutils ];
       };
       patches = {
-        "9.13.4" = [ ./bf-drivers-kernel-9.13.2.patch ];
+        "9.13.4" = [ ./bf-drivers-kernel.patch ];
       };
       additionalModules = additionalModulesDebian;
     };

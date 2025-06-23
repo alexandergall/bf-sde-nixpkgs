@@ -34,8 +34,8 @@ let
       "-DPI=OFF"
       "-DP4RT=OFF"
       "-DBF-PYTHON=ON"
-      ## Indirectly disable build of kdrv
-      "-DASIC=OFF"
+      ## Kernel mdules are built separately
+      "-DKERNEL-MODULES=OFF"
     ];
 
     preConfigure = ''

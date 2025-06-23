@@ -59,6 +59,11 @@ let
               "-DKDIR=${kernelSpec.buildTree}"
             ];
 
+          NIX_CFLAGS_COMPILE = lib.optional newport [
+            ## Make gcc recognize "fallthrough" pseudo-comments
+            "-Wimplicit-fallthrough=3"
+          ];
+
           postInstall =
           if (kernelSpec == null) then ''
               for file in $out/bin/*.sh; do

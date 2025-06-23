@@ -337,8 +337,8 @@ let
           src = pkgs.fetchFromGitHub {
             repo = "open-p4studio";
             owner = "p4lang";
-            rev = "77a0e3";
-            hash = "sha256-DV/UmBjORgca4ohjDMkq+vH+mdoOKS/cDInxX68CBXg=";
+            rev = "4fc6e4";
+            hash = "sha256-ohHb56B88exX0BmlyM7nz8ROUkP94vbeoUeskGZziT0=";
           };
           rdc = fetchFromStore {
             name = "bf-sde-9.13.4.tgz";

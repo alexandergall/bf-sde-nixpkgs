@@ -41,9 +41,12 @@ let
         "-DPI=OFF"
         "-DP4RT=OFF"
         ## Enable building of kdrv
-        "-DASIC=ON"
+        "-DKERNEL-MODULES=ON"
         "-DKDIR=${spec.buildTree}"
     ];
+
+    ## Make gcc recognise the pseudo comment "FALLTHRU"
+    NIX_CFLAGS_COMPILE= [ "-Wimplicit-fallthrough=4" ];
 
     buildFlags = [
       "bf_kdrv"
