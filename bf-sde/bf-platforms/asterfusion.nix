@@ -4,9 +4,9 @@
 let
   mkBaseboard = baseboard: {}:
     let
-      derivation = { stdenv, autoreconfHook, makeWrapper, libusb, curl, target-syslibs,
+      derivation = { stdenv, cmake, makeWrapper, libusb, curl, target-syslibs,
                      bf-drivers, target-utils, bf-utils, i2c-tools, coreutils,
-                     kmod, gnugrep, gawk, thrift, boost }:
+                     kmod, gnugrep, gawk, thrift, boost, python3, which }:
 
         let
           cgos = callPackage asterfusion/cgoslx.nix {
@@ -16,9 +16,9 @@ let
           pname = "bf-platforms-${baseboard}";
           inherit version src;
           patches = (patches.default or []) ++ (patches.${baseboard} or []);
-          buildInputs = [ autoreconfHook makeWrapper libusb curl
+          buildInputs = [ cmake makeWrapper libusb curl
                           target-syslibs thrift boost bf-drivers target-utils
-                          bf-utils i2c-tools cgos];
+                          bf-utils i2c-tools cgos python3 which ];
           outputs = [ "out" "dev" ];
           passthru = {
             inherit cgos;
@@ -30,10 +30,11 @@ let
             "-Wno-error=address"
             "-Wno-error=stringop-overflow"
             "-Wno-error=stringop-truncation"
+            "-Wno-error=maybe-uninitialized"
           ];
-          configureFlags = [
-            "--enable-thrift"
-            "--with-sde-version=${builtins.replaceStrings [ "." ] [ "" ] version}"
+          cmakeFlags = [
+            "-DOS_VERSION=12"
+            "-DSDE_VERSION=${builtins.replaceStrings [ "." ] [ "" ] version}"
           ];
           preConfigure = ''
             cat <<EOF >platforms/asterfusion-bf/include/version.h
@@ -42,8 +43,6 @@ let
             #define VERSION_NUMBER "${asterfusion_version}"
             #endif
             EOF
-            SDE_VERSION=$(echo ${version} | sed -e 's/\.//g')
-            NIX_CFLAGS_COMPILE="-DSDE_VERSION=$SDE_VERSION -DOS_VERSION=10 $NIX_CFLAGS_COMPILE"
           '';
           postInstall = ''
             wrapProgram $out/bin/xt-cfgen.sh \

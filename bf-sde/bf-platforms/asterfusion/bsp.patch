@@ -1,199 +1,55 @@
-diff -Naur bf-bsp-lts-a5033f2.orig/configure.ac bf-bsp-lts-a5033f2/configure.ac
---- bf-bsp-lts-a5033f2.orig/configure.ac	2023-09-27 03:54:02.000000000 +0200
-+++ bf-bsp-lts-a5033f2/configure.ac	2023-10-12 10:14:36.970150314 +0200
-@@ -59,6 +59,13 @@
- #AM_CONDITIONAL([BUILD_TOFINO_BRINGUP_PLAT], [test "x$build_tof_brgup" = xyes])
- #AM_CONDITIONAL([BUILD_NEWPORT_PLAT], [test "x$build_newport" = xyes])
- AM_CONDITIONAL([BUILD_ASTERFUSIONBF_PLAT], [test "x$build_asterfusionbf" = xyes])
-+AM_CONDITIONAL([BUILD_ASTERFUSIONBF_PLAT], [test "x$build_asterfusionbf" = xyes])
-+AC_ARG_WITH([sde_version],
-+	[AS_HELP_STRING([--with-sde-version],
-+	[SDE version as numeric value (e.g. 990) [default=990]])],
-+	[],
-+	[with_sde_version=990])
-+AM_CONDITIONAL([SDE_AT_LEAST_990],[test ${with_sde_version} -ge 990])
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 238f102..b5e9ca4 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -6,6 +6,7 @@
+ #
  
- asterfusion_diags=no
- AC_ARG_WITH([asterfusion-diags],
-diff -Naur bf-bsp-lts-a5033f2.orig/drivers/include/bf_pltfm_types/bf_pltfm_types.h bf-bsp-lts-a5033f2/drivers/include/bf_pltfm_types/bf_pltfm_types.h
---- bf-bsp-lts-a5033f2.orig/drivers/include/bf_pltfm_types/bf_pltfm_types.h	2023-09-27 03:54:02.000000000 +0200
-+++ bf-bsp-lts-a5033f2/drivers/include/bf_pltfm_types/bf_pltfm_types.h	2023-10-12 10:14:36.970150314 +0200
-@@ -31,7 +31,9 @@
- /* Mainline SDE version used by bsp, set 9.5.0 as default.
-  * Valid value in [891,900,910,930,950,970,990,9110,9120,9130 ...].
-  * A sub version start from a given mainline is valid too, such as 931,952,971, etc. */
-+#ifndef SDE_VERSION
- #define SDE_VERSION 950
-+#endif
- #define SDE_VERSION_EQ(key) \
-         EQ(SDE_VERSION, (key))
+ cmake_minimum_required(VERSION 3.5)
++list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
  
-@@ -42,7 +44,9 @@
-         LT(SDE_VERSION, (key))
+ option(THRIFT-DRIVER      "Build with thrift support" ON)
+ option(LASER_ON           "Build for forcely enabling laser when modules plugged-in" OFF)
+@@ -125,7 +126,7 @@ link_directories(AFTER ${CMAKE_INSTALL_PREFIX}/lib)
+ include_directories(SYSTEM ${CMAKE_INSTALL_PREFIX}/include)
  
- /* Mainline OS version, <= 9 or > 9. Valid value in [8,9,10,11]. */
-+#ifndef OS_VERSION
- #define OS_VERSION 9
-+#endif
- #define OS_VERSION_EQ(key) \
-         EQ(OS_VERSION, (key))
+ if (THRIFT-DRIVER)
+-  find_package(Thrift REQUIRED)
++  include(FindThrift)
+ endif()
  
-@@ -103,7 +107,7 @@
- #endif
+ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -DINC_PLTFM_UCLI -Wno-unused-parameter -Wno-shadow")
+diff --git a/platforms/asterfusion-bf/cp2112_util/onie_tlvinfo.c b/platforms/asterfusion-bf/cp2112_util/onie_tlvinfo.c
+index 85b20b4..088290e 100644
+--- a/platforms/asterfusion-bf/cp2112_util/onie_tlvinfo.c
++++ b/platforms/asterfusion-bf/cp2112_util/onie_tlvinfo.c
+@@ -795,7 +795,7 @@ bool tlvinfo_add_tlv (u_int8_t *eeprom, int tcode,
+     tlvinfo_tlv_t *eeprom_tlv;
+     int new_tlv_len = 0;
+     u_int32_t value;
+-    char data[MAX_TLV_VALUE_LEN];
++    char data[MAX_TLV_VALUE_LEN + 1];
+     int eeprom_index;
+     int max_size = TLV_TOTAL_LEN_MAX;
  
- 
--#if SDE_VERSION_LT(980)
-+#if SDE_VERSION_LT(990)
- #ifdef INC_PLTFM_UCLI
- #include <bfutils/uCli/ucli.h>
- #include <bfutils/uCli/ucli_argparse.h>
-diff -Naur bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/cp2112_util/Makefile.am bf-bsp-lts-a5033f2/platforms/asterfusion-bf/cp2112_util/Makefile.am
---- bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/cp2112_util/Makefile.am	2023-09-27 03:54:02.000000000 +0200
-+++ bf-bsp-lts-a5033f2/platforms/asterfusion-bf/cp2112_util/Makefile.am	2023-10-12 10:14:36.970150314 +0200
-@@ -19,10 +19,15 @@
- # Different SDE on different OS.
- # Default to OS <= 9 and SDE < 9.9.x. by tsihang, 2022-11-09.
- # For SDE version <  9.9.x && OS <= 9
--cp2112_util_LDADD = -lbfsys -lusb-1.0 -lcurl -lcgos
-+#cp2112_util_LDADD = -lbfsys -lusb-1.0 -lcurl -lcgos
- # For SDE version >= 9.9.x && OS <= 9
- #cp2112_util_LDADD =  -ltarget_sys -lusb-1.0 -lcurl -lcgos
- # For SDE version <  9.9.x && OS >= 10
- #cp2112_util_LDADD =  -lbfsys -lusb-1.0 -lcurl -lcgos -li2c
- # For SDE version >= 9.9.x && OS >= 10
- #cp2112_util_LDADD =  -ltarget_sys -lusb-1.0 -lcurl -lcgos -li2c
-+if SDE_AT_LEAST_990
-+cp2112_util_LDADD =  -ltarget_sys -lusb-1.0 -lcurl -lcgos -li2c
-+else
-+cp2112_util_LDADD =  -lbfsys -lusb-1.0 -lcurl -lcgos -li2c
-+endif
-diff -Naur bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c bf-bsp-lts-a5033f2/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c
---- bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c	2023-09-27 03:54:02.000000000 +0200
-+++ bf-bsp-lts-a5033f2/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c	2023-10-12 10:14:36.974150334 +0200
-@@ -860,8 +860,8 @@
-             /* First boot error, no chance to rescure, exit forcely. */
+diff --git a/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c b/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c
+index 705487f..05134a4 100644
+--- a/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c
++++ b/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_bd_eeprom.c
+@@ -846,7 +846,7 @@ bf_pltfm_status_t bf_pltfm_bd_type_init()
              exit (0);
          } else {
--            char tlv_str[128];
+             char tlv_str[lqe_valen + 1];
 -            char tlv_header[128];
-+            char tlv_str[lqe_valen];
-+            char tlv_header[lqe_valen];
++            char tlv_header[lqe_valen + 1];
              char *p;
              while (fgets (tlv_str, lqe_valen, fp)) {
                  p = strchr(tlv_str, 0x0A);
-diff -Naur bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/src/bf_pltfm_uart/bf_pltfm_uart.c bf-bsp-lts-a5033f2/platforms/asterfusion-bf/src/bf_pltfm_uart/bf_pltfm_uart.c
---- bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/src/bf_pltfm_uart/bf_pltfm_uart.c	2023-09-27 03:54:02.000000000 +0200
-+++ bf-bsp-lts-a5033f2/platforms/asterfusion-bf/src/bf_pltfm_uart/bf_pltfm_uart.c	2023-10-12 10:36:14.840420078 +0200
-@@ -592,7 +592,10 @@
-     }
- 
-     /* Sent key word "YMODEMUPDATE" to BMC */
-+#pragma GCC diagnostic push
-+#pragma GCC diagnostic ignored "-Wunused-result"
-     write (ctx->fd, "YMODEMUPDATE", 12);
-+#pragma GCC diagnostic pop
-     usleep (5000);
-     if(ymodem_wait_ack(ctx->fd) != CODE_C) {
-         rc = 0;
-diff -Naur bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/src/Makefile.am bf-bsp-lts-a5033f2/platforms/asterfusion-bf/src/Makefile.am
---- bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/src/Makefile.am	2023-09-27 03:54:02.000000000 +0200
-+++ bf-bsp-lts-a5033f2/platforms/asterfusion-bf/src/Makefile.am	2023-10-12 10:14:36.974150334 +0200
-@@ -114,7 +114,7 @@
- libasterfusionbf_driver_la_LIBADD = \
- libasterfusionbf_platform.la
- else
--libasterfusionbf_driver_la_LIBADD = \
-+libasterfusionbf_driver_la_LIBADD = -li2c \
- libasterfusionbf_platform.la \
- libasterfusionbf_cp2112.la \
- libasterfusionbf_chss_mgmt.la \
-diff -Naur bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/src/platform_mgr/platform.c bf-bsp-lts-a5033f2/platforms/asterfusion-bf/src/platform_mgr/platform.c
---- bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/src/platform_mgr/platform.c	2023-09-27 03:54:02.000000000 +0200
-+++ bf-bsp-lts-a5033f2/platforms/asterfusion-bf/src/platform_mgr/platform.c	2023-10-12 10:32:01.239263775 +0200
-@@ -1818,7 +1818,10 @@
-         aim_printf (&uc->pvs, "\nThere could be port link risk when upgrade BMC online.\n");
-         aim_printf (
-                 &uc->pvs,"Enter Y/N: ");
-+#pragma GCC diagnostic push
-+#pragma GCC diagnostic ignored "-Wunused-result"
-         scanf("%c", &c);
-+#pragma GCC diagnostic pop
-         aim_printf (
-                 &uc->pvs,"%c\n", c);
-         if ((c != 'Y') && (c != 'y')) {
-@@ -2055,7 +2058,10 @@
-     char c = 0;
-     aim_printf (
-             &uc->pvs,"Enter Y/N: ");
-+#pragma GCC diagnostic push
-+#pragma GCC diagnostic ignored "-Wunused-result"
-     scanf("%c", &c);
-+#pragma GCC diagnostic pop    
-     aim_printf (
-             &uc->pvs,"%c\n", c);
-     if (reset_tof) c = 'N'; /* Force abort when perform tof reset. */
-diff -Naur bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/tofino_spi_util/Makefile.am bf-bsp-lts-a5033f2/platforms/asterfusion-bf/tofino_spi_util/Makefile.am
---- bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/tofino_spi_util/Makefile.am	2023-09-27 03:54:02.000000000 +0200
-+++ bf-bsp-lts-a5033f2/platforms/asterfusion-bf/tofino_spi_util/Makefile.am	2023-10-12 10:14:36.974150334 +0200
-@@ -11,7 +11,7 @@
- # Different SDE on different OS.
- # Default to OS <= 9 and SDE < 9.9.x. by tsihang, 2022-11-09.
- # For SDE version <  9.9.x && OS <= 9
--tofino_spi_util_LDADD = -lbfsys -lusb-1.0 -lcurl -lcgos
-+#tofino_spi_util_LDADD = -lbfsys -lusb-1.0 -lcurl -lcgos
- # For SDE version >= 9.9.x && OS <= 9
- #tofino_spi_util_LDADD =  -ltarget_sys -ldriver -lusb-1.0 -lcurl -lcgos
- # For SDE version <  9.9.x && OS >= 10
-@@ -19,5 +19,11 @@
- # For SDE version >= 9.9.x && OS >= 10
- #tofino_spi_util_LDADD =  -ltarget_sys -ldriver -lusb-1.0 -lcurl -lcgos -li2c
- 
-+if SDE_AT_LEAST_990
-+tofino_spi_util_LDADD =  -ltarget_sys -ldriver -lusb-1.0 -lcurl -lcgos -li2c
-+else
-+tofino_spi_util_LDADD =  -lbfsys -ldriver -lusb-1.0 -lcurl -lcgos -li2c
-+endif
-+
- # For SDE version <  9.7.x
- #tofino_spi_util_LDADD += -lbf_switchd_lib
-diff -Naur bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/uart_util/Makefile.am bf-bsp-lts-a5033f2/platforms/asterfusion-bf/uart_util/Makefile.am
---- bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/uart_util/Makefile.am	2023-09-27 03:54:02.000000000 +0200
-+++ bf-bsp-lts-a5033f2/platforms/asterfusion-bf/uart_util/Makefile.am	2023-10-12 10:14:36.974150334 +0200
-@@ -17,10 +17,15 @@
- # Different SDE on different OS.
- # Default to OS <= 9 and SDE < 9.9.x. by tsihang, 2022-11-09.
- # For SDE version <  9.9.x && OS <= 9
--uart_util_LDADD = -lbfsys -lusb-1.0 -lcurl -lcgos
-+#uart_util_LDADD = -lbfsys -lusb-1.0 -lcurl -lcgos
- # For SDE version >= 9.9.x && OS <= 9
- #uart_util_LDADD =  -ltarget_sys -lusb-1.0 -lcurl -lcgos
- # For SDE version <  9.9.x && OS >= 10
- #uart_util_LDADD =  -lbfsys -lusb-1.0 -lcurl -lcgos -li2c
- # For SDE version >= 9.9.x && OS >= 10
- #uart_util_LDADD =  -ltarget_sys -lusb-1.0 -lcurl -lcgos -li2c
-+if SDE_AT_LEAST_990
-+uart_util_LDADD =  -ltarget_sys -lusb-1.0 -lcurl -lcgos -li2c
-+else
-+uart_util_LDADD =  -lbfsys -lusb-1.0 -lcurl -lcgos -li2c
-+endif
-diff -Naur bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/uart_util/uart_util.c bf-bsp-lts-a5033f2/platforms/asterfusion-bf/uart_util/uart_util.c
---- bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/uart_util/uart_util.c	2023-09-27 03:54:02.000000000 +0200
-+++ bf-bsp-lts-a5033f2/platforms/asterfusion-bf/uart_util/uart_util.c	2023-10-12 10:38:39.057078928 +0200
-@@ -124,7 +124,10 @@
-             char c = 'N';
- 
-             fprintf (stdout, "\nAre you sure you want to upgrade BMC firmware? Y/N: ");
-+#pragma GCC diagnostic push
-+#pragma GCC diagnostic ignored "-Wunused-result"
-             scanf("%c", &c);
-+#pragma GCC diagnostic pop
-             if ((c != 'Y') && (c != 'y')) {
-                 fprintf (stdout, "Abort\n");
-             } else {
-diff -Naur bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/utils/xt-cfgen.sh bf-bsp-lts-a5033f2/platforms/asterfusion-bf/utils/xt-cfgen.sh
---- bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/utils/xt-cfgen.sh	2023-09-27 03:54:02.000000000 +0200
-+++ bf-bsp-lts-a5033f2/platforms/asterfusion-bf/utils/xt-cfgen.sh	2023-10-12 16:34:50.386292019 +0200
-@@ -17,15 +17,13 @@
+diff --git a/platforms/asterfusion-bf/utils/xt-cfgen.sh b/platforms/asterfusion-bf/utils/xt-cfgen.sh
+index d5d5064..b5df1e2 100755
+--- a/platforms/asterfusion-bf/utils/xt-cfgen.sh
++++ b/platforms/asterfusion-bf/utils/xt-cfgen.sh
+@@ -17,15 +17,13 @@ enable_uart=0
  enable_iic=1
  
  echo -e "${YELLOW}Notice: Start detecting and make sure that the switchd is not running${RES}"
@@ -210,7 +66,7 @@ diff -Naur bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/utils/xt-cfgen.sh bf
  if [ ! -e $uart_util ]; then
      # For SONiC, uart_util is installed in /opt/bfn/install/bin
      uart_util="/opt/bfn/install/bin/uart_util"
-@@ -328,12 +326,11 @@
+@@ -375,12 +373,11 @@ fi
  echo "COMe     : $default_cme"
  
  if [ -f $cfgfile ]; then
@@ -228,18 +84,20 @@ diff -Naur bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/utils/xt-cfgen.sh bf
  fi
  
  echo ""
-@@ -430,6 +427,6 @@
+@@ -479,7 +476,7 @@ echo "# rpc-listen-point:127.0.0.1" >> $cfgfile
  echo "# rpc-listen-point:lo" >> $cfgfile
  echo "# rpc-listen-point:10.240.4.50" >> $cfgfile
  echo "# rpc-listen-point:ma1" >> $cfgfile
 -echo "rpc-listen-point:127.0.0.1" >> $cfgfile
 +echo "# rpc-listen-point:127.0.0.1" >> $cfgfile
  
- echo "==========================            Done             ========================== "
-diff -Naur bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/utils/xt-setup.sh bf-bsp-lts-a5033f2/platforms/asterfusion-bf/utils/xt-setup.sh
---- bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/utils/xt-setup.sh	2023-09-27 03:54:02.000000000 +0200
-+++ bf-bsp-lts-a5033f2/platforms/asterfusion-bf/utils/xt-setup.sh	2023-10-12 10:14:36.974150334 +0200
-@@ -22,7 +22,7 @@
+ if [[ $xt_platform =~ "732" ]]; then
+     echo "" >> $cfgfile
+diff --git a/platforms/asterfusion-bf/utils/xt-setup.sh b/platforms/asterfusion-bf/utils/xt-setup.sh
+index c2e77b7..4f570d3 100755
+--- a/platforms/asterfusion-bf/utils/xt-setup.sh
++++ b/platforms/asterfusion-bf/utils/xt-setup.sh
+@@ -22,7 +22,7 @@ friendly_exit()
  
  install_cgosdrv()
  {
@@ -248,7 +106,7 @@ diff -Naur bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/utils/xt-setup.sh bf
      mod=`lsmod | grep cgosdrv`
      mod=${mod:0:7}
  
-@@ -52,7 +52,7 @@
+@@ -52,7 +52,7 @@ uninstall_cgosdrv()
  
  install_nct6779d()
  {
@@ -257,7 +115,7 @@ diff -Naur bf-bsp-lts-a5033f2.orig/platforms/asterfusion-bf/utils/xt-setup.sh bf
      mod=`lsmod | grep nct6779d`
      mod=${mod:0:8}
  
-@@ -88,7 +88,7 @@
+@@ -88,7 +88,7 @@ install_bfnkdrv()
          $SDE_INSTALL/bin/dma_setup.sh
      fi
  

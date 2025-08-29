@@ -399,11 +399,11 @@ let
             src = fetchFromGitHub {
               owner = "asterfusion";
               repo = "bf-bsp-lts";
-              rev = "a5033f2";
-              sha256 = "0wrgmfzwvcdga1n0w17nr6lddj3hbvp9by9snac8097k3yzb2blj";
+              rev = "f7a132e";
+              sha256 = "0w0957d1kyhsyypl0z3gyaiz3r261vfwgnp2mnpxdagf1iwvfsgp";
             };
             ## Run gitver.sh in the cloned BSP to get this version ID
-            asterfusion_version = "Git: r40 23.09";
+            asterfusion_version = "Git: r58 25.08";
             patches = {
               asterfusion = [ bf-platforms/asterfusion/bsp.patch ];
             };
@@ -416,9 +416,11 @@ let
               };
               patches = [];
             };
+            ## X-T Programmable Bare Metal User Manual v3.10.5-11, section 10.26,1
+            ## https://drive.cloudswitch.io/external/745689ea25643bc00fac9224d368d4374ca3d15724cb83181a631c4168044d30
             cgoslx = fetchFromStore {
-              name = "cgoslx-facc4fb4.tar.gz";
-              outputHash = "aeebf6ef2238233e9a50707770fbbfc00440c4f7cf4adc94ddc1ef755552c7b4";
+              name = "cgoslx-build-24.tar.gz";
+              outputHash = "3738a81a5dd6ec06497ce132cb7dad606264752aa60762d02b338bc124f71504";
               patches = [
                 bf-platforms/asterfusion/cgoslx.patch
               ];

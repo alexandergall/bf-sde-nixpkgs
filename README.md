@@ -278,7 +278,7 @@ Support](#baseboardPlatform))
 | -----             | -----        | -----                                     | -----                                                             |
 | `accton` `newport` `model`  | Intel | `bf-reference-bsp-9.13.4.tgz` | `5bef42bcb885aaa59b237552e1f44789a74ebfc270b4d5685ba0dcf3f52e4381` |
 | `netberg`    | Netberg      | `bf-platforms-netberg-7xx-bsp-9.13.2-240517.tgz` | `9b09f926d4233db75017f28678265deb16a3aa72483317a40180977053d5a987`|
-| `asterfusion`| Asterfusion  | [Github](https://github.com/asterfusion/bf-bsp-lts) | Commit `a5033f2` |
+| `asterfusion`| Asterfusion  | [Github](https://github.com/asterfusion/bf-bsp-lts) | Commit `f7a132e` |
 
 #### <a name="addArchives"></a>Add archives to the Nix store
 
@@ -378,7 +378,11 @@ baseboard](/bf-sde/bf-platforms/properties.nix)
 | `inventec_d5264q28b`     | Inventec     | BSP-less     |
 | `inventec_d10064   `     | Inventec     | BSP-less     |
 | `netberg_aurora_710`     | Netberg      | `netberg`    |
+| `asterfusion_x308p`      | Asterfusion  | `asterfusion`|
 | `asterfusion_x312p`      | Asterfusion  | `asterfusion`|
+| `asterfusion_x532p`      | Asterfusion  | `asterfusion`|
+| `asterfusion_x564p`      | Asterfusion  | `asterfusion`|
+| `asterfusion_x732q`      | Asterfusion  | `asterfusion`|
 | `model`                  |              | `model`      |
 | `modelT2`                |              | `model`      |
 

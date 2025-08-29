@@ -91,4 +91,5 @@ in {
   asterfusion_x312p = asterfusion;
   asterfusion_x532p = asterfusion;
   asterfusion_x564p = asterfusion;
+  asterfusion_x732q = asterfusion;
 }
