@@ -382,7 +382,7 @@ baseboard](/bf-sde/bf-platforms/properties.nix)
 | `asterfusion_x312p`      | Asterfusion  | `asterfusion`|
 | `asterfusion_x532p`      | Asterfusion  | `asterfusion`|
 | `asterfusion_x564p`      | Asterfusion  | `asterfusion`|
-| `asterfusion_x732q`      | Asterfusion  | `asterfusion`|
+| `asterfusion_x732q_t`    | Asterfusion  | `asterfusion`|
 | `model`                  |              | `model`      |
 | `modelT2`                |              | `model`      |
 
