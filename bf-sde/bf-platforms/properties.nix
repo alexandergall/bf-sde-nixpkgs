@@ -91,5 +91,7 @@ in {
   asterfusion_x312p = asterfusion;
   asterfusion_x532p = asterfusion;
   asterfusion_x564p = asterfusion;
-  asterfusion_x732q = asterfusion;
+  asterfusion_x732q = asterfusion // {
+    mgmtEthPciAddr = "0000:0a:00.0";
+  };
 }
