@@ -92,6 +92,7 @@ in {
   asterfusion_x532p = asterfusion;
   asterfusion_x564p = asterfusion;
   asterfusion_x732q = asterfusion // {
+    target = "tofino2";
     mgmtEthPciAddr = "0000:0a:00.0";
   };
 }
