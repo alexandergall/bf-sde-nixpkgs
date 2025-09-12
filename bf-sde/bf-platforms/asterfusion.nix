@@ -6,7 +6,8 @@ let
     let
       derivation = { stdenv, cmake, makeWrapper, libusb, curl, target-syslibs,
                      bf-drivers, target-utils, bf-utils, i2c-tools, coreutils,
-                     kmod, gnugrep, gawk, thrift, boost, python3, which }:
+                     kmod, gnugrep, gawk, thrift, boost, python3, which, dmidecode,
+                     util-linux }:
 
         let
           cgos = callPackage asterfusion/cgoslx.nix {
@@ -46,7 +47,7 @@ let
           '';
           postInstall = ''
             wrapProgram $out/bin/xt-cfgen.sh \
-              --set PATH $out/bin:"${lib.strings.makeBinPath [ coreutils kmod gnugrep gawk i2c-tools ]}"
+              --set PATH $out/bin:"${lib.strings.makeBinPath [ coreutils kmod gnugrep gawk i2c-tools dmidecode util-linux ]}"
           '';
         };
     in callPackage derivation {};

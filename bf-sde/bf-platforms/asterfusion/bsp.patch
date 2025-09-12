@@ -1,5 +1,5 @@
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 238f102..b5e9ca4 100644
+index 238f102..77b2251 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
 @@ -6,6 +6,7 @@
@@ -19,6 +19,34 @@ index 238f102..b5e9ca4 100644
  endif()
  
  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}     -DINC_PLTFM_UCLI -Wno-unused-parameter -Wno-shadow")
+@@ -247,9 +248,9 @@ set_target_properties(pltfm_mgr PROPERTIES VERSION 0.0.0 SOVERSION 0)
+ #thrift
+ if (THRIFT-DRIVER)
+   add_subdirectory(platforms/asterfusion-bf/thrift)
+-  target_link_libraries(pltfm_mgr PUBLIC pltfm_mgr_thrift ${bfsys_lib} curl usb-1.0 ${private_lib})
++  target_link_libraries(pltfm_mgr PUBLIC pltfm_mgr_thrift ${bfsys_lib} curl usb-1.0 ${private_lib} ${i2c_lib})
+ else()
+-  target_link_libraries(pltfm_mgr PUBLIC ${bfsys_lib} curl usb-1.0 ${private_lib})
++  target_link_libraries(pltfm_mgr PUBLIC ${bfsys_lib} curl usb-1.0 ${private_lib} ${i2c_lib})
+ endif()
+ 
+ add_library(asterfusion_bin_srcs_o OBJECT
+diff --git a/drivers/include/bf_pltfm_types/bf_pltfm_types.h b/drivers/include/bf_pltfm_types/bf_pltfm_types.h
+index 3206982..3b0c9e2 100644
+--- a/drivers/include/bf_pltfm_types/bf_pltfm_types.h
++++ b/drivers/include/bf_pltfm_types/bf_pltfm_types.h
+@@ -199,9 +199,9 @@ extern "C" {
+             ____ubuf[strlen(____ubuf) - 1] = 0;                                 \
+             ____size += snprintf(____info + ____size, AF_LOG_MSG_SIZE,          \
+                         "%s %s.%06d ", ____tbuf, ____ubuf, (int)__tm__.tv_usec);\
+-            ____size += snprintf(____info + ____size, AF_LOG_MSG_SIZE,          \
++            ____size += snprintf(____info + ____size, AF_LOG_MSG_SIZE-____size, \
+                                         " [AF_LOG_EXT] : ");                    \
+-            ____size += snprintf(____info + ____size, AF_LOG_MSG_SIZE,          \
++            ____size += snprintf(____info + ____size, AF_LOG_MSG_SIZE-____size, \
+                             ##__VA_ARGS__);                                     \
+             if (____size == AF_LOG_MSG_SIZE) {                                  \
+                 ____info[AF_LOG_MSG_SIZE - 1] = '\0';                           \
 diff --git a/platforms/asterfusion-bf/cp2112_util/onie_tlvinfo.c b/platforms/asterfusion-bf/cp2112_util/onie_tlvinfo.c
 index 85b20b4..088290e 100644
 --- a/platforms/asterfusion-bf/cp2112_util/onie_tlvinfo.c
@@ -45,6 +73,20 @@ index 705487f..05134a4 100644
              char *p;
              while (fgets (tlv_str, lqe_valen, fp)) {
                  p = strchr(tlv_str, 0x0A);
+diff --git a/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_chss_mgmt_tmp.c b/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_chss_mgmt_tmp.c
+index 535d139..3055fd4 100644
+--- a/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_chss_mgmt_tmp.c
++++ b/platforms/asterfusion-bf/src/bf_pltfm_chss_mgmt/bf_pltfm_chss_mgmt_tmp.c
+@@ -579,7 +579,8 @@ __bf_pltfm_chss_mgmt_switch_temperature_get__ (
+             if (BF_SUCCESS !=
+                 bfn_tf2_serdes_temp_get (
+                     dev_id, dev_port, &pipe_temp_C)) {
+-                LOG_ERROR ("Error in reading pipe%d temperature of tofino2 asic.", logical_pipe);
++	        /* This call fails with BF_INVALID_ARG, have to understand why. For now, silence the error */ 
++                /* LOG_ERROR ("Error in reading pipe%d temperature of tofino2 asic.", logical_pipe); */
+             } else {
+                 // LOG_DEBUG ("Read tofino2 asic pipe%d temperature: %.1fC", logical_pipe, pipe_temp_C);
+                 max_pipe_temp_C = MAX(pipe_temp_C, max_pipe_temp_C);
 diff --git a/platforms/asterfusion-bf/utils/xt-cfgen.sh b/platforms/asterfusion-bf/utils/xt-cfgen.sh
 index d5d5064..b5df1e2 100755
 --- a/platforms/asterfusion-bf/utils/xt-cfgen.sh
