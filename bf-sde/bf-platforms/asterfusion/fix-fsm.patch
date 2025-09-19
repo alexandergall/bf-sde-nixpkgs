@@ -1,0 +1,36 @@
+diff --git a/drivers/src/bf_port_mgmt/bf_pm_qsfp_mgmt.c b/drivers/src/bf_port_mgmt/bf_pm_qsfp_mgmt.c
+index e8e653d..f789706 100644
+--- a/drivers/src/bf_port_mgmt/bf_pm_qsfp_mgmt.c
++++ b/drivers/src/bf_port_mgmt/bf_pm_qsfp_mgmt.c
+@@ -1748,17 +1748,6 @@ static void qsfp_log_lane_flags(int conn_id) {
+                           (qsfp_state[conn_id].ch_cnt / 4),
+                           ln_flag_log[loopcnt].fval_cur[conn_id]);
+             } else {
+-                if (strncmp(ln_flag_log[loopcnt].desc,
+-                            "FLAG_RX_LOS",
+-                            sizeof("FLAG_RX_LOS")) == 0) {
+-                    qsfp_state[conn_id].rx_los = ln_flag_log[loopcnt].fval_cur[conn_id];
+-                }
+-                if (strncmp(ln_flag_log[loopcnt].desc,
+-                            "FLAG_RX_LOL",
+-                            sizeof("FLAG_RX_LOL")) == 0) {
+-                    qsfp_state[conn_id].rx_lol = ln_flag_log[loopcnt].fval_cur[conn_id];
+-                }
+-
+                 AF_LOG_EXT ("QSFP    %2d : %s change (0x%0*x -> 0x%0*x)",
+                           conn_id,
+                           ln_flag_log[loopcnt].desc,
+@@ -1768,6 +1757,13 @@ static void qsfp_log_lane_flags(int conn_id) {
+                           ln_flag_log[loopcnt].fval_cur[conn_id]);
+             }
+         }
++
++	if (ln_flag_log[loopcnt].flag == FLAG_RX_LOS) {
++	  qsfp_state[conn_id].rx_los = ln_flag_log[loopcnt].fval_cur[conn_id];
++	}
++	if (ln_flag_log[loopcnt].flag == FLAG_RX_LOL) {
++	  qsfp_state[conn_id].rx_lol = ln_flag_log[loopcnt].fval_cur[conn_id];
++	}
+     }
+ }
+ 

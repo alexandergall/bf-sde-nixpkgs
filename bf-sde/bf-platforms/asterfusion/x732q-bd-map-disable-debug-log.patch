@@ -1,0 +1,12 @@
+diff --git a/platforms/asterfusion-bf/src/platform_mgr/pltfm_bd_map_x732q_v1.0.json b/platforms/asterfusion-bf/src/platform_mgr/pltfm_bd_map_x732q_v1.0.json
+index 5dad825..1598a16 100644
+--- a/platforms/asterfusion-bf/src/platform_mgr/pltfm_bd_map_x732q_v1.0.json
++++ b/platforms/asterfusion-bf/src/platform_mgr/pltfm_bd_map_x732q_v1.0.json
+@@ -1,6 +1,6 @@
+ {
+     "board_id": "x732q",
+-    "enable_debug_log": "1",
++    "enable_debug_log": "0",
+     "board_lane_map_entry": [
+         {
+             "Internal_port": "No",

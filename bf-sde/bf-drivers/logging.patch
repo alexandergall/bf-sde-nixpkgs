@@ -1,0 +1,242 @@
+diff --git a/bf_switchd/accton_wedge_32x_port_map.json b/bf_switchd/accton_wedge_32x_port_map.json
+index 0ad3cb20..b13dc87e 100644
+--- a/bf_switchd/accton_wedge_32x_port_map.json
++++ b/bf_switchd/accton_wedge_32x_port_map.json
+@@ -1,6 +1,6 @@
+ {
+   "_comment": "Example Configuration file for bspless support",
+-  "enable_debug_log": 1,
++  "enable_debug_log": 0,
+   "board_lane_map_entry": [
+     {
+       "connector": 1,
+diff --git a/bf_switchd/accton_wedge_tf2_32x400g_port_map.json b/bf_switchd/accton_wedge_tf2_32x400g_port_map.json
+index 8b70f407..9ba87a09 100644
+--- a/bf_switchd/accton_wedge_tf2_32x400g_port_map.json
++++ b/bf_switchd/accton_wedge_tf2_32x400g_port_map.json
+@@ -1,6 +1,6 @@
+ {
+ "board_id": "4404",
+-"enable_debug_log": "1",
++"enable_debug_log": "0",
+ "board_lane_map_entry": 
+ [
+     {
+diff --git a/bf_switchd/accton_wedge_tf3_32x400g_port_map.json b/bf_switchd/accton_wedge_tf3_32x400g_port_map.json
+index a12abc1f..041748b4 100644
+--- a/bf_switchd/accton_wedge_tf3_32x400g_port_map.json
++++ b/bf_switchd/accton_wedge_tf3_32x400g_port_map.json
+@@ -1,6 +1,6 @@
+ {
+   "board_id": "12290",
+-  "enable_debug_log": "1",
++  "enable_debug_log": "0",
+   "board_lane_map_entry": [
+     {
+       "Internal_port": "No",
+diff --git a/bf_switchd/accton_wedge_tf3_64x400g_port_map.json b/bf_switchd/accton_wedge_tf3_64x400g_port_map.json
+index 58a1128c..c644147d 100644
+--- a/bf_switchd/accton_wedge_tf3_64x400g_port_map.json
++++ bbf_switchd/accton_wedge_tf3_64x400g_port_map.json
+@@ -1,6 +1,6 @@
+ {
+   "board_id": "12289",
+-  "enable_debug_log": "1",
++  "enable_debug_log": "0",
+   "board_lane_map_entry": [
+     {
+       "Internal_port": "No",
+@@ -2907,4 +2907,4 @@
+       "TX_PN_Swap": ""
+     }
+   ]
+-}
+\ No newline at end of file
++}
+diff --git a/bf_switchd/zlog-cfg b/bf_switchd/zlog-cfg
+index 2eb4893c..05127536 100644
+--- a/bf_switchd/zlog-cfg
++++ b/bf_switchd/zlog-cfg
+@@ -17,61 +17,79 @@ console_format = "%d(%F %X).%us %c %5V - %m%n"
+ [rules]
+ 
+ BF_SYS.ERROR >stdout;console_format
+-BF_SYS.DEBUG "bf_drivers.log", 5M * 5 ;file_format
++BF_SYS.DEBUG "bf_debug.log", 5M * 5 ;file_format
++BF_SYS.INFO "bf_drivers.log", 5M * 5 ;file_format
+ 
+ BF_LLD.ERROR >stdout;console_format
+-BF_LLD.DEBUG "bf_drivers.log", 5M * 5 ;file_format
++BF_LLD.DEBUG "bf_debug.log", 5M * 5 ;file_format
++BF_LLD.INFO "bf_drivers.log", 5M * 5 ;file_format
+ 
+ BF_PIPE.ERROR >stdout;console_format
+-BF_PIPE.DEBUG "bf_drivers.log", 5M * 5 ;file_format
++BF_PIPE.DEBUG "bf_debug.log", 5M * 5 ;file_format
++BF_PIPE.INFO "bf_drivers.log", 5M * 5 ;file_format
+ 
+ BF_TM.ERROR >stdout;console_format
+-BF_TM.DEBUG "bf_drivers.log", 5M * 5 ;file_format
++BF_TM.DEBUG "bf_debug.log", 5M * 5 ;file_format
++BF_TM.INFO "bf_drivers.log", 5M * 5 ;file_format
+ 
+ BF_MC.ERROR >stdout;console_format
+-BF_MC.DEBUG "bf_drivers.log", 5M * 5 ;file_format
++BF_MC.DEBUG "bf_debug.log", 5M * 5 ;file_format
++BF_MC.INFO "bf_drivers.log", 5M * 5 ;file_format
+ 
+ BF_PKT.ERROR >stdout;console_format
+-BF_PKT.DEBUG "bf_drivers.log", 5M * 5 ;file_format
++BF_PKT.DEBUG "bf_debug.log", 5M * 5 ;file_format
++BF_PKT.INFO "bf_drivers.log", 5M * 5 ;file_format
+ 
+ BF_DVM.ERROR >stdout;console_format
+-BF_DVM.DEBUG "bf_drivers.log", 5M * 5 ;file_format
++BF_DVM.DEBUG "bf_debug.log", 5M * 5 ;file_format
++BF_DVM.INFO "bf_drivers.log", 5M * 5 ;file_format
+ 
+ BF_PORT.ERROR >stdout;console_format
+-BF_PORT.DEBUG "bf_drivers.log", 5M * 5 ;file_format
++BF_PORT.DEBUG "bf_debug.log", 5M * 5 ;file_format
++BF_PORT.INFO "bf_drivers.log", 5M * 5 ;file_format
+ 
+ BF_DRU.ERROR >stdout;console_format
+-BF_DRU.DEBUG "bf_drivers.log", 5M * 5 ;file_format
++BF_DRU.DEBUG "bf_debug.log", 5M * 5 ;file_format
++BF_DRU.INFO "bf_drivers.log", 5M * 5 ;file_format
+ 
+ BF_API.ERROR >stdout;console_format
+-BF_API.DEBUG "bf_drivers.log", 5M * 5 ;file_format
++BF_API.DEBUG "bf_debug.log", 5M * 5 ;file_format
++BF_API.INFO "bf_drivers.log", 5M * 5 ;file_format
+ 
+ BF_SAI.ERROR >stdout;console_format
+-BF_SAI.DEBUG "bf_drivers.log", 5M * 5 ;file_format
++BF_SAI.DEBUG "bf_debug.log", 5M * 5 ;file_format
++BF_SAI.INFO "bf_drivers.log", 5M * 5 ;file_format
+ 
+ BF_PI.ERROR >stdout;console_format
+-BF_PI.DEBUG "bf_drivers.log", 5M * 5 ;file_format
++BF_PI.DEBUG "bf_debug.log", 5M * 5 ;file_format
++BF_PI.INFO "bf_drivers.log", 5M * 5 ;file_format
+ 
+ BF_PLTFM.ERROR >stdout;console_format
+-BF_PLTFM.DEBUG "bf_drivers.log", 5M * 5 ;file_format
++BF_PLTFM.DEBUG "bf_debug.log", 5M * 5 ;file_format
++BF_PLTFM.INFO "bf_drivers.log", 5M * 5 ;file_format
+ 
+ BF_PAL.ERROR >stdout;console_format
+-BF_PAL.DEBUG "bf_drivers.log", 5M * 5 ;file_format
++BF_PAL.DEBUG "bf_debug.log", 5M * 5 ;file_format
++BF_PAL.INFO "bf_drivers.log", 5M * 5 ;file_format
+ 
+ BF_PM.ERROR >stdout;console_format
+-BF_PM.DEBUG "bf_drivers.log", 5M * 5 ;file_format
++BF_PM.DEBUG "bf_debug.log", 5M * 5 ;file_format
++BF_PM.INFO "bf_drivers.log", 5M * 5 ;file_format
+ 
+ BF_KNET.ERROR >stdout;console_format
+-BF_KNET.DEBUG "bf_drivers.log", 5M * 5 ;file_format
++BF_KNET.DEBUG "bf_debug.log", 5M * 5 ;file_format
++BF_KNET.INFO "bf_drivers.log", 5M * 5 ;file_format
+ 
+ BF_BFRT.ERROR >stdout;console_format
+-BF_BFRT.DEBUG "bf_drivers.log", 5M * 5 ;file_format
++BF_BFRT.ERROR "bf_debug.log", 5M * 5 ;file_format
+ 
+ BF_P4RT.ERROR >stdout;console_format
+-BF_P4RT.DEBUG "bf_drivers.log", 5M * 5 ;file_format
++BF_P4RT.DEBUG "bf_debug.log", 5M * 5 ;file_format
++BF_P4RT.INFO "bf_drivers.log", 5M * 5 ;file_format
+ 
+ BF_SWITCHD.DEBUG >stdout;console_format
+-BF_SWITCHD.DEBUG "bf_drivers.log", 5M * 5 ;file_format
++BF_SWITCHD.DEBUG "bf_debug.log", 5M * 5 ;file_format
++BF_SWITCHD.INFO "bf_drivers.log", 5M * 5 ;file_format
+ 
+ *.ERROR	 >syslog , LOG_USER
+ 
+diff --git a/src/bf_pm/bf_pm_intf.c b/src/bf_pm/bf_pm_intf.c
+index 6cd3f43d..093e5ec1 100644
+--- a/src/bf_pm/bf_pm_intf.c
++++ b/src/bf_pm/bf_pm_intf.c
+@@ -8057,7 +8057,7 @@ bf_status_t bf_pm_port_pll_ovrclk_get(bf_dev_id_t dev_id,
+   }
+ 
+   if (!bf_lld_dev_is_tof1(dev_id)) {
+-    PM_DEBUG("PLL Overclocking not supported on dev:%d", dev_id);
++    // PM_DEBUG("PLL Overclocking not supported on dev:%d", dev_id);
+     return BF_SUCCESS;
+   }
+ 
+@@ -9617,7 +9617,7 @@ bf_status_t bf_pm_port_serdes_tx_eq_pre_get(
+   if (dev_id < 0) return BF_INVALID_ARG;
+   if (dev_id >= BF_MAX_DEV_COUNT) return BF_INVALID_ARG;
+   if (!port_hdl || !tx_pre) return BF_INVALID_ARG;
+-  PM_TRACE("%d:%d/%d", dev_id, port_hdl->conn_id, port_hdl->chnl_id);
++  //PM_TRACE("%d:%d/%d", dev_id, port_hdl->conn_id, port_hdl->chnl_id);
+ 
+   port_info = pm_port_info_get_from_port_hdl(port_hdl, &dev_id_of_port);
+   if (dev_id_of_port != dev_id) {
+@@ -9665,7 +9665,7 @@ bf_status_t bf_pm_port_serdes_tx_eq_pre2_get(
+   if (dev_id < 0) return BF_INVALID_ARG;
+   if (dev_id >= BF_MAX_DEV_COUNT) return BF_INVALID_ARG;
+   if (!port_hdl || !tx_pre2) return BF_INVALID_ARG;
+-  PM_TRACE("%d:%d/%d", dev_id, port_hdl->conn_id, port_hdl->chnl_id);
++  //PM_TRACE("%d:%d/%d", dev_id, port_hdl->conn_id, port_hdl->chnl_id);
+ 
+   port_info = pm_port_info_get_from_port_hdl(port_hdl, &dev_id_of_port);
+   if (dev_id_of_port != dev_id) {
+@@ -9784,7 +9784,7 @@ bf_status_t bf_pm_port_serdes_tx_eq_post_get(
+   if (dev_id < 0) return BF_INVALID_ARG;
+   if (dev_id >= BF_MAX_DEV_COUNT) return BF_INVALID_ARG;
+   if (!port_hdl || !tx_post) return BF_INVALID_ARG;
+-  PM_TRACE("%d:%d/%d", dev_id, port_hdl->conn_id, port_hdl->chnl_id);
++  //PM_TRACE("%d:%d/%d", dev_id, port_hdl->conn_id, port_hdl->chnl_id);
+ 
+   port_info = pm_port_info_get_from_port_hdl(port_hdl, &dev_id_of_port);
+   if (dev_id_of_port != dev_id) {
+@@ -9833,7 +9833,7 @@ bf_status_t bf_pm_port_serdes_tx_eq_post2_get(
+   if (dev_id < 0) return BF_INVALID_ARG;
+   if (dev_id >= BF_MAX_DEV_COUNT) return BF_INVALID_ARG;
+   if (!port_hdl || !tx_post2) return BF_INVALID_ARG;
+-  PM_TRACE("%d:%d/%d", dev_id, port_hdl->conn_id, port_hdl->chnl_id);
++  //PM_TRACE("%d:%d/%d", dev_id, port_hdl->conn_id, port_hdl->chnl_id);
+ 
+   port_info = pm_port_info_get_from_port_hdl(port_hdl, &dev_id_of_port);
+   if (dev_id_of_port != dev_id) {
+@@ -9952,7 +9952,7 @@ bf_status_t bf_pm_port_serdes_tx_eq_main_get(
+   if (dev_id < 0) return BF_INVALID_ARG;
+   if (dev_id >= BF_MAX_DEV_COUNT) return BF_INVALID_ARG;
+   if (!port_hdl || !tx_attn) return BF_INVALID_ARG;
+-  PM_TRACE("%d:%d/%d", dev_id, port_hdl->conn_id, port_hdl->chnl_id);
++  //PM_TRACE("%d:%d/%d", dev_id, port_hdl->conn_id, port_hdl->chnl_id);
+ 
+   port_info = pm_port_info_get_from_port_hdl(port_hdl, &dev_id_of_port);
+   if (dev_id_of_port != dev_id) {
+diff --git a/src/bf_pm/pm_log.h b/src/bf_pm/pm_log.h
+index 03821237..e665f491 100644
+--- a/src/bf_pm/pm_log.h
++++ b/src/bf_pm/pm_log.h
+@@ -39,7 +39,7 @@
+                        ##__VA_ARGS__);
+ #define PM_TRACE(format, ...)           \
+   bf_sys_log_and_trace(BF_MOD_PM,       \
+-                       BF_LOG_INFO,     \
++                       BF_LOG_DBG,     \
+                        "%s:%d " format, \
+                        __func__,        \
+                        __LINE__,        \
+diff --git a/src/bf_pm/port_fsm/tof2_fsm/bf_pm_fsm_autoneg.c b/src/bf_pm/port_fsm/tof2_fsm/bf_pm_fsm_autoneg.c
+index 473b3bb3..37c3d669 100644
+--- a/src/bf_pm/port_fsm/tof2_fsm/bf_pm_fsm_autoneg.c
++++ b/src/bf_pm/port_fsm/tof2_fsm/bf_pm_fsm_autoneg.c
+@@ -253,7 +253,7 @@ static bf_status_t bf_pm_fsm_wait_an_done(bf_dev_id_t dev_id,
+     if (rc != BF_SUCCESS) {
+       PM_DEBUG("FSM :%d:%3d:%d: AN ST: Err", dev_id, dev_port, 0);
+     } else {
+-      PM_DEBUG("FSM :%d:%3d:%d: AN ST: %04x", dev_id, dev_port, 0, result);
++      //PM_DEBUG("FSM :%d:%3d:%d: AN ST: %04x", dev_id, dev_port, 0, result);
+     }
+   }
+ 

@@ -340,6 +340,7 @@ let
             rev = "4fc6e4";
             hash = "sha256-ohHb56B88exX0BmlyM7nz8ROUkP94vbeoUeskGZziT0=";
           };
+          patches = [ src-for-asic/bf-switchd.patch ];
           rdc = fetchFromStore {
             name = "bf-sde-9.13.4.tgz";
             outputHash = "1515fae8ec3abe644099c6cf3b9843bc1daaba1a6c39b3f57eb7b4edb5959669";
@@ -371,6 +372,9 @@ let
             ## rationale as above.
             sde/run_bfshell.patch
             sde/run_p4_tests.patch
+          ];
+          bf-drivers = [
+            bf-drivers/logging.patch
           ];
           ptf-modules = [
             ## Run ptf command directly, same rationale as above.
@@ -405,7 +409,12 @@ let
             ## Run gitver.sh in the cloned BSP to get this version ID
             asterfusion_version = "Git: r58 25.08";
             patches = {
-              asterfusion = [ bf-platforms/asterfusion/bsp.patch ];
+              asterfusion = [ bf-platforms/asterfusion/bsp.patch
+                              bf-platforms/asterfusion/fix-per-media-lane-flags.patch
+                              bf-platforms/asterfusion/fix-fsm.patch
+                              bf-platforms/asterfusion/led-on-when-admin-up.patch
+                              bf-platforms/asterfusion/x732q-bd-map-disable-debug-log.patch
+                            ];
             };
             nct6779d = {
               src = fetchFromGitHub {

@@ -1,0 +1,66 @@
+diff --git a/drivers/src/bf_port_mgmt/bf_pm_intf.c b/drivers/src/bf_port_mgmt/bf_pm_intf.c
+index 1a18709..1ba979e 100644
+--- a/drivers/src/bf_port_mgmt/bf_pm_intf.c
++++ b/drivers/src/bf_port_mgmt/bf_pm_intf.c
+@@ -339,7 +339,7 @@ static void qsfp_removal_actions (bf_dev_id_t
+     bf_pal_front_port_handle_t port_hdl;
+     bf_port_speed_t speed = BF_SPEED_NONE, max_speed = BF_SPEED_NONE;
+     bool is_subport_cfg_lp_mode = false, is_subport_cfg_force_tx_mode = false;
+-    bf_led_condition_t led_cond = BF_LED_POST_PORT_DEL;
++    bf_led_condition_t led_cond = BF_LED_PRE_PORT_EN;
+ 
+     qsfp_info_clear (conn_id);
+ 
+@@ -925,7 +925,7 @@ static void sfp_removal_actions (bf_dev_id_t
+     bf_pal_front_port_handle_t port_hdl;
+     bf_port_speed_t speed = BF_SPEED_NONE, max_speed = BF_SPEED_NONE;
+     bool is_subport_cfg_lp_mode = false, is_subport_cfg_force_tx_mode = false;
+-    bf_led_condition_t led_cond = BF_LED_POST_PORT_DEL;
++    bf_led_condition_t led_cond = BF_LED_PRE_PORT_EN;
+ 
+     sfp_info_clear (module);
+ 
+diff --git a/drivers/src/bf_port_mgmt/bf_pm_porting.c b/drivers/src/bf_port_mgmt/bf_pm_porting.c
+index 0270e01..c0fb14b 100644
+--- a/drivers/src/bf_port_mgmt/bf_pm_porting.c
++++ b/drivers/src/bf_port_mgmt/bf_pm_porting.c
+@@ -449,7 +449,7 @@ bf_status_t bf_pm_pre_port_enable_cfg_set (
+     bool is_present = false, is_optic = false;
+     bf_dev_port_t dev_port = 0;
+     bf_led_condition_t led_cond =
+-        BF_LED_POST_PORT_DIS;
++        BF_LED_PRE_PORT_EN;
+     bool an_required = true, is_x86_kr = true;
+ 
+     // Safety Checks
+@@ -564,12 +564,6 @@ bf_status_t bf_pm_pre_port_enable_cfg_set (
+                is_present ? "PRESENT" : "ABSENT",
+                is_optic   ? "OPTICAL" : "COPPER");
+     }
+-    /* TBD: Add force Tx conditions. */
+-    if (is_present || devport_state_tx_mode_chk(dev_id, port_hdl)) {
+-        /* Set LED to enabled status for X564P-T/X532P-T when there's a transciever plugged-in.
+-         * X312P-T/X308P-T could be keep disabled status as the led spec is different. */
+-        led_cond = BF_LED_PRE_PORT_EN;
+-    }
+     sts = bf_port_led_set (dev_id, &port_info,
+                            led_cond);
+     if (sts != BF_PLTFM_SUCCESS) {
+@@ -923,17 +917,8 @@ bf_status_t bf_pm_port_link_down_actions (
+         pltfm_pm_port_sfp_is_present (&port_info,
+                                       &is_present);
+     } else {
+-        /* Make sure the light off on the port which gonna down without transceiver.
+-         * This feature always present on the port in Tx mode.
+-         * by tsihang, 2021-08-31. */
+         pltfm_pm_port_qsfp_is_present (&port_info,
+                                        &is_present);
+-        if (!is_present) {
+-            /* The removle actions is more delay than linkdown action.
+-             * Light off in qsfp_removal_actions is much better.
+-             * tsihang 2023-03-10. */
+-            led_cond = BF_LED_POST_PORT_DEL;
+-        }
+     }
+ 
+     /* Pull led off if the linkdown event caused by port-dis. */
