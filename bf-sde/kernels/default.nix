@@ -353,6 +353,36 @@ let
       };
       additionalModules = additionalModulesDebian;
     };
+    Debian12_12 = {
+      kernelRelease = "6.1.0-39-amd64";
+      stdenv = pkgs.gcc12Stdenv;
+      buildTree = mkDebian {
+        spec = {
+          snapshotTimestamp = "20250922T143023Z";
+          arch = {
+            name = "linux-headers-6.1.0-39-amd64_6.1.148-1_amd64.deb";
+            sha256 = "040g4pjwnbd3jwipjkywm436rqk44s5rwc6swdnwsx0daaww0msb";
+          };
+          common = {
+            name = "linux-headers-6.1.0-39-common_6.1.148-1_all.deb";
+            sha256 = "1wd6z3vr0srqhmxg97xy2z50mznlxlshafjbvf8c9mi917f5bd40";
+          };
+          kbuild = {
+            name = "linux-kbuild-6.1_6.1.148-1_amd64.deb";
+            sha256 = "0pf9v1q4ncn9dwsc6wd277vifkndscldc2i4ykhq717x1q5n14ia";
+          };
+          source = {
+            name = "linux-source-6.1_6.1.148-1_all.deb";
+            sha256 = "0942q1gxnph1n902r0g4rkp3drak8hrlmg092mwxivqhc6n1jx12";
+          };
+        };
+        patchelfInputs = [ elfutils ];
+      };
+      patches = {
+        "9.13.4" = [ ./bf-drivers-kernel.patch ];
+      };
+      additionalModules = additionalModulesDebian;
+    };
   };
   kernelEnabled = _: spec:
     ! (spec.disable or false) &&
