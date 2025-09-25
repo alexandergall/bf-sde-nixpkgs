@@ -16,7 +16,7 @@ let
         "-Wno-error=array-bounds"
       ];
     });
-    python39 = prev.python39.override {
+    python311 = prev.python311.override {
       packageOverrides = python-final: python-prev: {
 
         ## tenjin.py is included in the bf-drivers packages and used by

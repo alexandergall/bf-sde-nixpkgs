@@ -3,7 +3,7 @@
 let
   mkBaseboard = baseboard: {}:
     let
-      derivation = { stdenv, cmake, thrift, boost, libusb,
+      derivation = { stdenv, cmake, thrift, boost, libusb1,
                      curl, target-syslibs, bf-drivers, target-utils,
                      bf-utils, buildSupport }:
 
@@ -16,7 +16,7 @@ let
 
           patches = (patches.default or []) ++ (patches.${baseboard} or []);
 
-          buildInputs = [ cmake thrift boost libusb curl target-syslibs
+          buildInputs = [ cmake thrift boost libusb1 curl target-syslibs
                           bf-drivers target-utils bf-utils ];
           cmakeFlags = [
             "-DSTANDALONE=ON"

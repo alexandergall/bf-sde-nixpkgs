@@ -1,4 +1,4 @@
-{ pname, version, src, patches, buildSupport, lib, stdenv, python3,
+{ pname, version, src, patches, buildSupport, lib, stdenv, python311,
   thrift, boost, libpcap, cmake, autoconf, automake, libtool, p4c,
   target-syslibs, target-utils, bf-utils, bf-drivers }:
 
@@ -12,7 +12,7 @@ stdenv.mkDerivation {
   };
 
   buildInputs = [ cmake autoconf automake libtool thrift boost libpcap
-                  p4c target-syslibs.dev target-utils bf-drivers.dev python3
+                  p4c target-syslibs.dev target-utils bf-drivers.dev python311
                   bf-utils ];
   outputs = [ "out" "dev" ];
   enableParallelBuilding = true;

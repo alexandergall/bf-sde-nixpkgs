@@ -1,6 +1,6 @@
 ## Build the SDE modules for a specific kernel
 
-{ lib, stdenv, buildEnv, python3, runtimeShell, kmod,
+{ lib, stdenv, buildEnv, python311, runtimeShell, kmod,
   coreutils, version, buildSupport, src, kernelID, spec, target-syslibs,
   cmake, drvsWithKernelModules, baseboard ? null }:
 
@@ -25,7 +25,7 @@ let
 
     patches = (spec.patches.all or []) ++
               (spec.patches.${version} or []);
-    buildInputs = [ cmake target-syslibs python3 kmod ];
+    buildInputs = [ cmake target-syslibs python311 kmod ];
 
     preConfigure = ''
       sed -i '/project/a list(APPEND CMAKE_MODULE_PATH "\''${CMAKE_CURRENT_SOURCE_DIR}/cmake")' CMakeLists.txt

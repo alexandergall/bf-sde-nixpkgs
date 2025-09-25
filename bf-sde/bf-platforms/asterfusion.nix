@@ -4,7 +4,7 @@
 let
   mkBaseboard = baseboard: {}:
     let
-      derivation = { stdenv, cmake, makeWrapper, libusb, curl, target-syslibs,
+      derivation = { stdenv, cmake, makeWrapper, libusb1, curl, target-syslibs,
                      bf-drivers, target-utils, bf-utils, i2c-tools, coreutils,
                      kmod, gnugrep, gawk, thrift, boost, python3, which, dmidecode,
                      util-linux }:
@@ -17,7 +17,7 @@ let
           pname = "bf-platforms-${baseboard}";
           inherit version src;
           patches = (patches.default or []) ++ (patches.${baseboard} or []);
-          buildInputs = [ cmake makeWrapper libusb curl
+          buildInputs = [ cmake makeWrapper libusb1 curl
                           target-syslibs thrift boost bf-drivers target-utils
                           bf-utils i2c-tools cgos python3 which ];
           outputs = [ "out" "dev" ];

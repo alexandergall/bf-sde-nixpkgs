@@ -4,7 +4,7 @@ let
   mkBaseboard = baseboard: { model ? false, newport ? false }:
     let
       derivation =
-        { version, buildSupport, lib, stdenv, thrift, boost, libusb,
+        { version, buildSupport, lib, stdenv, thrift, boost, libusb1,
           curl, target-syslibs, bf-drivers, bf-utils, target-utils,
           cmake, kernelSpec ? null, runtimeShell, kmod, coreutils }:
 
@@ -23,7 +23,7 @@ let
           inherit version src;
           patches = (patches.default or []) ++ (patches.${baseboard} or []);
 
-          buildInputs = [ cmake bf-drivers.pythonModule thrift boost libusb
+          buildInputs = [ cmake bf-drivers.pythonModule thrift boost libusb1
                           curl target-syslibs bf-drivers target-utils bf-utils ];
 
           outputs = [ "out" "dev" ];

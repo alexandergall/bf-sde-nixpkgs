@@ -22,11 +22,12 @@
 
 let
   nixpkgs = fetchTarball {
-    url = https://github.com/NixOS/nixpkgs/archive/23.11-6913-g205fd4226592.tar.gz;
-    sha256 = "1f5d2g1p6nfwycpmrnnmc2xmcszp804adp16knjvdkj8nz36y1fg";
+    url = https://github.com/NixOS/nixpkgs/archive/24.11-5444-g75ab63cf72c7.tar.gz;
+    sha256 = "0sqskvk5cdj88xv1d1yca8sz1f4bjh1s8s2k5blm3gq3sgljnv9x";
   };
-  ## This repository uses a different version of nixpkgs. That's not a
-  ## problem but increases the footprint of the SDE in the Nix store.
+  ## This version of p4lang-nixpkgs uses the exact same nixpkgs
+  ## version to keep the footprint small.  There is no strict
+  ## requirement for them to be identical.
   p4lang-nixpkgs = pkgs.fetchFromGitHub {
     repo = "p4lang-nixpkgs";
     owner = "alexandergall";

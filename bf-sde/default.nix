@@ -380,6 +380,9 @@ let
             ## Run ptf command directly, same rationale as above.
             ptf-modules/run_ptf_tests.patch
           ];
+          p4-examples = [
+            p4-16-examples/python3-11.patch
+          ];
         };
       };
       bsps = lib.optionalAttrs withAsic 
@@ -439,7 +442,7 @@ let
       ## Mimic what's supplied to the native p4studio on the supported
       ## build platforms.
       #stdenv = gcc10Stdenv;
-      python_bf_drivers = python39;
+      python_bf_drivers = python311;
     };
   };
 
