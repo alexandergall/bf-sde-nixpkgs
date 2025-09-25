@@ -1,6 +1,6 @@
 ## Build the SDE modules for a specific kernel
 
-{ lib, stdenv, buildEnv, python311, runtimeShell, kmod,
+{ lib, stdenv, buildEnv, python311, runtimeShell, kmod, system,
   coreutils, version, buildSupport, src, kernelID, spec, target-syslibs,
   cmake, drvsWithKernelModules, baseboard ? null }:
 
@@ -9,6 +9,7 @@ assert lib.assertMsg (baseboard != null -> ! builtins.elem baseboard spec.basebo
 let
   baseboard' = if baseboard == null then "" else baseboard;
   stdenv' = spec.stdenv or stdenv;
+  gnuPrefix = "${system}-gnu";
   driverModules = stdenv'.mkDerivation {
     name = "bf-sde-${version}-kernel-modules-${spec.kernelRelease}";
     src = buildSupport.fixupSrc {
@@ -25,10 +26,15 @@ let
 
     patches = (spec.patches.all or []) ++
               (spec.patches.${version} or []);
-    buildInputs = [ cmake target-syslibs python311 kmod ];
+    buildInputs = [ cmake target-syslibs python311 kmod ] ++ spec.buildTree.inputs;
 
     preConfigure = ''
       sed -i '/project/a list(APPEND CMAKE_MODULE_PATH "\''${CMAKE_CURRENT_SOURCE_DIR}/cmake")' CMakeLists.txt
+      for f in $(find kdrv -name CMakeLists.txt); do
+        sed -i 's/M=/foo=/g;s/src=/M=/g' $f
+        sed -i 's/install(FILES ''${CMAKE_CURRENT_BINARY/install(FILES ''${CMAKE_CURRENT_SOURCE/' $f
+      done
+      . ${spec.buildTree.prep stdenv'}
     '';
 
     KDIR = "${spec.buildTree}";
@@ -87,6 +93,7 @@ let
       let
         build = { directory, makeFlags }:
           ''
+           . ${spec.buildTree.prep stdenv'}
             make -C ${spec.buildTree} M=$(realpath ${directory}) ${builtins.concatStringsSep " " makeFlags}
           '';
         install = { directory, makeFlags }:
@@ -97,6 +104,7 @@ let
           stdenv'.mkDerivation {
             name = "additional-kernel-modules-${name}";
             src = spec.buildTree.source;
+            buildInputs = spec.buildTree.inputs;
             buildPhase = map build modSpecs;
             installPhase = ''
               dest=$out/lib/modules/${spec.kernelRelease}

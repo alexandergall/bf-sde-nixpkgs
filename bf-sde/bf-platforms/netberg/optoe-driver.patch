@@ -1,0 +1,16 @@
+diff --git a/optoe/optoe.c b/optoe/optoe.c
+index d1bb39b..6db9363 100644
+--- a/optoe/optoe.c
++++ b/optoe/optoe.c
+@@ -982,7 +982,11 @@ static struct i2c_driver optoe_driver = {
+ 		.owner = THIS_MODULE,
+ 	},
+ #ifdef LATEST_KERNEL
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 6, 0)
+ 	.probe_new = optoe_probe,
++#else
++	.probe = optoe_probe,
++#endif
+ #else
+ 	.probe = optoe_probe,
+ #endif

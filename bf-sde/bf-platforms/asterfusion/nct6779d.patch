@@ -1,0 +1,39 @@
+diff --git a/nct6779d.c b/nct6779d.c
+index 88a03e3..e370adb 100755
+--- a/nct6779d.c
++++ b/nct6779d.c
+@@ -10,6 +10,7 @@
+ #include <linux/platform_device.h>
+ #include <linux/delay.h>
+ #include <linux/i2c.h>
++#include <linux/version.h>
+ 
+ #if 0
+ struct mutex bmc_device_lock;
+@@ -586,7 +587,7 @@ static int sio_smbus_probe(struct platform_device *pdev)
+     if (!priv)
+         return -ENOMEM;
+ 
+-    strlcpy(priv->adapter.name, DRVNAME, sizeof(priv->adapter.name));
++    strncpy(priv->adapter.name, DRVNAME, sizeof(priv->adapter.name));
+ 
+     priv->adapter.owner = THIS_MODULE;
+     priv->adapter.algo = &smbus_algorithm;
+@@ -609,11 +610,17 @@ static int sio_smbus_probe(struct platform_device *pdev)
+     return ret;
+ }
+ 
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 11, 0)
+ static int sio_smbus_remove(struct platform_device *pdev)
++#else
++void sio_smbus_remove(struct platform_device *pdev)
++#endif
+ {
+     struct sio_smbus_priv *priv = platform_get_drvdata(pdev);
+     i2c_del_adapter(&priv->adapter);
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6, 11, 0)
+     return 0;
++#endif
+ }
+ 
+ static void sio_smbus_release(struct device *dev)

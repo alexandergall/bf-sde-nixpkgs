@@ -1,5 +1,5 @@
 { snapshotTimestamp, arch, common, kbuild, source, mkKbuild, fetchurl,
-  stdenv }:
+  stdenv, system, pahole, writeShellScript }:
 
 let
   fetch_deb = { name, sha256 }:
@@ -20,6 +20,24 @@ in mkKbuild.overrideAttrs (_: {
       '';
       dontInstall = true;
     };
+    inputs = [ pahole ];
+    prep = kernelStdenv:
+      let
+        gnuPrefix = "${system}-gnu";
+        debianGccSystemAliases = stdenv.mkDerivation {
+          name = "debian-gcc-aliases";
+          src = null;
+          phases = [ "installPhase" ];
+          installPhase = ''
+            mkdir -p $out/bin
+            ln -s ${kernelStdenv.cc}/bin/gcc $out/bin/${gnuPrefix}-gcc
+            ln -s ${kernelStdenv.cc}/bin/ld.bfd $out/bin/${gnuPrefix}-ld
+            ln -s ${kernelStdenv.cc}/bin/objcopy $out/bin/${gnuPrefix}-objcopy
+          '';
+        };
+      in writeShellScript "debian-kbuild-prep" ''
+        PATH=''${PATH}:${debianGccSystemAliases}/bin
+    '';
   };
   unpackPhase = ''
     arch=${fetch_deb arch}

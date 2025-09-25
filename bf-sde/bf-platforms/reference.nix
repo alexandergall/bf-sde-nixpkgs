@@ -24,7 +24,8 @@ let
           patches = (patches.default or []) ++ (patches.${baseboard} or []);
 
           buildInputs = [ cmake bf-drivers.pythonModule thrift boost libusb1
-                          curl target-syslibs bf-drivers target-utils bf-utils ];
+                          curl target-syslibs bf-drivers target-utils bf-utils ]
+          ++ lib.optional (kernelSpec != null) kernelSpec.buildTree.inputs;
 
           outputs = [ "out" "dev" ];
           enableParallelBuilding = true;
@@ -41,10 +42,19 @@ let
           ## the derivation will *only* contain the module where as
           ## for the non-kernel build, the derivation will not contain
           ## the module or any part related to it.
-          preConfigure = lib.optionalString (
-            (baseboard != "newport" || kernelSpec == null)) ''
-            sed -i -e '/bf_fpga/d' CMakeLists.txt
-          '';
+          preConfigure =
+            (if (baseboard != "newport" || kernelSpec == null) then
+              ''
+                sed -i -e '/bf_fpga/d' CMakeLists.txt
+              ''
+             else
+              ''
+                sed -i -e 's/M=/foo=/g;s/src=/M=/g' platforms/newport/kdrv/bf_fpga/CMakeLists.txt
+                sed -i 's/install(FILES ''${CMAKE_CURRENT_BINARY/install(FILES ''${CMAKE_CURRENT_SOURCE/' platforms/newport/kdrv/bf_fpga/CMakeLists.txt
+              '')
+            + lib.optionalString (kernelSpec != null) ''
+              . ${kernelSpec.buildTree.prep stdenv'}
+              '';
 
           cmakeFlags =
             (if model then
@@ -59,10 +69,12 @@ let
               "-DKDIR=${kernelSpec.buildTree}"
             ];
 
-          NIX_CFLAGS_COMPILE = lib.optional newport [
+          NIX_CFLAGS_COMPILE = lib.optional newport ([
             ## Make gcc recognize "fallthrough" pseudo-comments
             "-Wimplicit-fallthrough=3"
-          ];
+          ] ++ lib.optional (lib.versionAtLeast stdenv'.cc.version "14.0") [
+            "-Wno-error=calloc-transposed-args"
+          ]);
 
           postInstall =
           if (kernelSpec == null) then ''

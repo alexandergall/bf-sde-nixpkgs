@@ -1,10 +1,14 @@
 { stdenv, nct6779d, kernelSpec ? null }:
 
-(kernelSpec.stdenv or stdenv).mkDerivation {
+let
+  stdenv' = kernelSpec.stdenv or stdenv;
+in stdenv'.mkDerivation {
   pname = "nct6779d";
   version = "master";
   inherit (nct6779d) src patches;
+  buildInputs = kernelSpec.buildTree.inputs;
   buildPhase = ''
+   . ${kernelSpec.buildTree.prep stdenv'}
     make KDIR=${kernelSpec.buildTree}
   '';
   installPhase = ''
