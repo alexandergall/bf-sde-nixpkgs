@@ -41,10 +41,16 @@ let
           ## the derivation will *only* contain the module where as
           ## for the non-kernel build, the derivation will not contain
           ## the module or any part related to it.
-          preConfigure = lib.optionalString (
-            (baseboard != "newport" || kernelSpec == null)) ''
-            sed -i -e '/bf_fpga/d' CMakeLists.txt
-          '';
+          preConfigure =
+            if (baseboard != "newport" || kernelSpec == null) then
+              ''
+                sed -i -e '/bf_fpga/d' CMakeLists.txt
+              ''
+            else
+              ''
+                sed -i -e 's/M=/foo=/g;s/src=/M=/g' platforms/newport/kdrv/bf_fpga/CMakeLists.txt
+                sed -i 's/install(FILES ''${CMAKE_CURRENT_BINARY/install(FILES ''${CMAKE_CURRENT_SOURCE/' platforms/newport/kdrv/bf_fpga/CMakeLists.txt
+              '';
 
           cmakeFlags =
             (if model then
@@ -59,10 +65,12 @@ let
               "-DKDIR=${kernelSpec.buildTree}"
             ];
 
-          NIX_CFLAGS_COMPILE = lib.optional newport [
+          NIX_CFLAGS_COMPILE = lib.optional newport ([
             ## Make gcc recognize "fallthrough" pseudo-comments
             "-Wimplicit-fallthrough=3"
-          ];
+          ] ++ lib.optional (lib.versionAtLeast stdenv'.cc.version "14.0") [
+            "-Wno-error=calloc-transposed-args"
+          ]);
 
           postInstall =
           if (kernelSpec == null) then ''

@@ -393,7 +393,7 @@ let
             patches = {
               newport = [
                 bf-platforms/newport-eth-compliance.patch
-                bf-platforms/newport-kernel-9.13.2.patch
+                bf-platforms/newport-kernel.patch
                 bf-platforms/newport-fix-per-media-lane-flags.patch
               ];
             };
@@ -426,7 +426,7 @@ let
                 rev = "732b62e";
                 sha256 = "09x42rqsj9ra697jflrgkqj664pspq63akbrx6dw6kspcvswkf3a";
               };
-              patches = [];
+              patches = [ bf-platforms/asterfusion/nct6779d.patch ];
             };
             ## X-T Programmable Bare Metal User Manual v3.10.5-11, section 10.26,1
             ## https://drive.cloudswitch.io/external/745689ea25643bc00fac9224d368d4374ca3d15724cb83181a631c4168044d30

@@ -29,6 +29,10 @@ let
 
     preConfigure = ''
       sed -i '/project/a list(APPEND CMAKE_MODULE_PATH "\''${CMAKE_CURRENT_SOURCE_DIR}/cmake")' CMakeLists.txt
+      for f in $(find kdrv -name CMakeLists.txt); do
+        sed -i 's/M=/foo=/g;s/src=/M=/g' $f
+        sed -i 's/install(FILES ''${CMAKE_CURRENT_BINARY/install(FILES ''${CMAKE_CURRENT_SOURCE/' $f
+      done
     '';
 
     KDIR = "${spec.buildTree}";
