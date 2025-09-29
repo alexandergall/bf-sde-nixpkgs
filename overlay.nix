@@ -2,6 +2,19 @@
 
 let
   overlay = final: prev: {
+    ## The deboostrap wrapper in 24.11 is missing a dependency
+    debootstrap =
+      let
+        version = final.lib.version;
+        major = final.lib.versions.major version;
+        minor = final.lib.versions.minor version;
+      in prev.debootstrap.overrideAttrs (final.lib.optionalAttrs
+        (major == "24" && minor == "11")
+        {
+          postInstall = ''
+            sed -i -e 's!^\(export PATH.*$\)!\1:${final.util-linux}/bin!' $out/bin/debootstrap
+          '';
+        });
     ## For the tofino model binary
     libcli_1_10 = prev.libcli.overrideAttrs (oldAttrs: rec {
       version = "1.10.0";

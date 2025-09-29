@@ -8,8 +8,8 @@ with builtins;
 let
   mkOnieInstaller = callPackage (fetchgit {
     url = "https://github.com/alexandergall/onie-debian-nix-installer";
-    rev = "fc5a4d";
-    sha256 = "0lc3r62sls7vfbmgcx4kisr5lvqfbgl88kvin5zdsgrc5gmz45wl";
+    rev = "d86d27";
+    hash = "sha256-o+YuU2Rx3xEQF74AjH/hhWt23+mIx7CP1b3U5QY2f2U=";
   }) {};
   platforms' = filter (platform: builtins.match "^model.*" platform == null) platforms;
   kernelID = import (bootstrapProfile + "/kernelID.nix");
