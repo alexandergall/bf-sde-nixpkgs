@@ -1,8 +1,8 @@
 {
-    "SDE": {
+    "open-p4studio-model": {
         "enabled": 1,
         "hidden": false,
-        "description": "Barefoot Tofino SDE",
+        "description": "Open-source SDE without ASIC support",
         "nixexprinput": "src",
         "nixexprpath": "release.nix",
         "checkinterval": 300,
@@ -11,29 +11,30 @@
         "emailoverride": "",
         "keepnr": 3,
         "inputs": {
-            "src": { "type": "git", "value": "https://github.com/alexandergall/bf-sde-nixpkgs.git", "emailresponsible": false }
+            "src": { "type": "git", "value": "https://github.com/alexandergall/bf-sde-nixpkgs.git open-p4studio", "emailresponsible": false },
+            "withAsic": { "type": "boolean", "value": "false" }
         }
     },
-    "SDE-track-nixpkgs-master": {
+    "open-p4studio-asic": {
         "enabled": 1,
         "hidden": false,
-        "description": "Barefoot Tofino SDE on nixpkgs master",
+        "description": "Hybrid SDE with ASIC support",
         "nixexprinput": "src",
         "nixexprpath": "release.nix",
-        "checkinterval": 86400,
+        "checkinterval": 300,
         "schedulingshares": 100,
         "enableemail": false,
         "emailoverride": "",
-        "keepnr": 0,
+        "keepnr": 3,
         "inputs": {
-            "src": { "type": "git", "value": "https://github.com/alexandergall/bf-sde-nixpkgs.git nixpkgs-master", "emailresponsible": false },
-	    "nixpkgs": { "type": "git", "value": "https://github.com/NixOS/nixpkgs.git", "emailresponsible": false }
+            "src": { "type": "git", "value": "https://github.com/alexandergall/bf-sde-nixpkgs.git open-p4studio", "emailresponsible": false },
+            "withAsic": { "type": "boolean", "value": "true" }
         }
     },
     "test-cases": {
         "enabled": 1,
         "hidden": false,
-        "description": "Barefoot Tofino SDE test cases",
+        "description": "SDE test cases",
         "nixexprinput": "src",
         "nixexprpath": "release-test-cases.nix",
         "checkinterval": 300,
@@ -42,23 +43,8 @@
         "emailoverride": "",
         "keepnr": 3,
         "inputs": {
-            "src": { "type": "git", "value": "https://github.com/alexandergall/bf-sde-nixpkgs.git", "emailresponsible": false }
-        }
-    },
-    "test-cases-track-nixpkgs-master": {
-        "enabled": 1,
-        "hidden": false,
-        "description": "Barefoot Tofino SDE test cases on nixpkgs master",
-        "nixexprinput": "src",
-        "nixexprpath": "release-test-cases.nix",
-        "checkinterval": 86400,
-        "schedulingshares": 100,
-        "enableemail": false,
-        "emailoverride": "",
-        "keepnr": 0,
-        "inputs": {
-            "src": { "type": "git", "value": "https://github.com/alexandergall/bf-sde-nixpkgs.git nixpkgs-master", "emailresponsible": false },
-	    "nixpkgs": { "type": "git", "value": "https://github.com/NixOS/nixpkgs.git", "emailresponsible": false }
+            "src": { "type": "git", "value": "https://github.com/alexandergall/bf-sde-nixpkgs.git open-p4studio", "emailresponsible": false },
+            "withAsic": { "type": "boolean", "value": "false" }
         }
     }
 }
